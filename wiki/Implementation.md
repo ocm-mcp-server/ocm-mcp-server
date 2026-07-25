@@ -30,7 +30,7 @@ flowchart TD
 
 ## The tools, precisely
 
-The surface is **27 tools across nine toolsets**, but the shape is simple: almost
+The surface is **33 tools across ten toolsets**, but the shape is simple: almost
 everything is a safe read of the Open Cluster Management API, and only two toolsets
 can change anything, always through the same gate.
 
@@ -63,9 +63,11 @@ disables both write toolsets.
 The full list - every tool, its class, its arguments, and the OCM API it touches -
 is in the
 [Tools and Prompts reference](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/tools.md).
-The server also ships four MCP **prompts** (`diagnose_fleet`,
-`remediate_with_approval`, `incident_postmortem`, `why_not_scheduled`) that encode
-the safe workflow as reusable templates.
+The server also ships **ten MCP prompts** (from `diagnose_fleet` and
+`remediate_with_approval` to `onboard_cluster`, `hosted_cluster_health`, and
+`policy_compliance_report`) that encode the safe workflow as reusable templates. Run
+`ocm-mcp doctor` to exercise every read tool against a live hub and print a
+PASS/EMPTY/SKIP/FAIL table before connecting an agent.
 
 ## The generic reader is an allow-list
 
@@ -119,10 +121,11 @@ back via `get_audit_trail` to write an accurate post-incident report.
 
 ## Tests
 
-- `tests/` unit tests (37): the full approval-token lifecycle (roundtrip,
+- `tests/` unit tests (46): the full approval-token lifecycle (roundtrip,
   wrong-proposal, content-change invalidation, expiry, tampering, malformed) for
   both ManifestWork and lifecycle-action proposals, every static guardrail case,
-  and the generic reader's allow-list (Secrets and core kinds cannot be named).
+  the generic reader's allow-list (Secrets and core kinds cannot be named), and the
+  HCP / ManagedClusterInfo / add-on shaping logic against verified object fixtures.
   No cluster required.
 - `deploy/policies/tests/` Kyverno CLI suite (12 cases): good, bad, and
   human-created ManifestWorks. Offline, runs in CI.

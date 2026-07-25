@@ -129,6 +129,21 @@ def list_cluster_claims() -> str:
     return _read(ocm.list_cluster_claims)
 
 
+@mcp.tool(annotations=READ)
+@traced_tool
+def get_cluster_info(cluster: str) -> str:
+    """Extended inventory for one cluster from the hub: OpenShift version, nodes, console URL.
+
+    Args:
+        cluster: managed cluster name.
+
+    Reads ManagedClusterInfo on the hub, so it needs no spoke access and works for
+    any spoke - external OpenShift, HCP, or cloud. Needs the ACM/MCE
+    multicloud-operators-foundation add-on; reports clearly if it is not present.
+    """
+    return _read(ocm.get_cluster_info, cluster)
+
+
 # ========================================================== toolset: observability
 
 
@@ -397,6 +412,17 @@ def get_addon_health() -> str:
     return _read(ocm.addon_health)
 
 
+@mcp.tool(annotations=READ)
+@traced_tool
+def list_addons_for_cluster(cluster: str) -> str:
+    """Every add-on installed on one cluster, with health (ManagedClusterAddOn in its namespace).
+
+    Args:
+        cluster: managed cluster name.
+    """
+    return _read(ocm.list_addons_for_cluster, cluster)
+
+
 # =========================================================== toolset: registration
 
 
@@ -418,9 +444,12 @@ def propose_cluster_action(
         cluster: target managed cluster name.
         action: one of 'cordon' (taint out of scheduling), 'uncordon' (undo cordon),
             'set_label' (params: {"key","value"}; empty value removes the label),
-            'accept' (set hubAcceptsClient=true and approve pending join CSRs).
+            'accept' (set hubAcceptsClient=true and approve pending join CSRs),
+            'enable_addon' (params: {"addon","install_namespace"?}; create a
+            ManagedClusterAddOn), 'disable_addon' (params: {"addon"}; delete it).
         summary: one or two sentences the human approver will read.
-        params_json: JSON object of action parameters (only 'set_label' needs it).
+        params_json: JSON object of action parameters (set_label and the addon
+            actions need it; cordon/uncordon/accept do not).
 
     The action is validated with a server-side dry-run, then stored pending. The
     human operator must run `ocm-mcp approve <id>` to mint the approval token.
@@ -439,6 +468,8 @@ def propose_cluster_action(
         return f"REJECTED: params_json is not valid JSON: {exc}"
     if action == "set_label" and not params.get("key"):
         return "REJECTED: set_label requires params_json like {\"key\": \"...\", \"value\": \"...\"}."
+    if action in ("enable_addon", "disable_addon") and not params.get("addon"):
+        return f"REJECTED: {action} requires params_json like {{\"addon\": \"...\"}}."
 
     try:
         ocm.validate_cluster_action(cluster, action, params)
@@ -504,6 +535,55 @@ def list_policies(namespace: str = "") -> str:
         namespace: limit to one namespace; empty lists across all namespaces.
     """
     return _read(ocm.list_policies, namespace=namespace)
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
+def list_policy_violations() -> str:
+    """Only the NonCompliant / Pending Policy-cluster pairs across the fleet - the open risks."""
+    return _read(ocm.list_policy_violations)
+
+
+# ==================================================== toolset: hosted-control-planes
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
+def list_hosted_clusters(namespace: str = "") -> str:
+    """List HyperShift HostedClusters, when the hub is the HCP hosting cluster.
+
+    Args:
+        namespace: limit to one namespace; empty lists across all namespaces.
+
+    HostedCluster objects live on whichever cluster hosts the control plane. If your
+    HCPs are hosted on a separate management cluster, they are not on this hub - this
+    reports that clearly, and the spokes still appear via list_clusters.
+    """
+    return _read(ocm.list_hosted_clusters, namespace=namespace)
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
+def get_hosted_cluster(name: str, namespace: str) -> str:
+    """Detailed HostedCluster: version, conditions, and its NodePools.
+
+    Args:
+        name: HostedCluster name.
+        namespace: the namespace the HostedCluster lives in (its hosting namespace).
+    """
+    return _read(ocm.get_hosted_cluster, name, namespace)
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
+def list_node_pools(namespace: str = "", cluster: str = "") -> str:
+    """List HyperShift NodePools (worker groups), optionally filtered to one HostedCluster.
+
+    Args:
+        namespace: limit to one namespace; empty lists across all namespaces.
+        cluster: optional HostedCluster name to filter node pools by.
+    """
+    return _read(ocm.list_node_pools, namespace=namespace, cluster=cluster)
 
 
 # ============================================================= toolset: resources
@@ -653,6 +733,110 @@ def why_not_scheduled(cluster: str, placement: str, namespace: str) -> str:
         f"5. list_addon_placement_scores('{cluster}') if the Placement uses AddOn prioritizers.\n"
         "6. Conclude with the specific reason: not in a bound ClusterSet, failed a predicate, "
         "carries a NoSelect taint, or simply out-scored by others."
+    )
+
+
+@mcp.prompt()
+def onboard_cluster(cluster: str) -> str:
+    """Safely accept a pending cluster into the fleet, through the approval gate."""
+    return (
+        f"A new cluster '{cluster}' is trying to join the hub. Onboard it safely:\n\n"
+        "1. Call list_pending_csrs to see the pending cluster-join CSRs and confirm one "
+        f"belongs to '{cluster}'.\n"
+        f"2. Call get_cluster('{cluster}') to check its current acceptance and conditions.\n"
+        f"3. Propose acceptance: propose_cluster_action('{cluster}', 'accept', <summary>). This "
+        "sets hubAcceptsClient and approves the pending join CSRs, but applies nothing yet.\n"
+        "4. Give the operator the proposal id, ask them to run `ocm-mcp approve <id>`, and wait "
+        "for the token.\n"
+        "5. Call apply_cluster_action with the token, then verify with get_cluster and "
+        "get_addon_health that the cluster becomes Available and its agents register."
+    )
+
+
+@mcp.prompt()
+def addon_troubleshoot(addon: str) -> str:
+    """Diagnose a degraded add-on across the fleet, reads only."""
+    return (
+        f"The '{addon}' add-on looks unhealthy somewhere in the fleet. Investigate without "
+        "changing anything:\n\n"
+        "1. Call get_addon_health to find every cluster where an add-on is Degraded or not "
+        f"Available, and confirm which clusters have '{addon}' unhealthy.\n"
+        "2. For each affected cluster, call list_addons_for_cluster(cluster) for the add-on's "
+        "install namespace and conditions.\n"
+        "3. Call list_cluster_management_addons to read the fleet-level install strategy for "
+        f"'{addon}'.\n"
+        "4. If a spoke context is configured, use get_cluster_health, query_events, and "
+        "get_pod_logs in the add-on's install namespace to find the root cause.\n"
+        "5. Report the affected clusters, the evidence, and the smallest safe remediation. If it "
+        "means re-enabling the add-on, propose it with propose_cluster_action(..., 'enable_addon')."
+    )
+
+
+@mcp.prompt()
+def hosted_cluster_health(cluster: str) -> str:
+    """Assess the health of a HyperShift hosted control plane and its node pools."""
+    return (
+        f"Assess the health of hosted cluster '{cluster}'. Reads only:\n\n"
+        "1. Call list_hosted_clusters to locate it and read its version and conditions. If the "
+        "HostedCluster API is not on this hub, the HCP is hosted elsewhere - fall back to the "
+        f"ManagedCluster view with get_cluster('{cluster}') and get_cluster_info('{cluster}').\n"
+        "2. Call get_hosted_cluster(name, namespace) for its version history, control-plane "
+        "conditions, and node pools.\n"
+        "3. Check the NodePools' desired vs current replicas for capacity or scaling problems.\n"
+        f"4. Cross-check the spoke side: get_cluster('{cluster}') for hub availability and "
+        f"get_addon_health for its add-ons.\n"
+        "5. Summarize: control-plane state, worker capacity, and anything degraded, with the "
+        "evidence for each claim."
+    )
+
+
+@mcp.prompt()
+def policy_compliance_report() -> str:
+    """Summarize governance policy compliance across the fleet, reads only."""
+    return (
+        "Produce a governance compliance report for the fleet. Reads only:\n\n"
+        "1. Call list_policy_violations for every NonCompliant or Pending policy-cluster pair.\n"
+        "2. Call list_policies for the full picture, including which policies are inform vs "
+        "enforce (remediationAction).\n"
+        "3. Group the violations by policy and by cluster; call out anything Pending separately "
+        "from NonCompliant.\n"
+        "4. For the highest-impact violations, note whether the policy is inform (visibility "
+        "only) or enforce (actively remediating).\n"
+        "5. Present a concise table and a short prioritized list of what to fix first. Propose no "
+        "changes - this is a report."
+    )
+
+
+@mcp.prompt()
+def capacity_report() -> str:
+    """Find clusters with spare capacity and clusters under pressure, reads only."""
+    return (
+        "Report on fleet capacity so an operator can place new workloads well. Reads only:\n\n"
+        "1. Call list_clusters for each cluster's capacity and availability.\n"
+        "2. Call get_cluster on the candidates to compare capacity against allocatable.\n"
+        "3. Where available, call get_cluster_info for node counts and per-node capacity, and "
+        "list_addon_placement_scores for any custom scores prioritizers use.\n"
+        "4. Rank clusters by headroom; flag any that are Unavailable, cordoned (NoSelect taint), "
+        "or nearly full.\n"
+        "5. Recommend where a new workload should land, and note any cluster that needs "
+        "attention before it can take more."
+    )
+
+
+@mcp.prompt()
+def rollout_status(name: str, namespace: str) -> str:
+    """Track a ManifestWorkReplicaSet rollout across the clusters a Placement selected."""
+    return (
+        f"Report the rollout status of ManifestWorkReplicaSet '{name}' in namespace "
+        f"'{namespace}'. Reads only:\n\n"
+        "1. Call list_manifestworkreplicasets to read its summary (total / applied / available / "
+        "progressing / degraded) and conditions.\n"
+        "2. Identify the Placement it targets, then call get_placement_decision to list the "
+        "clusters in scope.\n"
+        "3. For any cluster that looks stuck, call get_manifestwork(cluster, <name>) to read the "
+        "per-resource conditions and status feedback and find what is blocking Apply/Available.\n"
+        "4. Summarize progress across the fleet and name the specific clusters and resources that "
+        "are not yet healthy, with evidence."
     )
 
 

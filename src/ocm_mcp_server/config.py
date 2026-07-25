@@ -91,12 +91,19 @@ READABLE_RESOURCES: dict[str, tuple[str, str, str, bool]] = {
     "policies": ("policy.open-cluster-management.io", "v1", "policies", True),
     "policysets": ("policy.open-cluster-management.io", "v1beta1", "policysets", True),
     "placementbindings": ("policy.open-cluster-management.io", "v1", "placementbindings", True),
+    # ACM extended inventory (multicloud-operators-foundation / cluster-lifecycle-api)
+    "managedclusterinfos": ("internal.open-cluster-management.io", "v1beta1", "managedclusterinfos", True),
+    # HyperShift Hosted Control Planes, when the fleet runs HCP spokes
+    "hostedclusters": ("hypershift.openshift.io", "v1beta1", "hostedclusters", True),
+    "nodepools": ("hypershift.openshift.io", "v1beta1", "nodepools", True),
 }
 
 # OCM-native lifecycle actions an agent may PROPOSE. Each still routes through the
 # same propose -> human approval token -> apply gate as a ManifestWork; none is
 # ever applied inline. Everything not listed here cannot be proposed at all.
-ALLOWED_CLUSTER_ACTIONS = frozenset({"cordon", "uncordon", "set_label", "accept"})
+ALLOWED_CLUSTER_ACTIONS = frozenset(
+    {"cordon", "uncordon", "set_label", "accept", "enable_addon", "disable_addon"}
+)
 
 # The NoSelect taint the cordon/uncordon actions add to or remove from a
 # ManagedCluster to pull it out of (or back into) Placement scheduling.

@@ -22,6 +22,10 @@ OCM_WORK_GROUP = "work.open-cluster-management.io"
 OCM_ADDON_GROUP = "addon.open-cluster-management.io"
 OCM_OPERATOR_GROUP = "operator.open-cluster-management.io"
 OCM_POLICY_GROUP = "policy.open-cluster-management.io"
+# ManagedClusterInfo (ACM extended inventory) lives under the internal. group.
+OCM_INTERNAL_GROUP = "internal.open-cluster-management.io"
+# HyperShift Hosted Control Planes (HCP spokes in ACM/MCE).
+HYPERSHIFT_GROUP = "hypershift.openshift.io"
 
 
 @cache
