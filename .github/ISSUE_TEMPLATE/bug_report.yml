@@ -1,0 +1,50 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. make bootstrap
+        2. make inject SCENARIO=... CLUSTER=...
+        3. tool call / prompt that triggered it
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - MCP tools / server
+        - Guardrails (static checks)
+        - Kyverno policies
+        - Approval flow / CLI
+        - Bootstrap / fleet setup
+        - Chaos scenarios
+        - Eval harness
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      placeholder: |
+        OS, Python version, kind/OCM/Kyverno versions, MCP client used
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Server output, `ocm-mcp audit` lines, or policy messages. Redact tokens and cluster names as needed.
+      render: shell
