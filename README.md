@@ -23,9 +23,7 @@ and audit between the model and your clusters.**
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
-### [Architecture](docs/architecture.md) &nbsp;·&nbsp; [Deployment Guide](docs/deployment.md) &nbsp;·&nbsp; [Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [Examples](docs/examples.md) &nbsp;·&nbsp; [Guardrails](docs/guardrails.md)
-
-**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📚 Docs](#documentation)**
+**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
 <img src="docs/assets/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
@@ -71,6 +69,11 @@ None of these layers live in the system prompt, so none of them can be talked ou
 </div>
 
 ## Architecture
+
+<div align="center">
+<img src="docs/assets/architecture-flow.gif" alt="ocm-mcp-server sits between an AI agent and the fleet: dangerous actions such as reading Secrets, exec into pods, or arbitrary delete do not exist and are blocked; every allowed change flows out only through Kyverno policy, human approval, and audit" width="100%">
+<br><sub>Dangerous capabilities do not exist. Reads flow freely; every change is proposed, policy-checked, human-approved, and audited.</sub>
+</div>
 
 ```mermaid
 flowchart LR
