@@ -1,6 +1,6 @@
 # ocm-mcp-server
 
-**AgentOps for Kubernetes fleets — done safely.**
+**AgentOps for Kubernetes fleets - done safely.**
 
 An [MCP](https://modelcontextprotocol.io/) server that lets AI agents operate a
 multi-cluster Kubernetes fleet through an
@@ -12,12 +12,12 @@ kubeconfig; every write is policy-checked, human-approved, and traced.
 
 ## Documentation
 
-- [Architecture](architecture.md) — the choke-point idea, components, and the
+- [Architecture](architecture.md) - the choke-point idea, components, and the
   design decisions worth arguing about
-- [Guardrails](guardrails.md) — the four layers, deliberate absences, what we
+- [Guardrails](guardrails.md) - the four layers, deliberate absences, what we
   refuse to automate, and the threat model
-- [Demo script](demo-script.md) — the 3-act live demo, timed, with fallbacks
-- [Upstream notes](upstream-notes.md) — gaps found while building this and
+- [Demo script](demo-script.md) - the 3-act live demo, timed, with fallbacks
+- [Upstream notes](upstream-notes.md) - gaps found while building this and
   what we're raising with MCP, OCM, and Kyverno
 
 ## In one picture
@@ -32,7 +32,7 @@ agent ──typed MCP tools──▶ ocm-mcp-server ──▶ OCM hub ──▶ 
 
 ## Author
 
-**Sandeep Bazar** —
+**Sandeep Bazar** - 
 [LinkedIn](https://www.linkedin.com/in/sandeepbazar/) ·
 [YouTube: Tech Horizon Hub](https://www.youtube.com/@techhorizonhub) ·
 sponsorship & support: sandeepbazar@gmail.com

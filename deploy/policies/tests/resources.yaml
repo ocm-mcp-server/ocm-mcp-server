@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Test ManifestWorks for the guardrail policies. Runs entirely offline with
-# the Kyverno CLI — no cluster, no OCM installation required:
+# the Kyverno CLI - no cluster, no OCM installation required:
 #   kyverno test deploy/policies/tests
 ---
 # A compliant agent proposal: allowed kind, safe namespace, pinned image.
@@ -205,7 +205,7 @@ spec:
                 - name: payments
                   image: registry.example.com/payments:latest
 ---
-# Unlabeled ManifestWork (human-created): policies must NOT apply — passes.
+# Unlabeled ManifestWork (human-created): policies must NOT apply - passes.
 apiVersion: work.open-cluster-management.io/v1
 kind: ManifestWork
 metadata:

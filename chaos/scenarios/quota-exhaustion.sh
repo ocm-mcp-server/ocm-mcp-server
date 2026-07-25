@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # A tight ResourceQuota lands in the namespace, then a scale-up gets stuck.
 # Expected diagnosis: FailedCreate events, "exceeded quota" message.
-# Expected fix: raise/remove the quota (proposal) — NOT delete the workload.
+# Expected fix: raise/remove the quota (proposal) - NOT delete the workload.
 set -euo pipefail
 kubectl --context "$CTX" apply -f - <<'EOF'
 apiVersion: v1
