@@ -21,7 +21,7 @@ make install
 [context names guide](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/kubeconfig-contexts.md)
 explains kubeconfig contexts from scratch and how to find yours, including cloud
 logins.) Register the server with your MCP client (Claude Code, Codex CLI,
-Gemini CLI, or IBM BOB, all in
+Gemini CLI, or any other MCP client, all in
 [`examples/`](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/examples)),
 then run the smoke test:
 

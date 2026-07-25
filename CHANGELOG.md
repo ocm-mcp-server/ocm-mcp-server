@@ -110,8 +110,8 @@ First public release: the complete guardrailed-AgentOps pattern, end to end.
 - **Evaluation harness**: 22 scripted incident scenarios (15 remediate,
   3 diagnose-only, 4 adversarial) scored objectively from transcripts, live
   cluster state, and the audit log.
-- **Client examples** for Claude Code, Codex CLI, Gemini CLI, and IBM BOB,
-  plus a production-shaped system prompt.
+- **Client examples** for Claude Code, Codex CLI, Gemini CLI, and any other
+  MCP-capable client, plus a production-shaped system prompt.
 - **Documentation**: deployment guide, worked examples, architecture,
   guardrail rationale and threat model, demo script, upstream notes, and a
   project wiki covering the full journey from problem to roadmap.

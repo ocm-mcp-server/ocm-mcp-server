@@ -383,7 +383,7 @@ OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3
 </details>
 
 <details>
-<summary><b>IBM BOB</b> - Settings → MCP → Add MCP Server → Open Configuration File (<code>~/.bob/settings/mcp.json</code>)</summary>
+<summary><b>Any other MCP client</b> - point it at the same command and environment (<a href="examples/generic-mcp.json">examples/generic-mcp.json</a>)</summary>
 
 ```json
 {
@@ -399,7 +399,8 @@ OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3
 }
 ```
 
-If `ocm-mcp-server` is not on the PATH BOB launches with, use the absolute path from
+Most MCP clients accept an `mcpServers` block like this one. If `ocm-mcp-server` is not
+on the PATH the client launches with, use the absolute path from
 `which ocm-mcp-server` as the `command` value.
 </details>
 
@@ -454,6 +455,8 @@ policy regression fails the build before it ever reaches a hub.
 | [Worked examples](docs/examples.md) | full incident transcripts, approval sessions, adversarial rejections, audit output |
 | [Architecture](docs/architecture.md) | the choke-point idea, components, design decisions worth arguing about |
 | [Guardrails](docs/guardrails.md) | the four layers, deliberate absences, threat model, what we refuse to automate |
+| [Security self-assessment](docs/security-self-assessment.md) | CNCF TAG-Security-style assessment: actors, actions, security functions, limits |
+| [CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md) | how the project maps to CNCF Sandbox expectations; honest gaps |
 | [Demo script](docs/demo-script.md) | a timed 3-act live demo with fallbacks |
 | [Upstream notes](docs/upstream-notes.md) | gaps found while building this; proposals for MCP, OCM, and Kyverno |
 | [Eval harness](eval/README.md) | scenario classes, scoring, how to run against your model |
@@ -521,15 +524,20 @@ operations, and making fleets safer to automate.
 
 If this project is useful to you, a ⭐ helps others find it.
 
-## Code of Conduct
+## Project governance and maturity
 
-This project follows the
-[Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/),
-version 2.1. In short: be respectful, be constructive, assume good intent, and keep the
-space welcoming for contributors of every background and experience level. Harassment,
-personal attacks, and sustained disruption are not tolerated. To report unacceptable
-behavior, connect privately on
-[LinkedIn](https://www.linkedin.com/in/sandeepbazar/); all reports are handled confidentially.
+This project is built to be picked up by a community and, in time, to stand as a CNCF
+Sandbox candidate. The scaffolding is already in place:
+
+- **[Governance](GOVERNANCE.md)** - how decisions are made and how to become a maintainer.
+- **[Maintainers](MAINTAINERS.md)** and **[Adopters](ADOPTERS.md)** - who maintains it, and an open page to record who uses it.
+- **[Roadmap](ROADMAP.md)** - direction by theme, safety-first.
+- **[Security self-assessment](docs/security-self-assessment.md)** - a CNCF TAG-Security-style assessment of what the guarantees are and where they end.
+- **[CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md)** - a transparent checklist of what is done and what is still open.
+- **[Code of Conduct](CODE_OF_CONDUCT.md)** - the CNCF Community Code of Conduct; report privately via [LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
+
+Every change is signed off under the [DCO](CONTRIBUTING.md), and any change that touches
+a guardrail requires a written safety rationale.
 
 ## License
 
