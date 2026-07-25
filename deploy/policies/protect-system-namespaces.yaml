@@ -1,0 +1,53 @@
+# Agent-proposed ManifestWorks may only target explicitly namespaced, non-system
+# namespaces on the managed clusters.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: protect-system-namespaces-manifestwork
+  annotations:
+    policies.kyverno.io/title: Protect System Namespaces from Agent ManifestWorks
+    policies.kyverno.io/category: Multi-Cluster Guardrails
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: ManifestWork
+    policies.kyverno.io/description: >-
+      Every embedded manifest in an agent-proposed ManifestWork must declare a
+      namespace, and that namespace may not be a system namespace
+      (kube-system, kube-public, kube-node-lease, open-cluster-management*,
+      kyverno).
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: require-safe-namespace
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: ocm-mcp-server
+      validate:
+        message: >-
+          Embedded manifests must set metadata.namespace, and system namespaces
+          (kube-system, kube-public, kube-node-lease, open-cluster-management*,
+          kyverno) are off-limits to agent proposals.
+        foreach:
+          - list: request.object.spec.workload.manifests
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.metadata.namespace || '' }}"
+                    operator: Equals
+                    value: ""
+                  - key: "{{ element.metadata.namespace || '' }}"
+                    operator: AnyIn
+                    value:
+                      - kube-system
+                      - kube-public
+                      - kube-node-lease
+                      - open-cluster-management
+                      - open-cluster-management-hub
+                      - open-cluster-management-agent
+                      - open-cluster-management-agent-addon
+                      - kyverno

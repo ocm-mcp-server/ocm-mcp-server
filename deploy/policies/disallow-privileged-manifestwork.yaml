@@ -1,0 +1,65 @@
+# Blocks privileged pod specs inside agent-proposed ManifestWorks.
+#
+# Standard pod-security policies match Pods/Deployments at admission on the
+# cluster where they run. Here the workload is EMBEDDED inside a ManifestWork
+# on the hub, so we iterate spec.workload.manifests and validate each embedded
+# manifest. Scoped to ManifestWorks labeled as managed by ocm-mcp-server, so
+# human platform engineers are not affected.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-privileged-manifestwork
+  annotations:
+    policies.kyverno.io/title: Disallow Privileged Specs in Agent ManifestWorks
+    policies.kyverno.io/category: Multi-Cluster Guardrails
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: ManifestWork
+    policies.kyverno.io/description: >-
+      Agent-proposed ManifestWorks may not contain privileged containers,
+      privilege escalation, added capabilities, host namespaces, or hostPath
+      volumes in any embedded workload manifest.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: deny-privileged-embedded-specs
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: ocm-mcp-server
+      validate:
+        message: >-
+          Embedded manifest uses a privileged or host-level setting
+          (privileged, allowPrivilegeEscalation, added capabilities,
+          hostNetwork/hostPID/hostIPC, or hostPath). Agent proposals may not
+          request elevated privileges.
+        foreach:
+          - list: request.object.spec.workload.manifests
+            deny:
+              conditions:
+                any:
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.privileged == `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.allowPrivilegeEscalation == `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.capabilities.add] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ element.spec.template.spec.hostNetwork || `false` }}"
+                    operator: Equals
+                    value: true
+                  - key: "{{ element.spec.template.spec.hostPID || `false` }}"
+                    operator: Equals
+                    value: true
+                  - key: "{{ element.spec.template.spec.hostIPC || `false` }}"
+                    operator: Equals
+                    value: true
+                  - key: "{{ length(element.spec.template.spec.volumes[?hostPath] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
