@@ -16,14 +16,20 @@ from kubernetes.client import ApiException
 
 from .config import CORDON_TAINT_KEY, READABLE_RESOURCES
 from .k8s import (
+    HYPERSHIFT_GROUP,
     OCM_ADDON_GROUP,
     OCM_CLUSTER_GROUP,
+    OCM_INTERNAL_GROUP,
+    OCM_POLICY_GROUP,
     OCM_WORK_GROUP,
     hub_certificates,
     hub_custom,
     spoke_apps,
     spoke_core,
 )
+
+# ACM compliance states that mean "not healthy" for a violations rollup.
+NONCOMPLIANT_STATES = ("NonCompliant", "Pending")
 
 # Label OCM stamps on a PlacementDecision to link it to its Placement, and the one
 # that records a ManagedCluster's ClusterSet membership.
@@ -396,8 +402,25 @@ def list_addon_placement_scores(cluster: str) -> list[dict[str, Any]]:
 # ------------------------------------------------------------------ work reads
 
 
+def _feedback_value(fv: dict[str, Any]) -> Any:
+    """Read a ManifestWork FeedbackValue by its type discriminator (Integer/String/Boolean/JsonRaw)."""
+    kind = fv.get("type")
+    key = {"Integer": "integer", "String": "string", "Boolean": "boolean", "JsonRaw": "jsonRaw"}
+    if kind in key:
+        return fv.get(key[kind])
+    # fall back across the typed fields if the discriminator is absent
+    for k in ("integer", "string", "boolean", "jsonRaw"):
+        if k in fv:
+            return fv[k]
+    return None
+
+
 def get_manifestwork(cluster: str, name: str) -> dict[str, Any]:
-    """Detailed ManifestWork status: top-level conditions + per-resource status feedback."""
+    """Detailed ManifestWork status: top-level conditions + per-resource status feedback.
+
+    The JSON path is `status.resourceStatus.manifests[].statusFeedback.values[]` - note
+    `statusFeedback` is singular on the wire even though the Go field is plural.
+    """
     obj = hub_custom().get_namespaced_custom_object(
         OCM_WORK_GROUP, "v1", cluster, "manifestworks", name
     )
@@ -405,9 +428,7 @@ def get_manifestwork(cluster: str, name: str) -> dict[str, Any]:
     for man in obj.get("status", {}).get("resourceStatus", {}).get("manifests", []):
         meta = man.get("resourceMeta", {})
         feedback = {
-            v.get("name"): (v.get("fieldValue", {}) or {}).get(
-                "integer", (v.get("fieldValue", {}) or {}).get("string")
-            )
+            v.get("name"): _feedback_value(v.get("fieldValue", {}) or {})
             for v in man.get("statusFeedback", {}).get("values", [])
         }
         resources.append(
@@ -572,13 +593,191 @@ def list_policies(namespace: str = "") -> list[dict[str, Any]]:
                 "name": p["metadata"]["name"],
                 "remediation": p.get("spec", {}).get("remediationAction"),
                 "compliant": status.get("compliant"),
+                # ACM CompliancePerClusterStatus keys are all-lowercase on the wire.
                 "per_cluster": {
-                    s.get("clustername", s.get("clustername")): s.get("compliant")
-                    for s in status.get("status", [])
+                    s.get("clustername"): s.get("compliant")
+                    for s in (status.get("status") or [])
                 },
             }
         )
     return out
+
+
+def list_policy_violations() -> list[dict[str, Any]]:
+    """Only the Policy/cluster pairs that are NonCompliant or Pending - the fleet's open risks."""
+    api = hub_custom()
+    try:
+        res = api.list_cluster_custom_object(OCM_POLICY_GROUP, "v1", "policies")
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                "The governance policy add-on (policy.open-cluster-management.io) is not "
+                "installed on this hub."
+            ) from exc
+        raise
+    violations = []
+    for p in res.get("items", []):
+        status = p.get("status", {})
+        for s in status.get("status") or []:
+            if s.get("compliant") in NONCOMPLIANT_STATES:
+                violations.append(
+                    {
+                        "policy": f"{p['metadata'].get('namespace')}/{p['metadata']['name']}",
+                        "cluster": s.get("clustername"),
+                        "compliant": s.get("compliant"),
+                        "remediation": p.get("spec", {}).get("remediationAction"),
+                    }
+                )
+    return violations
+
+
+# ------------------------------------------------------------------ ACM extended inventory
+
+
+def get_cluster_info(cluster: str) -> dict[str, Any]:
+    """Extended inventory for one cluster from the HUB (no spoke access needed).
+
+    ManagedClusterInfo is populated by the OCM work agent and stored on the hub in
+    the cluster namespace, so this works for any spoke - external OCP, HCP, or cloud -
+    without a kubeconfig for that cluster. Reports OpenShift/distribution version,
+    node list, console URL, and vendor.
+    """
+    try:
+        obj = hub_custom().get_namespaced_custom_object(
+            OCM_INTERNAL_GROUP, "v1beta1", cluster, "managedclusterinfos", cluster
+        )
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                f"No ManagedClusterInfo for '{cluster}'. This needs the ACM/MCE "
+                "multicloud-operators-foundation add-on (internal.open-cluster-management.io)."
+            ) from exc
+        raise
+    status = obj.get("status", {})
+    dist = status.get("distributionInfo", {})
+    nodes = status.get("nodeList", [])
+    return {
+        "cluster": cluster,
+        "console_url": status.get("consoleURL"),
+        "kube_vendor": status.get("kubeVendor"),
+        "cloud_vendor": status.get("cloudVendor"),
+        "openshift_version": dist.get("ocp", {}).get("version"),
+        "node_count": len(nodes),
+        "nodes": [
+            {"name": n.get("name"), "capacity": n.get("capacity", {}), "labels": n.get("labels", {})}
+            for n in nodes[:50]
+        ],
+        "conditions": _condition_map(obj),
+    }
+
+
+def list_addons_for_cluster(cluster: str) -> list[dict[str, Any]]:
+    """Every ManagedClusterAddOn in one cluster's namespace, with health conditions."""
+    try:
+        res = hub_custom().list_namespaced_custom_object(
+            OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons"
+        )
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                "The add-on API (addon.open-cluster-management.io) is not installed on this hub."
+            ) from exc
+        raise
+    out = []
+    for a in res.get("items", []):
+        conds = _condition_map(a)
+        out.append(
+            {
+                "addon": a["metadata"]["name"],
+                "install_namespace": a.get("spec", {}).get("installNamespace"),
+                "available": conds.get("Available", "Unknown"),
+                "degraded": conds.get("Degraded", "False"),
+            }
+        )
+    return out
+
+
+# ------------------------------------------------------------------ HyperShift HCP reads
+
+
+def list_hosted_clusters(namespace: str = "") -> list[dict[str, Any]]:
+    """HyperShift HostedClusters, when the hub is the HCP hosting/management cluster.
+
+    HostedCluster objects live on whichever cluster hosts the control plane. If HCPs
+    are hosted on a separate management cluster, they are not on this hub - the tool
+    says so, and the ManagedCluster view still covers those spokes.
+    """
+    api = hub_custom()
+    try:
+        if namespace:
+            res = api.list_namespaced_custom_object(
+                HYPERSHIFT_GROUP, "v1beta1", namespace, "hostedclusters"
+            )
+        else:
+            res = api.list_cluster_custom_object(HYPERSHIFT_GROUP, "v1beta1", "hostedclusters")
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                "No HostedCluster API on this hub. Either HyperShift/HCP is not enabled here, "
+                "or the hosted control planes are hosted on a different management cluster "
+                "(the spokes still appear via list_clusters as ManagedClusters)."
+            ) from exc
+        raise
+    return [_hosted_cluster_summary(h) for h in res.get("items", [])]
+
+
+def get_hosted_cluster(name: str, namespace: str) -> dict[str, Any]:
+    """Detailed HostedCluster: version history, conditions, node pools in the same namespace."""
+    obj = hub_custom().get_namespaced_custom_object(
+        HYPERSHIFT_GROUP, "v1beta1", namespace, "hostedclusters", name
+    )
+    summary = _hosted_cluster_summary(obj)
+    summary["node_pools"] = list_node_pools(namespace, cluster=name)
+    return summary
+
+
+def list_node_pools(namespace: str = "", cluster: str = "") -> list[dict[str, Any]]:
+    """HyperShift NodePools (worker groups), optionally filtered to one HostedCluster."""
+    api = hub_custom()
+    try:
+        if namespace:
+            res = api.list_namespaced_custom_object(
+                HYPERSHIFT_GROUP, "v1beta1", namespace, "nodepools"
+            )
+        else:
+            res = api.list_cluster_custom_object(HYPERSHIFT_GROUP, "v1beta1", "nodepools")
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled("No NodePool API on this hub (HyperShift not enabled here).") from exc
+        raise
+    out = []
+    for np in res.get("items", []):
+        spec = np.get("spec", {})
+        if cluster and spec.get("clusterName") != cluster:
+            continue
+        out.append(
+            {
+                "name": np["metadata"]["name"],
+                "namespace": np["metadata"].get("namespace"),
+                "cluster": spec.get("clusterName"),
+                "desired_replicas": spec.get("replicas"),
+                "current_replicas": np.get("status", {}).get("replicas"),
+                "conditions": _condition_map(np),
+            }
+        )
+    return out
+
+
+def _hosted_cluster_summary(h: dict[str, Any]) -> dict[str, Any]:
+    status = h.get("status", {})
+    history = status.get("version", {}).get("history", [])
+    return {
+        "name": h["metadata"]["name"],
+        "namespace": h["metadata"].get("namespace"),
+        "version": history[0].get("version") if history else None,
+        "version_state": history[0].get("state") if history else None,
+        "conditions": _condition_map(h),
+    }
 
 
 # ------------------------------------------------------------------ generic reader
@@ -670,18 +869,64 @@ def accept_patch() -> dict[str, Any]:
     return {"spec": {"hubAcceptsClient": True}}
 
 
+PATCH_ACTIONS = ("cordon", "uncordon", "set_label", "accept")
+
+
+def managed_cluster_addon_body(cluster: str, addon: str, install_namespace: str) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "apiVersion": f"{OCM_ADDON_GROUP}/v1alpha1",
+        "kind": "ManagedClusterAddOn",
+        "metadata": {"name": addon, "namespace": cluster},
+        "spec": {},
+    }
+    if install_namespace:
+        body["spec"]["installNamespace"] = install_namespace
+    return body
+
+
 def validate_cluster_action(cluster: str, action: str, params: dict[str, Any]) -> None:
     """Server-side dry-run of a lifecycle action so it fails at propose time, not apply time."""
-    _merge_patch_cluster(cluster, _action_patch(cluster, action, params), dry_run=True)
+    if action in PATCH_ACTIONS:
+        _merge_patch_cluster(cluster, _action_patch(cluster, action, params), dry_run=True)
+    elif action == "enable_addon":
+        body = managed_cluster_addon_body(cluster, params["addon"], params.get("install_namespace", ""))
+        hub_custom().create_namespaced_custom_object(
+            OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons", body, dry_run="All"
+        )
+    elif action == "disable_addon":
+        # Confirm it exists; a 404 here surfaces at propose time as a clear rejection.
+        hub_custom().get_namespaced_custom_object(
+            OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons", params["addon"]
+        )
+    else:
+        raise ValueError(f"Unknown cluster action '{action}'.")
 
 
 def apply_cluster_action(cluster: str, action: str, params: dict[str, Any]) -> dict[str, Any]:
-    """Apply an approved lifecycle action. For 'accept', also approve pending join CSRs."""
-    _merge_patch_cluster(cluster, _action_patch(cluster, action, params))
+    """Apply an approved lifecycle action.
+
+    Cluster patches (cordon/uncordon/set_label/accept) merge-patch the ManagedCluster;
+    'accept' also approves pending join CSRs. enable_addon/disable_addon create or
+    delete a ManagedClusterAddOn in the cluster namespace.
+    """
     result: dict[str, Any] = {"cluster": cluster, "action": action, "status": "applied"}
-    if action == "accept":
-        approved = _approve_pending_csrs(cluster)
-        result["approved_csrs"] = approved
+    if action in PATCH_ACTIONS:
+        _merge_patch_cluster(cluster, _action_patch(cluster, action, params))
+        if action == "accept":
+            result["approved_csrs"] = _approve_pending_csrs(cluster)
+    elif action == "enable_addon":
+        body = managed_cluster_addon_body(cluster, params["addon"], params.get("install_namespace", ""))
+        hub_custom().create_namespaced_custom_object(
+            OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons", body
+        )
+        result["addon"] = params["addon"]
+    elif action == "disable_addon":
+        hub_custom().delete_namespaced_custom_object(
+            OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons", params["addon"]
+        )
+        result["addon"] = params["addon"]
+    else:
+        raise ValueError(f"Unknown cluster action '{action}'.")
     return result
 
 

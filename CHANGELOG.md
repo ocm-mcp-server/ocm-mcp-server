@@ -29,14 +29,32 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   inspection-only deployments.
 - **Homepage demo** (animated terminal GIF) plus a
   [Tools and Prompts reference](docs/tools.md) and a matching wiki page.
+- **HyperShift HCP toolset**: `list_hosted_clusters`, `get_hosted_cluster`,
+  `list_node_pools` (hypershift.openshift.io/v1beta1), for fleets running Hosted
+  Control Planes. Feature-detects when HCPs are hosted on a separate management
+  cluster.
+- **ACM extended inventory**: `get_cluster_info` (ManagedClusterInfo: OpenShift
+  version, nodes, console URL, vendor - read from the hub, no spoke access needed),
+  `list_addons_for_cluster`, and `list_policy_violations` (NonCompliant / Pending
+  rollup; `Pending` correctly counts as a violation).
+- **Add-on lifecycle actions**: `enable_addon` / `disable_addon` (create/delete a
+  ManagedClusterAddOn) as gated `propose_cluster_action` actions.
+- **Six more prompts**: `onboard_cluster`, `addon_troubleshoot`,
+  `hosted_cluster_health`, `policy_compliance_report`, `capacity_report`,
+  `rollout_status` (ten prompts total).
+- **`ocm-mcp doctor`**: a live read-path smoke test that calls every read tool
+  against the hub and prints a PASS/EMPTY/SKIP/FAIL table, writing nothing.
 
 ### Changed
 
 - Approval proposals now carry a `kind` (manifestwork or action) and typed
   `params`; the content hash binds the whole proposal, so a token approves an
   exact ManifestWork bundle or an exact lifecycle action.
-- Unit tests: 37 (from 26), adding lifecycle-action approvals and the reader
-  allow-list.
+- Tool surface: 33 tools across ten toolsets (from the initial 10). ManifestWork
+  status feedback now decodes the FieldValue `type` discriminator
+  (Integer/String/Boolean/JsonRaw) rather than guessing.
+- Unit tests: 46 (from 26), adding lifecycle-action approvals, the reader
+  allow-list, and the HCP / ManagedClusterInfo / add-on shaping logic.
 
 ## [0.1.0] - 2026-07-25
 
