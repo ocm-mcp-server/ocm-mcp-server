@@ -26,6 +26,44 @@ STATUS = {
 }
 
 
+# The end-to-end story, top to bottom: (emoji, group/colour, title, one-liner).
+FLOW = [
+    ("\U0001f9f0", "setup", "Install & verify tools", "podman, kind, kubectl, clusteradm, helm"),
+    ("☸️", "setup", "Bootstrap a real fleet", "1 hub + N spoke clusters, OCM, Kyverno, policies"),
+    ("✨", "setup", "Enrich & seed fixtures", "add-ons, policies, ManifestWorks - so every tool has real data"),
+    ("\U0001f50d", "read", "Investigate (read tools)", "inventory, health, placement, work, add-ons - free, no gate"),
+    ("\U0001f6e1️", "gate", "Make a change, gated", "propose → Kyverno + guardrails → human token → apply (a bad token is refused)"),
+    ("\U0001f4ac", "read", "Prompts & audit", "reusable runbooks and an append-only audit trail"),
+    ("\U0001f4a5", "break", "Break something", "inject a failing rollout (ImagePullBackOff)"),
+    ("\U0001fa7a", "break", "Diagnose", "health + events pinpoint the bad image"),
+    ("\U0001f527", "fix", "Fix, through the gate", "propose the pinned image, approve, apply"),
+    ("✅", "verify", "Verify recovery", "re-read health until the workload is healthy again"),
+    ("\U0001f9f9", "clean", "Clean up", "delete only the clusters this run created"),
+]
+FLOW_LEDE = (
+    "One command stands up a real multi-cluster Open Cluster Management fleet on kind, then "
+    "drives the MCP server through every tool and prompt: it reads the fleet freely, but forces "
+    "every change through policy checks and a human-approved token. It then deliberately breaks a "
+    "workload and shows the agent diagnose and fix it, before tearing the fleet down. Green means "
+    "the whole loop worked."
+)
+
+
+def flow_html() -> str:
+    nodes = []
+    for i, (ico, grp, title, sub) in enumerate(FLOW):
+        nodes.append(
+            f'<div class="fnode g-{grp}" style="--i:{i}"><span class="fdot"></span>'
+            f'<span class="fico">{ico}</span><span class="ftext"><b>{esc(title)}</b>'
+            f'<small>{esc(sub)}</small></span></div>'
+        )
+    return (
+        '<section class="flowsec"><h2>What this end-to-end test does</h2>'
+        f'<p class="lede">{esc(FLOW_LEDE)}</p>'
+        f'<div class="flow">{"".join(nodes)}</div></section>'
+    )
+
+
 def esc(s: str) -> str:
     return html.escape(str(s or ""))
 
@@ -122,6 +160,27 @@ section h2{{margin:0 0 14px;font-size:17px;color:#0b3d91;border-bottom:2px solid
 pre.out{{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:#f6f8fa;
   border:1px solid #eaeef2;border-radius:8px;padding:10px 12px;overflow:auto;max-height:340px;margin:6px 0 4px}}
 footer{{text-align:center;color:#8b949e;font-size:12px;padding:18px}}
+.flowsec .lede{{color:#57606a;font-size:14px;margin:0 0 18px;max-width:840px}}
+.flow{{position:relative;padding-left:36px}}
+.flow::before{{content:"";position:absolute;left:15px;top:10px;bottom:10px;width:3px;border-radius:3px;
+  background:linear-gradient(#0969da,#1b7c83,#9a6700,#8250df,#1a7f37,#57606a);
+  background-size:100% 300%;animation:flow 7s linear infinite}}
+@keyframes flow{{0%{{background-position:0 0}}100%{{background-position:0 -300%}}}}
+.fnode{{position:relative;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #eaeef2;
+  border-left:5px solid var(--c);border-radius:10px;padding:10px 14px;margin:0 0 12px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);opacity:0;transform:translateY(10px);
+  animation:rise .5s ease forwards;animation-delay:calc(var(--i)*.12s)}}
+@keyframes rise{{to{{opacity:1;transform:none}}}}
+.fdot{{position:absolute;left:-26px;width:14px;height:14px;border-radius:50%;background:var(--c);
+  border:3px solid #fff;box-shadow:0 0 0 2px var(--c);animation:pulse 2.4s ease-in-out infinite;
+  animation-delay:calc(var(--i)*.12s)}}
+@keyframes pulse{{0%,100%{{box-shadow:0 0 0 2px var(--c)}}50%{{box-shadow:0 0 0 5px color-mix(in srgb,var(--c) 30%,transparent)}}}}
+.fico{{font-size:20px;line-height:1}}
+.ftext b{{font-size:14.5px}}
+.ftext small{{display:block;color:#57606a;font-size:12.5px}}
+.g-setup{{--c:#0969da}} .g-read{{--c:#1b7c83}} .g-gate{{--c:#9a6700}}
+.g-break{{--c:#8250df}} .g-fix{{--c:#1b7c83}} .g-verify{{--c:#1a7f37}} .g-clean{{--c:#57606a}}
+@media (prefers-reduced-motion:reduce){{.flow::before,.fnode,.fdot{{animation:none}}.fnode{{opacity:1;transform:none}}}}
 </style></head><body>
 <header><div class="wrap" style="padding-bottom:0">
   <h1>{esc(args.title)}</h1>
@@ -130,6 +189,7 @@ footer{{text-align:center;color:#8b949e;font-size:12px;padding:18px}}
 </div></header>
 <div class="wrap">
   <div class="summary">{summary}</div>
+  {flow_html()}
   {''.join(cards)}
 </div>
 <footer>Reproduce with <code>./hack/e2e-local.sh</code> - this report is generated, not checked in.</footer>
