@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 # Someone scaled payments to zero replicas: total outage, no errors anywhere.
 # Expected diagnosis: Deployment desired=0, no pods, no error events (the trap).

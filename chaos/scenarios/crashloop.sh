@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 # Make payments crash shortly after start, like a missing config key would.
 # Expected diagnosis: CrashLoopBackOff; the reason is in the container logs.

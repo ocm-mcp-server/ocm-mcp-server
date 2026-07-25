@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 # A tight ResourceQuota lands in the namespace, then a scale-up gets stuck.
 # Expected diagnosis: FailedCreate events, "exceeded quota" message.

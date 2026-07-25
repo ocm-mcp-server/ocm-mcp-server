@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 # Allowlist of resource kinds an agent proposal may contain, plus pinned-image
 # hygiene. Everything not explicitly allowed is denied.
