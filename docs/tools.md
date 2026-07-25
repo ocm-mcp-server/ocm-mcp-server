@@ -3,11 +3,36 @@
 
 # Tools and Prompts reference
 
-The server exposes **27 tools across nine toolsets** plus **four prompts**. This page
-is the canonical reference: every tool, its class, its arguments, and the Open
-Cluster Management API it reads or writes. The short version lives in the
+The server exposes **33 tools across ten toolsets** plus **ten prompts**. This page is
+the canonical reference: every tool, its class, its arguments, and the Open Cluster
+Management API it reads or writes. The short version lives in the
 [README](../README.md#toolsets); the safety model behind the classes is in
 [guardrails.md](guardrails.md).
+
+## Works with any managed cluster
+
+Every hub-level tool operates on the OCM APIs on the hub, where each spoke - a
+standalone OpenShift cluster, a HyperShift hosted cluster (hosted on the hub or on a
+separate management cluster), or a cloud cluster - is a `ManagedCluster`. So inventory,
+placement, work, add-on, registration, policy, and `get_cluster_info` are all
+topology-agnostic. Two things depend on topology:
+
+- **`list_hosted_clusters` / `get_hosted_cluster` / `list_node_pools`** read
+  `HostedCluster` objects, which live on whichever cluster hosts the control plane.
+  When the hub is the HyperShift hosting cluster they are on the hub; when HCPs are
+  hosted elsewhere, these tools report that and the `ManagedCluster` view still covers
+  those spokes.
+- **`get_cluster_health`, `query_events`, `get_pod_logs`** read the spoke directly and
+  need a per-cluster context (a kubeconfig, or cluster-proxy + managed-serviceaccount).
+  `get_cluster_info` gives version, nodes, and console URL from the hub with no spoke
+  access at all.
+
+## Validate against a live hub
+
+`ocm-mcp doctor` calls every read tool against the hub and prints a
+`PASS / EMPTY / SKIP / FAIL` table, writing nothing. `SKIP` means a spoke context or an
+optional CRD is absent; `FAIL` means the hub returned an error (check RBAC and the
+CRD). Non-zero exit on any `FAIL`, so it works as a health gate too.
 
 ## Tool classes
 
@@ -35,6 +60,7 @@ prompt can call them.
 | `list_cluster_sets` | read | - | `ManagedClusterSet` v1beta2 + membership |
 | `list_cluster_set_bindings` | read | `namespace?` | `ManagedClusterSetBinding` v1beta2 |
 | `list_cluster_claims` | read | - | `ManagedCluster.status.clusterClaims` |
+| `get_cluster_info` | read | `cluster` | `ManagedClusterInfo` v1beta1 (internal.) - OpenShift version, nodes, console URL; hub-side |
 
 ## observability
 
@@ -69,6 +95,7 @@ prompt can call them.
 |---|---|---|---|
 | `list_cluster_management_addons` | read | - | `ClusterManagementAddOn` v1alpha1 + install strategy |
 | `get_addon_health` | read | - | `ManagedClusterAddOn` v1alpha1 Available/Degraded per cluster |
+| `list_addons_for_cluster` | read | `cluster` | `ManagedClusterAddOn` in one cluster namespace + health |
 
 ## registration
 
@@ -84,15 +111,31 @@ prompt can call them.
 - `uncordon` - remove that taint.
 - `set_label` - set or remove a label (`params_json`: `{"key": "...", "value": "..."}`; empty value removes it).
 - `accept` - set `spec.hubAcceptsClient=true` and approve the cluster's pending join CSRs (the double opt-in that completes onboarding).
+- `enable_addon` - create a `ManagedClusterAddOn` in the cluster namespace (`params_json`: `{"addon": "...", "install_namespace": "..."}`; namespace optional).
+- `disable_addon` - delete a `ManagedClusterAddOn` (`params_json`: `{"addon": "..."}`).
 
 ## policy (optional add-on)
 
 | Tool | Class | Arguments | Reads |
 |---|---|---|---|
 | `list_policies` | read | `namespace?` | `Policy` v1 + per-cluster compliance |
+| `list_policy_violations` | read | - | `Policy` v1, filtered to NonCompliant / Pending pairs |
 
-If the governance policy add-on is not installed on the hub, this returns a clear
-`UNAVAILABLE` message rather than an error.
+If the governance policy add-on is not installed on the hub, these return a clear
+`UNAVAILABLE` message rather than an error. Note ACM's `compliant` field is not binary:
+`Pending` also counts as a violation.
+
+## hosted-control-planes (HyperShift)
+
+| Tool | Class | Arguments | Reads |
+|---|---|---|---|
+| `list_hosted_clusters` | read | `namespace?` | `HostedCluster` (hypershift.openshift.io/v1beta1) + version/conditions |
+| `get_hosted_cluster` | read | `name`, `namespace` | one `HostedCluster` in detail + its NodePools |
+| `list_node_pools` | read | `namespace?`, `cluster?` | `NodePool` desired vs current replicas |
+
+These read `HostedCluster` objects on the hub, so they work when the hub is the
+HyperShift hosting cluster. If HCPs are hosted on a separate management cluster, they
+return a clear `UNAVAILABLE` message; the spokes still appear via `list_clusters`.
 
 ## resources (generic, allow-listed)
 
@@ -111,7 +154,8 @@ placements                   placementdecisions           addonplacementscores
 manifestworks                manifestworkreplicasets       clustermanagementaddons
 managedclusteraddons         addondeploymentconfigs        addontemplates
 clustermanagers              klusterlets                   policies
-policysets                   placementbindings
+policysets                   placementbindings             managedclusterinfos
+hostedclusters               nodepools
 ```
 
 ## audit
@@ -132,3 +176,9 @@ drives the agent through the safe workflow with the real tool names.
 | `remediate_with_approval` | `symptom` | investigate, propose the smallest safe fix, wait for the human token, apply, verify, report. |
 | `incident_postmortem` | - | write the post-incident report strictly from `get_audit_trail`. |
 | `why_not_scheduled` | `cluster`, `placement`, `namespace` | explain a Placement decision from the live objects. |
+| `onboard_cluster` | `cluster` | accept a pending cluster safely through the approval gate. |
+| `addon_troubleshoot` | `addon` | diagnose a degraded add-on across the fleet. |
+| `hosted_cluster_health` | `cluster` | assess a HyperShift hosted control plane and its node pools. |
+| `policy_compliance_report` | - | summarize governance compliance and prioritize what to fix. |
+| `capacity_report` | - | find clusters with headroom and clusters under pressure. |
+| `rollout_status` | `name`, `namespace` | track a ManifestWorkReplicaSet rollout across selected clusters. |

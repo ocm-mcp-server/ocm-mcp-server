@@ -90,25 +90,32 @@ and logged.
 
 ## Toolsets
 
-The surface is **27 tools across nine toolsets**. Almost all of it is read: the
-whole Open Cluster Management API is safe to inspect. Only two toolsets can change
-anything, and only through the propose -> approve -> apply gate.
+The surface is **33 tools across ten toolsets**. Almost all of it is read: the whole
+Open Cluster Management API is safe to inspect. Only two toolsets can change
+anything, and only through the propose -> approve -> apply gate. Every hub-level
+tool works for any managed spoke - a standalone OpenShift cluster, a HyperShift
+hosted cluster, or a cloud cluster - because on the hub they are all `ManagedCluster`s.
 
 | Toolset | What it covers | Tools | Writes |
 |---|---|---|---|
-| **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims | 5 | - |
+| **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims, ManagedClusterInfo | 6 | - |
 | **observability** | cluster health, events, pod logs | 3 | - |
 | **placement** | Placements, PlacementDecisions, AddOnPlacementScores | 3 | - |
 | **work** | ManifestWork status feedback + the gated deploy flow | 6 | gated |
-| **addons** | ClusterManagementAddOns, per-cluster add-on health | 2 | - |
+| **addons** | ClusterManagementAddOns, fleet + per-cluster add-on health | 3 | - |
 | **registration** | pending join CSRs + gated cluster lifecycle actions | 3 | gated |
-| **policy** | governance policy compliance (if the add-on is installed) | 1 | - |
+| **policy** | governance compliance + violations rollup (if the add-on is installed) | 2 | - |
+| **hosted-control-planes** | HyperShift HostedClusters and NodePools (when the hub hosts them) | 3 | - |
 | **resources** | generic get/list over an allow-list of OCM API types | 2 | - |
 | **audit** | pending proposals, this server's own audit trail | 2 | - |
 
 Every read tool is annotated `readOnlyHint`; every write tool is annotated
 `destructiveHint` and enforced by the gate. Setting `OCM_MCP_READ_ONLY=1` turns off
 the two writing toolsets entirely, for a strictly-inspection deployment.
+
+> **Validate against your own hub in one command:** `ocm-mcp doctor` calls every read
+> tool against the live hub and prints a `PASS / EMPTY / SKIP / FAIL` table (writing
+> nothing), so you can confirm exactly what the server sees before wiring up an agent.
 
 <div align="center">
 <img src="docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
@@ -136,6 +143,8 @@ approved change; needs a human token).
 - **`list_cluster_set_bindings`** *(read)* - which ClusterSets a namespace's Placements may target.
   - `namespace` (string, optional) - limit to one namespace; empty lists all.
 - **`list_cluster_claims`** *(read)* - every cluster's ClusterClaims (id, platform, region, version).
+- **`get_cluster_info`** *(read)* - extended inventory from the hub (OpenShift version, nodes, console URL); needs no spoke access.
+  - `cluster` (string) - managed cluster name.
 </details>
 
 <details>
@@ -190,6 +199,8 @@ approved change; needs a human token).
 
 - **`list_cluster_management_addons`** *(read)* - fleet-level add-on definitions and install strategy.
 - **`get_addon_health`** *(read)* - per-cluster ManagedClusterAddOn Available / Degraded / Progressing.
+- **`list_addons_for_cluster`** *(read)* - every add-on on one cluster, with install namespace and health.
+  - `cluster` (string) - managed cluster name.
 </details>
 
 <details>
@@ -198,9 +209,9 @@ approved change; needs a human token).
 - **`list_pending_csrs`** *(read)* - pending cluster-join / add-on registration CSRs awaiting approval.
 - **`propose_cluster_action`** *(propose)* - propose a lifecycle action. Applies nothing.
   - `cluster` (string) - target cluster.
-  - `action` (string) - one of `cordon` (taint out of scheduling), `uncordon`, `set_label`, `accept` (hubAcceptsClient + approve join CSRs).
+  - `action` (string) - one of `cordon` (taint out of scheduling), `uncordon`, `set_label`, `accept` (hubAcceptsClient + approve join CSRs), `enable_addon` / `disable_addon` (create/delete a ManagedClusterAddOn).
   - `summary` (string) - what the human approver reads.
-  - `params_json` (string, optional) - action parameters; only `set_label` needs `{"key","value"}`.
+  - `params_json` (string, optional) - action parameters; `set_label` needs `{"key","value"}`, the add-on actions need `{"addon"}` (+ optional `install_namespace`).
 - **`apply_cluster_action`** *(apply)* - apply an approved lifecycle action.
   - `proposal_id` (string), `approval_token` (string).
 </details>
@@ -210,6 +221,18 @@ approved change; needs a human token).
 
 - **`list_policies`** *(read)* - Policies and per-cluster compliance. Reports clearly if the governance add-on is not installed.
   - `namespace` (string, optional) - limit to one namespace.
+- **`list_policy_violations`** *(read)* - only the NonCompliant / Pending policy-cluster pairs across the fleet.
+</details>
+
+<details>
+<summary><b>hosted-control-planes</b> - HyperShift HCP (when the hub hosts them)</summary>
+
+- **`list_hosted_clusters`** *(read)* - HostedClusters with version and conditions. Reports clearly if HCPs are hosted on a different management cluster.
+  - `namespace` (string, optional) - limit to one namespace.
+- **`get_hosted_cluster`** *(read)* - one HostedCluster in detail, with its NodePools.
+  - `name` (string), `namespace` (string) - target.
+- **`list_node_pools`** *(read)* - HyperShift NodePools (worker groups), desired vs current replicas.
+  - `namespace` (string, optional), `cluster` (string, optional) - filters.
 </details>
 
 <details>
@@ -233,7 +256,7 @@ approved change; needs a human token).
 
 ## Prompts
 
-The server also ships four MCP **prompts** - reusable templates that encode the safe
+The server also ships **ten MCP prompts** - reusable templates that encode the safe
 workflow so any client can start from a good runbook instead of a blank box.
 
 | Prompt | What it drives | Arguments |
@@ -242,6 +265,12 @@ workflow so any client can start from a good runbook instead of a blank box.
 | **`remediate_with_approval`** | investigate a symptom, propose the smallest safe fix, wait for the human token, apply, verify, report | `symptom` |
 | **`incident_postmortem`** | write the post-incident report strictly from `get_audit_trail`, not from memory | - |
 | **`why_not_scheduled`** | explain why a cluster was or was not selected by a Placement, from the live objects | `cluster`, `placement`, `namespace` |
+| **`onboard_cluster`** | accept a pending cluster safely through the approval gate | `cluster` |
+| **`addon_troubleshoot`** | diagnose a degraded add-on across the fleet | `addon` |
+| **`hosted_cluster_health`** | assess a HyperShift hosted control plane and its node pools | `cluster` |
+| **`policy_compliance_report`** | summarize governance compliance and prioritize what to fix | - |
+| **`capacity_report`** | find clusters with headroom and clusters under pressure | - |
+| **`rollout_status`** | track a ManifestWorkReplicaSet rollout across selected clusters | `name`, `namespace` |
 
 ## Quickstart (laptop, ~15 minutes)
 
