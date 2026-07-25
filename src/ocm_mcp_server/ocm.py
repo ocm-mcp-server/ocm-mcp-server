@@ -14,7 +14,25 @@ from typing import Any
 
 from kubernetes.client import ApiException
 
-from .k8s import OCM_CLUSTER_GROUP, OCM_WORK_GROUP, hub_custom, spoke_apps, spoke_core
+from .config import CORDON_TAINT_KEY, READABLE_RESOURCES
+from .k8s import (
+    OCM_ADDON_GROUP,
+    OCM_CLUSTER_GROUP,
+    OCM_WORK_GROUP,
+    hub_certificates,
+    hub_custom,
+    spoke_apps,
+    spoke_core,
+)
+
+# Label OCM stamps on a PlacementDecision to link it to its Placement, and the one
+# that records a ManagedCluster's ClusterSet membership.
+PLACEMENT_LABEL = "cluster.open-cluster-management.io/placement"
+CLUSTERSET_LABEL = "cluster.open-cluster-management.io/clusterset"
+
+
+class FeatureNotInstalled(LookupError):
+    """A requested OCM API type is not served by this hub (add-on not installed)."""
 
 
 def _condition_map(obj: dict[str, Any]) -> dict[str, str]:
@@ -22,6 +40,21 @@ def _condition_map(obj: dict[str, Any]) -> dict[str, str]:
         c.get("type", "?"): c.get("status", "?")
         for c in obj.get("status", {}).get("conditions", [])
     }
+
+
+def _summarize(item: dict[str, Any]) -> dict[str, Any]:
+    """Trim a raw object to the fields an operator scans: identity, labels, conditions."""
+    meta = item.get("metadata", {})
+    summary: dict[str, Any] = {"name": meta.get("name")}
+    if meta.get("namespace"):
+        summary["namespace"] = meta["namespace"]
+    labels = meta.get("labels", {})
+    if labels:
+        summary["labels"] = labels
+    conds = _condition_map(item)
+    if conds:
+        summary["conditions"] = conds
+    return summary
 
 
 def list_managed_clusters() -> list[dict[str, Any]]:
@@ -199,3 +232,490 @@ def delete_manifestwork(cluster: str, name: str) -> None:
     hub_custom().delete_namespaced_custom_object(
         OCM_WORK_GROUP, "v1", cluster, "manifestworks", name
     )
+
+
+# ------------------------------------------------------------------ inventory reads
+
+
+def get_managed_cluster(name: str) -> dict[str, Any]:
+    """Full-but-trimmed view of one ManagedCluster: acceptance, version, capacity, taints."""
+    obj = hub_custom().get_cluster_custom_object(
+        OCM_CLUSTER_GROUP, "v1", "managedclusters", name
+    )
+    status = obj.get("status", {})
+    return {
+        "name": name,
+        "labels": obj.get("metadata", {}).get("labels", {}),
+        "hub_accepts_client": obj.get("spec", {}).get("hubAcceptsClient", False),
+        "taints": obj.get("spec", {}).get("taints", []),
+        "conditions": _condition_map(obj),
+        "kubernetes_version": status.get("version", {}).get("kubernetes", "unknown"),
+        "capacity": status.get("capacity", {}),
+        "allocatable": status.get("allocatable", {}),
+        "cluster_claims": {
+            c.get("name"): c.get("value") for c in status.get("clusterClaims", [])
+        },
+    }
+
+
+def list_cluster_sets() -> list[dict[str, Any]]:
+    """ManagedClusterSets with their selector and the clusters that belong to each."""
+    sets = hub_custom().list_cluster_custom_object(
+        OCM_CLUSTER_GROUP, "v1beta2", "managedclustersets"
+    )
+    clusters = hub_custom().list_cluster_custom_object(
+        OCM_CLUSTER_GROUP, "v1", "managedclusters"
+    ).get("items", [])
+    out = []
+    for cs in sets.get("items", []):
+        name = cs["metadata"]["name"]
+        selector = cs.get("spec", {}).get("clusterSelector", {})
+        members = [
+            c["metadata"]["name"]
+            for c in clusters
+            if c.get("metadata", {}).get("labels", {}).get(CLUSTERSET_LABEL) == name
+        ]
+        out.append(
+            {
+                "name": name,
+                "selector_type": selector.get("selectorType", "ExclusiveClusterSetLabel"),
+                "conditions": _condition_map(cs),
+                "members": members,
+            }
+        )
+    return out
+
+
+def list_cluster_set_bindings(namespace: str = "") -> list[dict[str, Any]]:
+    """ManagedClusterSetBindings (which ClusterSets a namespace's Placements may target)."""
+    api = hub_custom()
+    if namespace:
+        res = api.list_namespaced_custom_object(
+            OCM_CLUSTER_GROUP, "v1beta2", namespace, "managedclustersetbindings"
+        )
+    else:
+        res = api.list_cluster_custom_object(
+            OCM_CLUSTER_GROUP, "v1beta2", "managedclustersetbindings"
+        )
+    return [
+        {
+            "namespace": b["metadata"].get("namespace"),
+            "name": b["metadata"]["name"],
+            "cluster_set": b.get("spec", {}).get("clusterSet", b["metadata"]["name"]),
+            "conditions": _condition_map(b),
+        }
+        for b in res.get("items", [])
+    ]
+
+
+def list_cluster_claims() -> list[dict[str, Any]]:
+    """Every cluster's ClusterClaims (id, platform, region, version...) rolled up from status."""
+    clusters = hub_custom().list_cluster_custom_object(
+        OCM_CLUSTER_GROUP, "v1", "managedclusters"
+    )
+    return [
+        {
+            "cluster": c["metadata"]["name"],
+            "claims": {
+                cl.get("name"): cl.get("value")
+                for cl in c.get("status", {}).get("clusterClaims", [])
+            },
+        }
+        for c in clusters.get("items", [])
+    ]
+
+
+# ------------------------------------------------------------------ placement reads
+
+
+def list_placements(namespace: str = "") -> list[dict[str, Any]]:
+    """Placements and how many clusters each currently selects."""
+    api = hub_custom()
+    if namespace:
+        res = api.list_namespaced_custom_object(
+            OCM_CLUSTER_GROUP, "v1beta1", namespace, "placements"
+        )
+    else:
+        res = api.list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1beta1", "placements")
+    out = []
+    for p in res.get("items", []):
+        spec = p.get("spec", {})
+        out.append(
+            {
+                "namespace": p["metadata"].get("namespace"),
+                "name": p["metadata"]["name"],
+                "cluster_sets": spec.get("clusterSets", []),
+                "number_of_clusters": spec.get("numberOfClusters"),
+                "selected": p.get("status", {}).get("numberOfSelectedClusters"),
+                "conditions": _condition_map(p),
+            }
+        )
+    return out
+
+
+def get_placement_decision(placement: str, namespace: str) -> dict[str, Any]:
+    """Which clusters a Placement actually selected (reads its PlacementDecisions)."""
+    res = hub_custom().list_namespaced_custom_object(
+        OCM_CLUSTER_GROUP,
+        "v1beta1",
+        namespace,
+        "placementdecisions",
+        label_selector=f"{PLACEMENT_LABEL}={placement}",
+    )
+    decisions: list[str] = []
+    for pd in res.get("items", []):
+        decisions.extend(
+            d.get("clusterName") for d in pd.get("status", {}).get("decisions", [])
+        )
+    return {
+        "placement": placement,
+        "namespace": namespace,
+        "selected_clusters": sorted(set(decisions)),
+        "count": len(set(decisions)),
+    }
+
+
+def list_addon_placement_scores(cluster: str) -> list[dict[str, Any]]:
+    """AddOnPlacementScores in a cluster's namespace (custom scores prioritizers consume)."""
+    res = hub_custom().list_namespaced_custom_object(
+        OCM_CLUSTER_GROUP, "v1alpha1", cluster, "addonplacementscores"
+    )
+    return [
+        {
+            "name": s["metadata"]["name"],
+            "scores": {
+                sc.get("name"): sc.get("value")
+                for sc in s.get("status", {}).get("scores", [])
+            },
+            "valid_until": s.get("status", {}).get("validUntil"),
+        }
+        for s in res.get("items", [])
+    ]
+
+
+# ------------------------------------------------------------------ work reads
+
+
+def get_manifestwork(cluster: str, name: str) -> dict[str, Any]:
+    """Detailed ManifestWork status: top-level conditions + per-resource status feedback."""
+    obj = hub_custom().get_namespaced_custom_object(
+        OCM_WORK_GROUP, "v1", cluster, "manifestworks", name
+    )
+    resources = []
+    for man in obj.get("status", {}).get("resourceStatus", {}).get("manifests", []):
+        meta = man.get("resourceMeta", {})
+        feedback = {
+            v.get("name"): (v.get("fieldValue", {}) or {}).get(
+                "integer", (v.get("fieldValue", {}) or {}).get("string")
+            )
+            for v in man.get("statusFeedback", {}).get("values", [])
+        }
+        resources.append(
+            {
+                "resource": f"{meta.get('kind', '?')}/{meta.get('name', '?')}",
+                "namespace": meta.get("namespace"),
+                "conditions": {
+                    c.get("type"): c.get("status") for c in man.get("conditions", [])
+                },
+                "status_feedback": feedback,
+            }
+        )
+    return {
+        "cluster": cluster,
+        "name": name,
+        "conditions": _condition_map(obj),
+        "resources": resources,
+    }
+
+
+def list_manifestworkreplicasets(namespace: str = "") -> list[dict[str, Any]]:
+    """ManifestWorkReplicaSets: one template fanned out across a Placement, with rollout summary."""
+    api = hub_custom()
+    try:
+        if namespace:
+            res = api.list_namespaced_custom_object(
+                OCM_WORK_GROUP, "v1alpha1", namespace, "manifestworkreplicasets"
+            )
+        else:
+            res = api.list_cluster_custom_object(
+                OCM_WORK_GROUP, "v1alpha1", "manifestworkreplicasets"
+            )
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                "ManifestWorkReplicaSet is not served by this hub. It is feature-gated; "
+                "enable it in the ClusterManager (spec.workConfiguration featureGates)."
+            ) from exc
+        raise
+    return [
+        {
+            "namespace": r["metadata"].get("namespace"),
+            "name": r["metadata"]["name"],
+            "summary": r.get("status", {}).get("summary", {}),
+            "conditions": _condition_map(r),
+        }
+        for r in res.get("items", [])
+    ]
+
+
+# ------------------------------------------------------------------ add-on reads
+
+
+def list_cluster_management_addons() -> list[dict[str, Any]]:
+    """Fleet-level add-on definitions (ClusterManagementAddOn) and their install strategy."""
+    try:
+        res = hub_custom().list_cluster_custom_object(
+            OCM_ADDON_GROUP, "v1alpha1", "clustermanagementaddons"
+        )
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                "The add-on API (addon.open-cluster-management.io) is not installed on this hub."
+            ) from exc
+        raise
+    return [
+        {
+            "name": a["metadata"]["name"],
+            "install_strategy": a.get("spec", {}).get("installStrategy", {}).get("type"),
+            "conditions": _condition_map(a),
+        }
+        for a in res.get("items", [])
+    ]
+
+
+def addon_health() -> list[dict[str, Any]]:
+    """ManagedClusterAddOn health across every cluster namespace (Available / Degraded)."""
+    try:
+        res = hub_custom().list_cluster_custom_object(
+            OCM_ADDON_GROUP, "v1alpha1", "managedclusteraddons"
+        )
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                "The add-on API (addon.open-cluster-management.io) is not installed on this hub."
+            ) from exc
+        raise
+    out = []
+    for a in res.get("items", []):
+        conds = _condition_map(a)
+        out.append(
+            {
+                "cluster": a["metadata"].get("namespace"),
+                "addon": a["metadata"]["name"],
+                "available": conds.get("Available", "Unknown"),
+                "degraded": conds.get("Degraded", "False"),
+                "progressing": conds.get("Progressing", "Unknown"),
+            }
+        )
+    return out
+
+
+# ------------------------------------------------------------------ registration reads
+
+
+def list_pending_csrs() -> list[dict[str, Any]]:
+    """Pending cluster-join / add-on registration CSRs awaiting hub approval."""
+    csrs = hub_certificates().list_certificate_signing_request()
+    out = []
+    for c in csrs.items:
+        approved = any(
+            cond.type == "Approved" for cond in (c.status.conditions or [])
+        )
+        if approved:
+            continue
+        username = c.spec.username or ""
+        if not username.startswith("system:open-cluster-management:"):
+            continue
+        out.append(
+            {
+                "name": c.metadata.name,
+                "requester": username,
+                "cluster": c.metadata.labels.get(
+                    "open-cluster-management.io/cluster-name", "?"
+                )
+                if c.metadata.labels
+                else "?",
+                "signer": c.spec.signer_name,
+            }
+        )
+    return out
+
+
+# ------------------------------------------------------------------ policy reads (optional)
+
+
+def list_policies(namespace: str = "") -> list[dict[str, Any]]:
+    """Governance Policies and their per-cluster compliance (only if the add-on is installed)."""
+    api = hub_custom()
+    try:
+        if namespace:
+            res = api.list_namespaced_custom_object(
+                "policy.open-cluster-management.io", "v1", namespace, "policies"
+            )
+        else:
+            res = api.list_cluster_custom_object(
+                "policy.open-cluster-management.io", "v1", "policies"
+            )
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                "The governance policy add-on (policy.open-cluster-management.io) is not "
+                "installed on this hub."
+            ) from exc
+        raise
+    out = []
+    for p in res.get("items", []):
+        status = p.get("status", {})
+        out.append(
+            {
+                "namespace": p["metadata"].get("namespace"),
+                "name": p["metadata"]["name"],
+                "remediation": p.get("spec", {}).get("remediationAction"),
+                "compliant": status.get("compliant"),
+                "per_cluster": {
+                    s.get("clustername", s.get("clustername")): s.get("compliant")
+                    for s in status.get("status", [])
+                },
+            }
+        )
+    return out
+
+
+# ------------------------------------------------------------------ generic reader
+
+
+def list_resources(resource: str, namespace: str = "") -> list[dict[str, Any]]:
+    """List any allow-listed OCM resource type, trimmed to identity + conditions."""
+    group, version, plural, namespaced = _resolve_resource(resource)
+    api = hub_custom()
+    try:
+        if namespaced and namespace:
+            res = api.list_namespaced_custom_object(group, version, namespace, plural)
+        else:
+            res = api.list_cluster_custom_object(group, version, plural)
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                f"'{resource}' ({group}/{version}) is not served by this hub."
+            ) from exc
+        raise
+    return [_summarize(item) for item in res.get("items", [])]
+
+
+def get_resource(resource: str, name: str, namespace: str = "") -> dict[str, Any]:
+    """Get one allow-listed OCM resource in full (never a Secret - not on the allow-list)."""
+    group, version, plural, namespaced = _resolve_resource(resource)
+    api = hub_custom()
+    try:
+        if namespaced:
+            if not namespace:
+                raise ValueError(
+                    f"'{resource}' is namespaced; pass the namespace "
+                    "(usually the cluster namespace on the hub)."
+                )
+            return api.get_namespaced_custom_object(group, version, namespace, plural, name)
+        return api.get_cluster_custom_object(group, version, plural, name)
+    except ApiException as exc:
+        if exc.status == 404:
+            raise FeatureNotInstalled(
+                f"'{resource}/{name}' not found (or the type is not served by this hub)."
+            ) from exc
+        raise
+
+
+def _resolve_resource(resource: str) -> tuple[str, str, str, bool]:
+    key = resource.strip().lower()
+    if key not in READABLE_RESOURCES:
+        allowed = ", ".join(sorted(READABLE_RESOURCES))
+        raise ValueError(
+            f"'{resource}' is not a readable OCM resource type. "
+            f"Allowed types: {allowed}."
+        )
+    return READABLE_RESOURCES[key]
+
+
+# ------------------------------------------------------------------ lifecycle writes
+
+
+def _merge_patch_cluster(name: str, patch: dict[str, Any], dry_run: bool = False) -> None:
+    hub_custom().patch_cluster_custom_object(
+        OCM_CLUSTER_GROUP,
+        "v1",
+        "managedclusters",
+        name,
+        patch,
+        **({"dry_run": "All"} if dry_run else {}),
+    )
+
+
+def cordon_patch(cluster: str, cordon: bool) -> dict[str, Any]:
+    """Build the taints patch that pulls a cluster out of (cordon) or back into scheduling."""
+    obj = hub_custom().get_cluster_custom_object(
+        OCM_CLUSTER_GROUP, "v1", "managedclusters", cluster
+    )
+    taints = [
+        t for t in obj.get("spec", {}).get("taints", []) if t.get("key") != CORDON_TAINT_KEY
+    ]
+    if cordon:
+        taints.append({"key": CORDON_TAINT_KEY, "value": "true", "effect": "NoSelect"})
+    return {"spec": {"taints": taints}}
+
+
+def label_patch(key: str, value: str) -> dict[str, Any]:
+    """Build a labels merge-patch. An empty value removes the label."""
+    return {"metadata": {"labels": {key: value or None}}}
+
+
+def accept_patch() -> dict[str, Any]:
+    return {"spec": {"hubAcceptsClient": True}}
+
+
+def validate_cluster_action(cluster: str, action: str, params: dict[str, Any]) -> None:
+    """Server-side dry-run of a lifecycle action so it fails at propose time, not apply time."""
+    _merge_patch_cluster(cluster, _action_patch(cluster, action, params), dry_run=True)
+
+
+def apply_cluster_action(cluster: str, action: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Apply an approved lifecycle action. For 'accept', also approve pending join CSRs."""
+    _merge_patch_cluster(cluster, _action_patch(cluster, action, params))
+    result: dict[str, Any] = {"cluster": cluster, "action": action, "status": "applied"}
+    if action == "accept":
+        approved = _approve_pending_csrs(cluster)
+        result["approved_csrs"] = approved
+    return result
+
+
+def _action_patch(cluster: str, action: str, params: dict[str, Any]) -> dict[str, Any]:
+    if action == "cordon":
+        return cordon_patch(cluster, cordon=True)
+    if action == "uncordon":
+        return cordon_patch(cluster, cordon=False)
+    if action == "set_label":
+        return label_patch(params["key"], params.get("value", ""))
+    if action == "accept":
+        return accept_patch()
+    raise ValueError(f"Unknown cluster action '{action}'.")
+
+
+def _approve_pending_csrs(cluster: str) -> list[str]:
+    from kubernetes import client
+
+    certs = hub_certificates()
+    approved: list[str] = []
+    for c in certs.list_certificate_signing_request().items:
+        labels = c.metadata.labels or {}
+        if labels.get("open-cluster-management.io/cluster-name") != cluster:
+            continue
+        if any(cond.type == "Approved" for cond in (c.status.conditions or [])):
+            continue
+        c.status.conditions = (c.status.conditions or []) + [
+            client.V1CertificateSigningRequestCondition(
+                type="Approved",
+                status="True",
+                reason="OCMMCPApproved",
+                message="Approved through ocm-mcp-server after human approval.",
+            )
+        ]
+        certs.replace_certificate_signing_request_approval(c.metadata.name, c)
+        approved.append(c.metadata.name)
+    return approved
