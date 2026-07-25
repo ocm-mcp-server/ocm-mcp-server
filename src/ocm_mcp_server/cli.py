@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 
 """ocm-mcp: the human side of the approval flow.

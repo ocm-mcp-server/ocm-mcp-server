@@ -48,4 +48,4 @@ cluster without passing policy and a human. Every action is traced and logged.
 
 *Maintained by [Sandeep Bazar](https://www.linkedin.com/in/sandeepbazar/) ·
 [YouTube: Tech Horizon Hub](https://www.youtube.com/@techhorizonhub) ·
-sponsorship: sandeepbazar@gmail.com*
+sponsorship via [LinkedIn](https://www.linkedin.com/in/sandeepbazar/)*

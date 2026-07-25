@@ -64,7 +64,7 @@ and the [Code of Conduct](https://github.com/sandeepbazar/ocm-mcp-server/blob/ma
   never public issues. See
   [SECURITY.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SECURITY.md).
 - For commercial support, a hardened deployment review, sponsored features, or
-  talks and workshops, write to **sandeepbazar@gmail.com**
+  talks and workshops, connect on [LinkedIn](https://www.linkedin.com/in/sandeepbazar/)
   ([SUPPORT.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SUPPORT.md)).
 
 Next: [FAQ](FAQ).

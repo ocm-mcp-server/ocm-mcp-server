@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-label="ocm-mcp-server: AgentOps for Kubernetes fleets, done safely">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="0.55" stop-color="#141a33"/>
+      <stop offset="1" stop-color="#1c2547"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#6f6cf6"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+    <style>
+      .t  { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+      .title { font-weight: 800; }
+      .sub   { font-weight: 600; }
+      .mono  { font-family: 'SFMono-Regular', Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="320" fill="url(#bg)"/>
+  <!-- subtle grid -->
+  <g opacity="0.06" stroke="#8ea2ff">
+    <path d="M0 80 H1280 M0 160 H1280 M0 240 H1280"/>
+    <path d="M160 0 V320 M320 0 V320 M480 0 V320 M640 0 V320 M800 0 V320 M960 0 V320 M1120 0 V320"/>
+  </g>
+  <rect x="0" y="0" width="1280" height="6" fill="url(#accent)"/>
+
+  <!-- shield emblem -->
+  <g transform="translate(96,96)">
+    <path d="M64 8 L118 30 V78 C118 116 94 140 64 152 C34 140 10 116 10 78 V30 Z"
+          fill="url(#shield)" opacity="0.16" stroke="url(#shield)" stroke-width="2.5"/>
+    <path d="M40 78 L57 96 L92 56" fill="none" stroke="#7dd3fc" stroke-width="7"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="250" y="126" class="t title" font-size="60" fill="#f8fafc">ocm-mcp-server</text>
+  <text x="252" y="170" class="t sub" font-size="27" fill="url(#accent)">AgentOps for Kubernetes fleets, done safely.</text>
+  <text x="252" y="212" class="t" font-size="19" fill="#aab6d6">The agent never holds a kubeconfig. Every write is policy-checked, human-approved, and traced.</text>
+
+  <!-- chips -->
+  <g class="t" font-size="15" font-weight="600">
+    <g transform="translate(252,244)">
+      <rect width="150" height="34" rx="17" fill="#1e2a52" stroke="#38bdf8" stroke-opacity="0.5"/>
+      <text x="75" y="22" fill="#7dd3fc" text-anchor="middle">MCP tools</text>
+    </g>
+    <g transform="translate(414,244)">
+      <rect width="230" height="34" rx="17" fill="#1e2a52" stroke="#6f6cf6" stroke-opacity="0.5"/>
+      <text x="115" y="22" fill="#b3aef8" text-anchor="middle">Open Cluster Management</text>
+    </g>
+    <g transform="translate(656,244)">
+      <rect width="150" height="34" rx="17" fill="#1e2a52" stroke="#fb923c" stroke-opacity="0.5"/>
+      <text x="75" y="22" fill="#fdba74" text-anchor="middle">Kyverno policy</text>
+    </g>
+    <g transform="translate(818,244)">
+      <rect width="176" height="34" rx="17" fill="#1e2a52" stroke="#34d399" stroke-opacity="0.5"/>
+      <text x="88" y="22" fill="#6ee7b7" text-anchor="middle">human approval</text>
+    </g>
+  </g>
+</svg>

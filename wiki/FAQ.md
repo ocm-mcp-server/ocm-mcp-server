@@ -55,6 +55,6 @@ ServiceAccount. There is no paid dependency.
 
 Community help through [GitHub issues](https://github.com/sandeepbazar/ocm-mcp-server/issues).
 Commercial support, deployment reviews, sponsored features, and talks:
-**sandeepbazar@gmail.com**.
+[LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
 
 Back to [Home](Home).

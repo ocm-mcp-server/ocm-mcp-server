@@ -17,8 +17,7 @@ This project is independently maintained. If your organization wants:
 - sponsored features or roadmap input,
 - talks/workshops on safe agentic operations for Kubernetes fleets,
 
-reach out at **sandeepbazar@gmail.com**  - 
-or connect on [LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
+reach out via [LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
 
 ## Security issues
 

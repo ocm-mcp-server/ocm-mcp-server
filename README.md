@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/banner.svg" alt="ocm-mcp-server - AgentOps for Kubernetes fleets, done safely" width="100%">
+
 # 🛡️ ocm-mcp-server
 
 ### AgentOps for Kubernetes fleets, done safely.
@@ -52,6 +54,10 @@ between the model and your clusters:
 | 4 | **Least-privilege RBAC** | Kubernetes | everything else; no Secrets, no exec, no deletes outside its own ManifestWorks |
 
 None of these layers live in the system prompt, so none of them can be talked out of.
+
+<div align="center">
+<img src="docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
+</div>
 
 ## Architecture
 
@@ -299,15 +305,16 @@ New tools require a safety rationale; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing & community
 
-Issues and PRs welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
-[Code of Conduct](CODE_OF_CONDUCT.md). Getting help: [SUPPORT.md](SUPPORT.md).
+Issues and PRs welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+Getting help: [SUPPORT.md](SUPPORT.md).
 Security reports (privately, please): [SECURITY.md](SECURITY.md).
 
 ## Sponsorship
 
 This project is independently maintained. If your organization wants priority integration
 help, a hardened deployment review, sponsored features, or talks and workshops on safe
-agentic operations, write to **sandeepbazar@gmail.com** (details in [SUPPORT.md](SUPPORT.md)).
+agentic operations, connect on
+[LinkedIn](https://www.linkedin.com/in/sandeepbazar/) (details in [SUPPORT.md](SUPPORT.md)).
 
 ## Author
 
@@ -318,6 +325,16 @@ operations, and making fleets safer to automate.
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
 If this project is useful to you, a ⭐ helps others find it.
+
+## Code of Conduct
+
+This project follows the
+[Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/),
+version 2.1. In short: be respectful, be constructive, assume good intent, and keep the
+space welcoming for contributors of every background and experience level. Harassment,
+personal attacks, and sustained disruption are not tolerated. To report unacceptable
+behavior, connect privately on
+[LinkedIn](https://www.linkedin.com/in/sandeepbazar/); all reports are handled confidentially.
 
 ## License
 
