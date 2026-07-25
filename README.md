@@ -83,14 +83,91 @@ cd ocm-mcp-server
 
 make bootstrap      # 1 hub + 3 managed kind clusters, OCM, Kyverno, policies, demo app
 make install        # pip install -e ".[dev,tracing]"
-
-export OCM_MCP_HUB_CONTEXT=kind-hub
-export OCM_MCP_SPOKE_CONTEXTS=cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3
 ```
 
-Register the server with your MCP client (example for Claude Code in
-[`examples/claude-code.mcp.json`](examples/claude-code.mcp.json)), then break something and
-watch the flow:
+### Configuration
+
+The server is configured entirely through environment variables. The two that matter
+are **kubeconfig context names** — run `kubectl config get-contexts` to see yours
+(`make bootstrap` prints ready-to-paste values at the end):
+
+| Variable | Required | What goes in it |
+|---|---|---|
+| `OCM_MCP_HUB_CONTEXT` | yes | The kubeconfig **context that points at the OCM hub cluster** — where `ManagedCluster` and `ManifestWork` live. After `make bootstrap` this is `kind-hub`. Empty = current context. |
+| `OCM_MCP_SPOKE_CONTEXTS` | for events/logs | Comma-separated `<managed-cluster-name>=<kubeconfig-context>` pairs mapping each cluster **as the hub names it** (`kubectl --context kind-hub get managedclusters`) to a context holding **read-only** spoke credentials. Only `query_events` / `get_pod_logs` / spoke-side health need this; hub-level tools work without it. |
+| `KUBECONFIG` | no | Kubeconfig file path(s); defaults to `~/.kube/config`. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Set (e.g. `http://localhost:4318`) to emit a trace span per tool call to Jaeger/any OTLP collector. Unset = tracing off, audit log still on. |
+| `OCM_MCP_HOME` | no | State directory (approval secret, pending proposals, `audit.jsonl`). Default `~/.ocm-mcp`. |
+| `OCM_MCP_APPROVAL_TTL` | no | Approval-token lifetime in seconds. Default `3600`. |
+
+```bash
+# the values make bootstrap prints, spelled out:
+export OCM_MCP_HUB_CONTEXT=kind-hub                      # context of the hub cluster
+export OCM_MCP_SPOKE_CONTEXTS=cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3
+#                             └ name on the hub ┘ └ kubeconfig context with read-only creds ┘
+```
+
+Pointing at a **real fleet** instead of kind? Same variables — hub context is wherever your
+OCM hub kubeconfig lives, and each spoke entry uses the read-only ServiceAccount context you
+provision (see `deploy/rbac.yaml`, `ocm-mcp-reader`).
+
+### Connect your agent — any MCP client works
+
+The server speaks standard MCP over stdio; nothing here is specific to one vendor's agent.
+Ready-made configs live in [`examples/`](examples/):
+
+<details>
+<summary><b>Claude Code</b> — <code>.mcp.json</code> in your project (or <code>claude mcp add</code>)</summary>
+
+```json
+{
+  "mcpServers": {
+    "ocm-fleet": {
+      "command": "ocm-mcp-server",
+      "env": {
+        "OCM_MCP_HUB_CONTEXT": "kind-hub",
+        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Codex CLI</b> — <code>~/.codex/config.toml</code></summary>
+
+```toml
+[mcp_servers.ocm-fleet]
+command = "ocm-mcp-server"
+
+[mcp_servers.ocm-fleet.env]
+OCM_MCP_HUB_CONTEXT = "kind-hub"
+OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+```
+</details>
+
+<details>
+<summary><b>Gemini CLI</b> — <code>~/.gemini/settings.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ocm-fleet": {
+      "command": "ocm-mcp-server",
+      "env": {
+        "OCM_MCP_HUB_CONTEXT": "kind-hub",
+        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+      }
+    }
+  }
+}
+```
+</details>
+
+Give the agent the runbook discipline in
+[`examples/system-prompt.md`](examples/system-prompt.md), then break something and watch
+the flow:
 
 ```bash
 make inject SCENARIO=failing-rollout CLUSTER=cluster2
@@ -158,7 +235,7 @@ Security reports: [SECURITY.md](SECURITY.md).
 
 ## Author
 
-**Sandeep Bazar** — Senior Development Manager, IBM. Multi-cluster Kubernetes platforms,
+**Sandeep Bazar** — Engineering Leader. Multi-cluster Kubernetes platforms,
 day-2 operations, and making fleets safer to automate.
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-connect-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)

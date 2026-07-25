@@ -1,0 +1,8 @@
+# Codex CLI — merge into ~/.codex/config.toml
+[mcp_servers.ocm-fleet]
+command = "ocm-mcp-server"
+
+[mcp_servers.ocm-fleet.env]
+OCM_MCP_HUB_CONTEXT = "kind-hub"
+OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318"
