@@ -2,10 +2,10 @@
 
 ## Getting help
 
-1. Read the [README](README.md) and [docs/](docs/) first — architecture,
+1. Read the [README](README.md) and [docs/](docs/) first - architecture,
    guardrail rationale, and the demo script cover most questions.
 2. Search [existing issues](https://github.com/sandeepbazar/ocm-mcp-server/issues).
-3. Open a new issue using the templates — bug reports and feature requests
+3. Open a new issue using the templates - bug reports and feature requests
    each have one.
 
 ## Commercial support & sponsorship
@@ -17,9 +17,9 @@ This project is independently maintained. If your organization wants:
 - sponsored features or roadmap input,
 - talks/workshops on safe agentic operations for Kubernetes fleets,
 
-reach out at **sandeepbazar@gmail.com** —
+reach out at **sandeepbazar@gmail.com**  - 
 or connect on [LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
 
 ## Security issues
 
-Never in public issues — see [SECURITY.md](SECURITY.md).
+Never in public issues - see [SECURITY.md](SECURITY.md).

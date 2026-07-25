@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 
-"""Static guardrails — defense in depth, evaluated before Kyverno ever sees a proposal.
+"""Static guardrails - defense in depth, evaluated before Kyverno ever sees a proposal.
 
 Layer model (a proposal must pass ALL of these, in order):
     1. Static checks here (fast, local, no cluster required)
@@ -45,16 +45,16 @@ def check_manifest(manifest: dict[str, Any]) -> list[str]:
     if kind not in ALLOWED_KINDS:
         violations.append(
             f"kind '{kind or '(missing)'}' is not in the allowed set "
-            f"{sorted(ALLOWED_KINDS)} — agents may not manage this resource type."
+            f"{sorted(ALLOWED_KINDS)} - agents may not manage this resource type."
         )
     if not namespace:
         violations.append(
             f"{kind}/{manifest.get('metadata', {}).get('name', '?')}: metadata.namespace is "
-            "required — cluster-scoped or default-namespace writes are not allowed."
+            "required - cluster-scoped or default-namespace writes are not allowed."
         )
     elif namespace in PROTECTED_NAMESPACES:
         violations.append(
-            f"namespace '{namespace}' is protected — agent writes to system namespaces are "
+            f"namespace '{namespace}' is protected - agent writes to system namespaces are "
             "never allowed."
         )
 
