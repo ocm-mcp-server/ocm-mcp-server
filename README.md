@@ -234,6 +234,11 @@ The point is honest data about what agents can and cannot yet be trusted to do.
   [kyverno/policies](https://github.com/kyverno/policies) conventions and scopes to ManifestWorks
   labeled `app.kubernetes.io/managed-by: ocm-mcp-server` — your platform engineers stay unaffected.
   Extend with your org's policies; the dry-run gate picks them up automatically.
+- **Policies are tested offline** — `make policy-test` runs a 12-case
+  [Kyverno CLI](https://kyverno.io/docs/kyverno-cli/) suite
+  ([`deploy/policies/tests/`](deploy/policies/tests/)) against good, bad, and
+  human-created ManifestWorks with **no cluster and no dependencies** — it also runs in CI,
+  so a policy regression fails the build before it ever reaches a hub.
 - **What we still refuse to automate:** anything touching etcd, storage, cluster lifecycle
   deletion, or auto-approval. See [`docs/guardrails.md`](docs/guardrails.md) for the reasoning.
 
@@ -249,10 +254,31 @@ docs/                 architecture, guardrail rationale, demo script, upstream n
 examples/             MCP client config + a production-shaped system prompt
 ```
 
-## Contributing
+## Roadmap
 
-Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
-Security reports: [SECURITY.md](SECURITY.md).
+- [ ] Live end-to-end recording of the demo flow in this README
+- [ ] Published eval results across multiple models (`eval/results/`)
+- [ ] OCM cluster-proxy transport option (replace direct spoke contexts)
+- [ ] Filing the upstream proposals in [`docs/upstream-notes.md`](docs/upstream-notes.md)
+      (MCP long-running operations · OCM ManifestWork feedback · Kyverno catalog contribution)
+- [ ] Container image publishing (ghcr.io) and Helm chart for in-cluster deployment
+- [ ] Additional chaos classes: node pressure, network partitions, noisy neighbors
+
+Have a need that's not here? [Open a feature request](.github/ISSUE_TEMPLATE/feature_request.yml)
+— new tools require a safety rationale, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contributing & community
+
+Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md). Getting help: [SUPPORT.md](SUPPORT.md).
+Security reports (privately, please): [SECURITY.md](SECURITY.md).
+
+## Sponsorship
+
+This project is independently maintained. If your organization wants priority
+integration help, a hardened deployment review, sponsored features, or
+talks/workshops on safe agentic operations — reach out at
+**sandeepbazar@gmail.com** (details in [SUPPORT.md](SUPPORT.md)).
 
 ## Author
 

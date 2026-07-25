@@ -1,0 +1,6 @@
+title: ocm-mcp-server
+description: >-
+  AgentOps for Kubernetes fleets, done safely — an MCP server over Open
+  Cluster Management with policy admission, human approval, and full audit.
+theme: jekyll-theme-cayman
+show_downloads: false
