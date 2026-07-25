@@ -1,5 +1,7 @@
 # ocm-mcp-server Wiki
 
+![ocm-mcp-server](https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/banner.svg)
+
 **AgentOps for Kubernetes fleets, done safely.**
 
 This wiki is the guided tour: the whole journey from the problem, through the

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="300" viewBox="0 0 1280 300" role="img" aria-label="Two paths: reads are free, writes are gated">
+  <defs>
+    <style>
+      .t{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;}
+      .h{font-weight:800;} .s{font-weight:600;}
+    </style>
+    <marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="300" fill="#f8fafc"/>
+
+  <!-- READ lane -->
+  <g transform="translate(40,40)">
+    <rect width="1200" height="96" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+    <text x="28" y="42" class="t h" font-size="18" fill="#065f46">READ</text>
+    <text x="28" y="68" class="t s" font-size="13" fill="#047857">no gate, investigate freely</text>
+    <g class="t s" font-size="14" fill="#0f172a">
+      <text x="330" y="56">list clusters</text>
+      <text x="520" y="56">check health</text>
+      <text x="710" y="56">query events</text>
+      <text x="890" y="56">read logs</text>
+      <text x="1040" y="56">audit trail</text>
+    </g>
+  </g>
+
+  <!-- WRITE lane -->
+  <g transform="translate(40,164)">
+    <rect width="1200" height="96" rx="14" fill="#fff1f2" stroke="#f43f5e" stroke-width="2"/>
+    <text x="28" y="42" class="t h" font-size="18" fill="#9f1239">WRITE</text>
+    <text x="28" y="68" class="t s" font-size="13" fill="#be123c">gated: propose, approve, apply</text>
+    <g class="t" font-size="14">
+      <g transform="translate(330,30)"><rect width="150" height="36" rx="18" fill="#fff" stroke="#f43f5e"/><text x="75" y="23" class="s" fill="#9f1239" text-anchor="middle">propose</text></g>
+      <line x1="490" y1="48" x2="524" y2="48" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2)"/>
+      <g transform="translate(530,30)"><rect width="210" height="36" rx="18" fill="#fff" stroke="#f43f5e"/><text x="105" y="23" class="s" fill="#9f1239" text-anchor="middle">policy + human approval</text></g>
+      <line x1="750" y1="48" x2="784" y2="48" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2)"/>
+      <g transform="translate(790,30)"><rect width="150" height="36" rx="18" fill="#fff" stroke="#f43f5e"/><text x="75" y="23" class="s" fill="#9f1239" text-anchor="middle">apply</text></g>
+    </g>
+  </g>
+</svg>
