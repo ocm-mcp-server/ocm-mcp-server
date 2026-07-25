@@ -45,6 +45,29 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - **`ocm-mcp doctor`**: a live read-path smoke test that calls every read tool
   against the hub and prints a PASS/EMPTY/SKIP/FAIL table, writing nothing.
 
+### Security and hardening
+
+- **Apply-time integrity re-check (TOCTOU)**: `apply_manifestwork` and
+  `apply_cluster_action` now recompute the proposal's content hash and (for
+  ManifestWorks) re-run the static guardrails at apply time, so a proposal file
+  edited at rest is rejected even though the token still matches the stale hash.
+- **RBAC now mirrors the real tool surface**: the hub ClusterRole covers placement,
+  add-on, operator, policy, ManagedClusterInfo, HyperShift, and CSR APIs, plus
+  `patch` on ManagedClusters and CSR approval - previously it only allowed
+  ManagedCluster reads and ManifestWorks, so most tool calls would have 403'd. Still
+  no Secret reads, no exec, no arbitrary delete.
+- **HMAC key handling**: the approval key is cached in-process (no disk read per
+  mint/verify) and a new `ocm-mcp rotate-secret` rotates it, invalidating all
+  outstanding tokens.
+- **Bounded spoke reads**: health/event/log calls carry a read timeout
+  (`OCM_MCP_SPOKE_TIMEOUT`) and a fetch cap (`OCM_MCP_HEALTH_LIMIT`) that reports
+  truncation, so one large cluster cannot hang or flood a tool call.
+- **API client TTL**: the cached Kubernetes client is rebuilt after
+  `OCM_MCP_CLIENT_TTL` seconds so rotated/exec-refreshed credentials are picked up.
+- **Full-UUID proposal IDs** (128-bit) instead of 8 hex characters.
+- **Robust PodSpec extraction** in the static guardrails for CronJob and other
+  workload kinds, so the security checks stay correct if `ALLOWED_KINDS` grows.
+
 ### Changed
 
 - Approval proposals now carry a `kind` (manifestwork or action) and typed

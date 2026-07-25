@@ -131,6 +131,10 @@ class Settings:
         default_factory=lambda: os.environ.get("OCM_MCP_READ_ONLY", "").strip().lower()
         in ("1", "true", "yes", "on")
     )
+    # In-process cache of the HMAC key so mint/verify does not hit disk every call.
+    # Keyed by home so tests (which repoint home) and rotation invalidate correctly.
+    _secret_cache: bytes | None = field(default=None, init=False, repr=False, compare=False)
+    _secret_home: Path | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         raw = os.environ.get("OCM_MCP_SPOKE_CONTEXTS", "")
@@ -152,13 +156,35 @@ class Settings:
         return self.home / "audit.jsonl"
 
     def secret(self) -> bytes:
-        """HMAC key for approval tokens; generated once, stored 0600."""
+        """HMAC key for approval tokens; generated once, stored 0600, then cached.
+
+        The key is read from disk only on the first use (or after the home directory
+        changes or the key is rotated), not on every token mint or verification.
+        """
+        if self._secret_cache is not None and self._secret_home == self.home:
+            return self._secret_cache
         path = self.home / "secret"
         if not path.exists():
             self.home.mkdir(parents=True, exist_ok=True)
             path.write_text(secrets.token_hex(32))
             path.chmod(0o600)
-        return path.read_text().strip().encode()
+        self._secret_cache = path.read_text().strip().encode()
+        self._secret_home = self.home
+        return self._secret_cache
+
+    def rotate_secret(self) -> bytes:
+        """Generate a fresh HMAC key and drop the cache.
+
+        This invalidates every approval token minted before rotation - any pending
+        proposal must be approved again. Use it if the key may have been exposed.
+        """
+        path = self.home / "secret"
+        self.home.mkdir(parents=True, exist_ok=True)
+        path.write_text(secrets.token_hex(32))
+        path.chmod(0o600)
+        self._secret_cache = None
+        self._secret_home = None
+        return self.secret()
 
 
 SETTINGS = Settings()

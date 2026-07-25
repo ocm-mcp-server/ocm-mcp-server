@@ -87,7 +87,7 @@ def new_proposal(
     cluster: str, name: str, summary: str, manifests: list[dict[str, Any]]
 ) -> Proposal:
     prop = Proposal(
-        id=uuid.uuid4().hex[:8],
+        id=uuid.uuid4().hex,
         cluster=cluster,
         name=name,
         summary=summary,
@@ -105,7 +105,7 @@ def new_action_proposal(
 ) -> Proposal:
     """A proposed OCM lifecycle action (cordon/uncordon/set_label/accept) awaiting approval."""
     prop = Proposal(
-        id=uuid.uuid4().hex[:8],
+        id=uuid.uuid4().hex,
         cluster=cluster,
         name=f"{action}-{cluster}",
         summary=summary,

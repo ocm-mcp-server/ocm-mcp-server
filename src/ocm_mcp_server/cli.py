@@ -11,6 +11,7 @@ Run on a trusted terminal, never by the agent:
     ocm-mcp reject <id>             mark a proposal rejected
     ocm-mcp audit [-n 20]           tail the tool-call audit log
     ocm-mcp doctor                  live read-path smoke test against the hub
+    ocm-mcp rotate-secret           mint a new HMAC key (invalidates all tokens)
 """
 
 from __future__ import annotations
@@ -90,6 +91,20 @@ def cmd_audit(args: argparse.Namespace) -> int:
             f'{entry.get("outcome", "?"):5s} {entry.get("duration_ms", 0):>6}ms  '
             f'{entry.get("error", "")[:80]}'
         )
+    return 0
+
+
+def cmd_rotate_secret(args: argparse.Namespace) -> int:
+    if not args.yes:
+        print(
+            "Rotating the HMAC key invalidates ALL previously minted approval tokens; "
+            "any pending proposal must be approved again."
+        )
+        if input("Rotate now? [y/N] ").strip().lower() != "y":
+            print("Not rotated.")
+            return 1
+    SETTINGS.rotate_secret()
+    print("Rotated. Previously minted approval tokens are now invalid.")
     return 0
 
 
@@ -202,6 +217,10 @@ def main() -> None:
     p_audit.set_defaults(func=cmd_audit)
 
     sub.add_parser("doctor").set_defaults(func=cmd_doctor)
+
+    p_rotate = sub.add_parser("rotate-secret")
+    p_rotate.add_argument("-y", "--yes", action="store_true", help="skip confirmation prompt")
+    p_rotate.set_defaults(func=cmd_rotate_secret)
 
     args = parser.parse_args()
     raise SystemExit(args.func(args))

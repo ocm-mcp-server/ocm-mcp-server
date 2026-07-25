@@ -121,11 +121,12 @@ back via `get_audit_trail` to write an accurate post-incident report.
 
 ## Tests
 
-- `tests/` unit tests (46): the full approval-token lifecycle (roundtrip,
+- `tests/` unit tests (52): the full approval-token lifecycle (roundtrip,
   wrong-proposal, content-change invalidation, expiry, tampering, malformed) for
   both ManifestWork and lifecycle-action proposals, every static guardrail case,
-  the generic reader's allow-list (Secrets and core kinds cannot be named), and the
-  HCP / ManagedClusterInfo / add-on shaping logic against verified object fixtures.
+  the generic reader's allow-list (Secrets and core kinds cannot be named), the
+  HCP / ManagedClusterInfo / add-on shaping logic, and the hardening fixes
+  (key caching + rotation, apply-time content re-check, robust PodSpec extraction).
   No cluster required.
 - `deploy/policies/tests/` Kyverno CLI suite (12 cases): good, bad, and
   human-created ManifestWorks. Offline, runs in CI.

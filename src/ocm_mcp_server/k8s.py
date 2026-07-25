@@ -11,11 +11,17 @@ cluster-proxy add-on - see docs/architecture.md.
 
 from __future__ import annotations
 
-from functools import cache
+import os
+import time
 
 from kubernetes import client, config
 
 from .config import SETTINGS
+
+# Rebuild the API client periodically so a long-lived server process picks up
+# rotated credentials / refreshed exec tokens instead of caching them forever.
+_CLIENT_TTL = int(os.environ.get("OCM_MCP_CLIENT_TTL", "600"))
+_CLIENTS: dict[str, tuple[float, client.ApiClient]] = {}
 
 OCM_CLUSTER_GROUP = "cluster.open-cluster-management.io"
 OCM_WORK_GROUP = "work.open-cluster-management.io"
@@ -28,13 +34,22 @@ OCM_INTERNAL_GROUP = "internal.open-cluster-management.io"
 HYPERSHIFT_GROUP = "hypershift.openshift.io"
 
 
-@cache
 def api_client(context: str = "") -> client.ApiClient:
-    """Build an ApiClient for a kubeconfig context ("" = current/hub context)."""
+    """Build (or reuse, within a TTL) an ApiClient for a kubeconfig context.
+
+    "" resolves to the configured hub context (or the current kubeconfig context).
+    The client is rebuilt after OCM_MCP_CLIENT_TTL seconds (default 600) so rotated
+    or exec-refreshed credentials are eventually picked up rather than cached forever.
+    """
     ctx = context or (SETTINGS.hub_context or None)
-    return config.new_client_from_config(
-        config_file=SETTINGS.kubeconfig or None, context=ctx
-    )
+    key = ctx or "__hub__"
+    now = time.monotonic()
+    cached = _CLIENTS.get(key)
+    if cached and (now - cached[0]) < _CLIENT_TTL:
+        return cached[1]
+    fresh = config.new_client_from_config(config_file=SETTINGS.kubeconfig or None, context=ctx)
+    _CLIENTS[key] = (now, fresh)
+    return fresh
 
 
 def hub_custom(_api: client.CustomObjectsApi | None = None) -> client.CustomObjectsApi:

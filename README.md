@@ -308,6 +308,12 @@ ready-to-paste values at the end).
 | `OCM_MCP_HOME` | no | State directory (approval secret, pending proposals, `audit.jsonl`). Default `~/.ocm-mcp`. |
 | `OCM_MCP_APPROVAL_TTL` | no | Approval-token lifetime in seconds. Default `3600`. |
 | `OCM_MCP_READ_ONLY` | no | Set to `1`/`true` for a strictly-inspection deployment: every propose/apply tool refuses, a coarse backstop under the token gate. Default off. |
+| `OCM_MCP_CLIENT_TTL` | no | Seconds before the cached Kubernetes API client is rebuilt, so rotated/refreshed credentials are picked up. Default `600`. |
+| `OCM_MCP_SPOKE_TIMEOUT` | no | Read timeout (seconds) for spoke health/event/log calls, so one large cluster cannot hang a tool. Default `30`. |
+| `OCM_MCP_HEALTH_LIMIT` | no | Max pods/deployments `get_cluster_health` fetches per cluster; the result notes truncation. Default `500`. |
+
+For key management, `ocm-mcp rotate-secret` mints a fresh HMAC key (invalidating every
+outstanding approval token), and `ocm-mcp doctor` runs the live read-path smoke test.
 
 ```bash
 # the values make bootstrap prints, spelled out:

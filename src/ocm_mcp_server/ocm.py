@@ -10,6 +10,7 @@ no raw multi-thousand-line objects, just the fields an operator would look at.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from kubernetes.client import ApiException
@@ -30,6 +31,11 @@ from .k8s import (
 
 # ACM compliance states that mean "not healthy" for a violations rollup.
 NONCOMPLIANT_STATES = ("NonCompliant", "Pending")
+
+# Spoke reads are bounded and time-limited so one very large managed cluster cannot
+# hang a tool call or pull an unbounded object set into memory.
+SPOKE_TIMEOUT = (5, int(os.environ.get("OCM_MCP_SPOKE_TIMEOUT", "30")))
+HEALTH_LIMIT = int(os.environ.get("OCM_MCP_HEALTH_LIMIT", "500"))
 
 # Label OCM stamps on a PlacementDecision to link it to its Placement, and the one
 # that records a ManagedCluster's ClusterSet membership.
@@ -108,7 +114,13 @@ def cluster_health(cluster: str) -> dict[str, Any]:
         return health
 
     health["spoke_view"] = "ok"
-    for pod in core.list_pod_for_all_namespaces(limit=500).items:
+    pods = core.list_pod_for_all_namespaces(limit=HEALTH_LIMIT, _request_timeout=SPOKE_TIMEOUT)
+    if pods.metadata._continue:
+        health["note"] = (
+            f"cluster has more than {HEALTH_LIMIT} pods; showing the first {HEALTH_LIMIT}. "
+            "Raise OCM_MCP_HEALTH_LIMIT or scope by namespace for full coverage."
+        )
+    for pod in pods.items:
         phase = pod.status.phase
         waiting_reasons = [
             cs.state.waiting.reason
@@ -126,7 +138,10 @@ def cluster_health(cluster: str) -> dict[str, Any]:
                     "restarts": restarts,
                 }
             )
-    for dep in apps.list_deployment_for_all_namespaces(limit=500).items:
+    deployments = apps.list_deployment_for_all_namespaces(
+        limit=HEALTH_LIMIT, _request_timeout=SPOKE_TIMEOUT
+    )
+    for dep in deployments.items:
         desired = dep.spec.replicas or 0
         ready = dep.status.ready_replicas or 0
         if ready < desired:
@@ -143,9 +158,9 @@ def cluster_health(cluster: str) -> dict[str, Any]:
 def cluster_events(cluster: str, namespace: str = "", limit: int = 40) -> list[dict[str, Any]]:
     core = spoke_core(cluster)
     if namespace:
-        events = core.list_namespaced_event(namespace, limit=limit)
+        events = core.list_namespaced_event(namespace, limit=limit, _request_timeout=SPOKE_TIMEOUT)
     else:
-        events = core.list_event_for_all_namespaces(limit=limit)
+        events = core.list_event_for_all_namespaces(limit=limit, _request_timeout=SPOKE_TIMEOUT)
     items = sorted(
         events.items,
         key=lambda e: (e.last_timestamp or e.event_time or e.metadata.creation_timestamp),
@@ -173,12 +188,18 @@ def pod_logs(cluster: str, namespace: str, pod: str, container: str = "", lines:
             container=container or None,
             tail_lines=lines,
             previous=False,
+            _request_timeout=SPOKE_TIMEOUT,
         )
     except ApiException as exc:
         if exc.status == 400 and "previous" not in str(exc):
             # container may be crashing; try previous instance
             return core.read_namespaced_pod_log(
-                pod, namespace, container=container or None, tail_lines=lines, previous=True
+                pod,
+                namespace,
+                container=container or None,
+                tail_lines=lines,
+                previous=True,
+                _request_timeout=SPOKE_TIMEOUT,
             )
         raise
 

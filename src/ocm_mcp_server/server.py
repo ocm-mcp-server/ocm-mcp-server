@@ -80,6 +80,31 @@ def _writable() -> str | None:
     return None
 
 
+def _content_intact(prop: approvals.Proposal) -> str | None:
+    """Confirm the stored proposal still matches its own content hash, at apply time.
+
+    The HMAC token already binds to the hash, but the on-disk manifests could be
+    edited while leaving the hash field untouched (a TOCTOU on a writable state dir).
+    Recomputing the hash from the stored content closes that window; ManifestWork
+    proposals also get a fresh static-guardrail pass. Defense in depth.
+    """
+    expected = approvals.content_hash(
+        prop.cluster, prop.name, prop.manifests, kind=prop.kind,
+        action=prop.action, params=prop.params,
+    )
+    if expected != prop.content_hash:
+        return (
+            "REJECTED: the stored proposal no longer matches its approved content hash. "
+            "Re-propose and get a fresh approval."
+        )
+    if prop.kind == "manifestwork":
+        try:
+            guardrails.validate_manifests(prop.manifests)
+        except guardrails.GuardrailViolation as exc:
+            return f"REJECTED by static guardrails at apply time:\n{exc}"
+    return None
+
+
 # ============================================================== toolset: inventory
 
 
@@ -347,6 +372,9 @@ def apply_manifestwork(proposal_id: str, approval_token: str) -> str:
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
 
+    if (msg := _content_intact(prop)):
+        return msg
+
     body = ocm.manifestwork_body(prop.name, prop.manifests)
     try:
         ocm.create_manifestwork(prop.cluster, body)
@@ -512,6 +540,9 @@ def apply_cluster_action(proposal_id: str, approval_token: str) -> str:
         approvals.verify_token(prop, approval_token)
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
+
+    if (msg := _content_intact(prop)):
+        return msg
 
     try:
         result = ocm.apply_cluster_action(prop.cluster, prop.action, prop.params)
