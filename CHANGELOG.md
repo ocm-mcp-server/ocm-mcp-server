@@ -4,9 +4,47 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.0] - 2026-07-25
 
-### Added
+A security-focused release addressing an external security audit. The headline change
+is that human approval is now cryptographically independent of the server.
+
+### Security
+
+- **Asymmetric, operation-bound approval (was shared HMAC).** The `ocm-mcp` CLI holds an
+  Ed25519 private signing key; the MCP server loads only the public key. The server can
+  verify a token but can never mint one, so a compromised server - or an agent that reads
+  the server's key material - still cannot approve its own changes. Each token's claims
+  bind the exact proposal hash, the operation (`apply` or `rollback`), and an expiry, so
+  an apply token can never authorize a rollback.
+- **Rollback is now a distinct, approvable operation.** `propose_rollback` creates a
+  separate rollback proposal bound to the applied ManifestWork's name and UID;
+  `rollback_manifestwork` verifies a rollback-scoped token, checks the work is still
+  ours (managed-by label) with the approved UID, then deletes it. This fixes the old
+  workflow where a fresh rollback token could not be minted and an apply token could
+  authorize deletion.
+- **Static guardrails hardened.** Manifests are matched against an exact
+  `apiVersion/kind` allow-list (blocking group spoofing like `evil.example/v1, Deployment`),
+  and now reject Secret access via `env.secretKeyRef`/`envFrom.secretRef`, secret and
+  serviceAccountToken-projected volumes, and arbitrary `serviceAccountName`.
+- **CSR approval is bound to exact CSRs.** The `accept` action captures the pending join
+  CSRs (name, UID, signer, subject) at propose time and approves only those at apply time,
+  re-verifying signer and username - it no longer sweeps every CSR with a matching label
+  or approves CSRs created after the human reviewed.
+- **Truthful audit.** The trace wrapper now classifies a tool's outcome from its result
+  (`rejected` / `failed` / `unavailable`), so a refused operation is no longer logged as
+  `ok`; the evaluation harness scores from the corrected outcomes.
+- **Dependency bounds.** Pinned `mcp>=1.9,<2` (MCP v2 is a breaking rewrite) and
+  `kubernetes<37`; added `cryptography` for Ed25519.
+
+### Changed
+
+- Tool surface: 34 tools (added `propose_rollback`). Proposals are written atomically
+  (temp file + rename). `get_audit_trail` streams the tail instead of reading the whole
+  file. `cluster_events` fetches a wider window before sorting so newer events are not
+  missed on busy clusters. Unit tests: 57.
+
+### Added (tooling, platform, and governance in this release)
 
 - **Expanded the tool surface to 27 tools across nine toolsets** (inventory,
   observability, placement, work, addons, registration, policy, resources,
@@ -20,7 +58,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   the dangerous read does not exist rather than being merely restricted.
 - **Gated OCM lifecycle actions** (`propose_cluster_action`,
   `apply_cluster_action`): cordon, uncordon, set_label, accept. Each routes
-  through the same static-guardrail, hub dry-run, and HMAC-token gate as a
+  through the same static-guardrail, hub dry-run, and approval-token gate as a
   ManifestWork; none is applied inline.
 - **Four MCP prompts**: `diagnose_fleet`, `remediate_with_approval`,
   `incident_postmortem`, `why_not_scheduled`, encoding the safe workflow.
@@ -56,9 +94,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   `patch` on ManagedClusters and CSR approval - previously it only allowed
   ManagedCluster reads and ManifestWorks, so most tool calls would have 403'd. Still
   no Secret reads, no exec, no arbitrary delete.
-- **HMAC key handling**: the approval key is cached in-process (no disk read per
-  mint/verify) and a new `ocm-mcp rotate-secret` rotates it, invalidating all
-  outstanding tokens.
+- **Approval key rotation**: `ocm-mcp rotate-secret` regenerates the approval
+  keypair, invalidating all outstanding tokens.
 - **Bounded spoke reads**: health/event/log calls carry a read timeout
   (`OCM_MCP_SPOKE_TIMEOUT`) and a fetch cap (`OCM_MCP_HEALTH_LIMIT`) that reports
   truncation, so one large cluster cannot hang or flood a tool call.

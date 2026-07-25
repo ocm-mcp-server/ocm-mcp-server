@@ -3,7 +3,7 @@
 
 # Tools and Prompts reference
 
-The server exposes **33 tools across ten toolsets** plus **ten prompts**. This page is
+The server exposes **34 tools across ten toolsets** plus **ten prompts**. This page is
 the canonical reference: every tool, its class, its arguments, and the Open Cluster
 Management API it reads or writes. The short version lives in the
 [README](../README.md#toolsets); the safety model behind the classes is in
@@ -40,7 +40,7 @@ CRD). Non-zero exit on any `FAIL`, so it works as a health gate too.
 |---|---|---|
 | **read** | Safe, non-mutating. No gate. Annotated `readOnlyHint`. | none needed |
 | **propose** | Stores a pending change. Mutates nothing on any cluster. | static guardrails + Kyverno dry-run at propose time |
-| **apply** | Delivers an already-approved change. Annotated `destructiveHint`. | human-minted HMAC token bound to the exact content + least-privilege RBAC |
+| **apply** | Delivers an already-approved change. Annotated `destructiveHint`. | Ed25519 token (signed by the CLI, verified by the server's public key) bound to the exact content + operation, plus least-privilege RBAC |
 
 `OCM_MCP_READ_ONLY=1` makes every **propose** and **apply** tool refuse before doing
 anything - a coarse backstop layered under the token gate, for inspection-only
@@ -86,8 +86,9 @@ prompt can call them.
 | `get_manifestwork` | read | `cluster`, `name` | `ManifestWork` conditions + per-resource `statusFeedback` |
 | `list_manifestworkreplicasets` | read | `namespace?` | `ManifestWorkReplicaSet` v1alpha1 rollout summary |
 | `propose_manifestwork` | propose | `cluster`, `name`, `summary`, `manifests_json` | validates, stores pending |
-| `apply_manifestwork` | apply | `proposal_id`, `approval_token` | creates the `ManifestWork` |
-| `rollback_manifestwork` | apply | `proposal_id`, `approval_token` | deletes the applied `ManifestWork` |
+| `apply_manifestwork` | apply | `proposal_id`, `approval_token` | verifies an apply-scoped token, creates the `ManifestWork` |
+| `propose_rollback` | propose | `proposal_id` | creates a rollback proposal bound to the applied work's UID |
+| `rollback_manifestwork` | apply | `rollback_proposal_id`, `approval_token` | verifies a rollback-scoped token + ownership, deletes the `ManifestWork` |
 
 ## addons
 

@@ -30,7 +30,7 @@ ManifestWork → work agent on each managed cluster
 | `server.py` | FastMCP server; the only surface the agent sees |
 | `ocm.py` | ManagedCluster / ManifestWork operations, summarized for agents |
 | `guardrails.py` | layer-1 static checks (kinds allowlist, namespaces, pod security, image pinning) |
-| `approvals.py` | proposal store + HMAC tokens bound to a content hash with TTL |
+| `approvals.py` | proposal store + Ed25519 approval tokens binding the content hash, operation, and TTL (server holds only the public key) |
 | `tracing.py` | OTel span + audit line per tool call |
 | `cli.py` | `ocm-mcp` - the human approval terminal |
 | `deploy/policies/` | Kyverno ClusterPolicies validating **inside** the ManifestWork envelope |
@@ -43,10 +43,13 @@ resources only after delivery. Validating the *envelope* on the hub rejects bad
 content before it ever leaves - at proposal time, via server-side dry-run, so
 the agent gets the policy message as feedback and can self-correct.
 
-**Why an HMAC token instead of a "yes" in chat?** A chat approval approves a
-*conversation*. The token approves a *content hash*: if the agent mutates the
-proposal after approval, the token no longer verifies. Tokens expire (default
-1 h) and are minted only by the CLI on a trusted terminal.
+**Why an Ed25519-signed token instead of a "yes" in chat?** A chat approval
+approves a *conversation*. The token approves a *content hash* and an operation:
+if the agent mutates the proposal after approval, the signature no longer
+verifies, and an `apply` token cannot authorize a `rollback`. Approval is
+asymmetric - the CLI signs with a private key the server never holds, so a
+compromised server cannot mint one. Tokens expire (default 1 h) and are minted
+only by the CLI on a trusted terminal.
 
 **Why per-spoke read ServiceAccounts in the quickstart?** Simplicity. The
 production-correct path is the OCM cluster-proxy add-on (hub-mediated access,

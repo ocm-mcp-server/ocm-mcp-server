@@ -157,10 +157,13 @@ def cluster_health(cluster: str) -> dict[str, Any]:
 
 def cluster_events(cluster: str, namespace: str = "", limit: int = 40) -> list[dict[str, Any]]:
     core = spoke_core(cluster)
+    # The events API is not time-ordered, so limiting to N then sorting would miss newer
+    # events on a busy cluster. Fetch a wider bounded window, sort by time, then slice.
+    fetch = min(500, max(limit * 10, 100))
     if namespace:
-        events = core.list_namespaced_event(namespace, limit=limit, _request_timeout=SPOKE_TIMEOUT)
+        events = core.list_namespaced_event(namespace, limit=fetch, _request_timeout=SPOKE_TIMEOUT)
     else:
-        events = core.list_event_for_all_namespaces(limit=limit, _request_timeout=SPOKE_TIMEOUT)
+        events = core.list_event_for_all_namespaces(limit=fetch, _request_timeout=SPOKE_TIMEOUT)
     items = sorted(
         events.items,
         key=lambda e: (e.last_timestamp or e.event_time or e.metadata.creation_timestamp),
@@ -257,6 +260,13 @@ def create_manifestwork(cluster: str, body: dict[str, Any]) -> dict[str, Any]:
 
 def delete_manifestwork(cluster: str, name: str) -> None:
     hub_custom().delete_namespaced_custom_object(
+        OCM_WORK_GROUP, "v1", cluster, "manifestworks", name
+    )
+
+
+def get_manifestwork_object(cluster: str, name: str) -> dict[str, Any]:
+    """The raw ManifestWork object (labels, uid) - used to verify ownership before rollback."""
+    return hub_custom().get_namespaced_custom_object(
         OCM_WORK_GROUP, "v1", cluster, "manifestworks", name
     )
 
@@ -555,30 +565,48 @@ def addon_health() -> list[dict[str, Any]]:
 # ------------------------------------------------------------------ registration reads
 
 
+OCM_CSR_USERNAME_PREFIX = "system:open-cluster-management:"
+OCM_CSR_SIGNER = "kubernetes.io/kube-apiserver-client"
+CSR_CLUSTER_LABEL = "open-cluster-management.io/cluster-name"
+
+
+def _is_ocm_join_csr(c: Any) -> bool:
+    if any(cond.type == "Approved" for cond in (c.status.conditions or [])):
+        return False
+    return (c.spec.username or "").startswith(OCM_CSR_USERNAME_PREFIX) and (
+        c.spec.signer_name == OCM_CSR_SIGNER
+    )
+
+
 def list_pending_csrs() -> list[dict[str, Any]]:
     """Pending cluster-join / add-on registration CSRs awaiting hub approval."""
-    csrs = hub_certificates().list_certificate_signing_request()
     out = []
-    for c in csrs.items:
-        approved = any(
-            cond.type == "Approved" for cond in (c.status.conditions or [])
-        )
-        if approved:
+    for c in hub_certificates().list_certificate_signing_request().items:
+        if not _is_ocm_join_csr(c):
             continue
-        username = c.spec.username or ""
-        if not username.startswith("system:open-cluster-management:"):
-            continue
+        labels = c.metadata.labels or {}
         out.append(
             {
                 "name": c.metadata.name,
-                "requester": username,
-                "cluster": c.metadata.labels.get(
-                    "open-cluster-management.io/cluster-name", "?"
-                )
-                if c.metadata.labels
-                else "?",
+                "requester": c.spec.username,
+                "cluster": labels.get(CSR_CLUSTER_LABEL, "?"),
                 "signer": c.spec.signer_name,
             }
+        )
+    return out
+
+
+def pending_csr_identities(cluster: str) -> list[dict[str, str]]:
+    """Exact identities of the pending OCM join CSRs for a cluster, captured at propose time
+    so that apply approves only these - never a CSR created after the human reviewed."""
+    out = []
+    for c in hub_certificates().list_certificate_signing_request().items:
+        labels = c.metadata.labels or {}
+        if labels.get(CSR_CLUSTER_LABEL) != cluster or not _is_ocm_join_csr(c):
+            continue
+        out.append(
+            {"name": c.metadata.name, "uid": c.metadata.uid or "",
+             "signer": c.spec.signer_name, "username": c.spec.username or ""}
         )
     return out
 
@@ -934,7 +962,7 @@ def apply_cluster_action(cluster: str, action: str, params: dict[str, Any]) -> d
     if action in PATCH_ACTIONS:
         _merge_patch_cluster(cluster, _action_patch(cluster, action, params))
         if action == "accept":
-            result["approved_csrs"] = _approve_pending_csrs(cluster)
+            result["approved_csrs"] = _approve_pending_csrs(cluster, params.get("csrs", []))
     elif action == "enable_addon":
         body = managed_cluster_addon_body(cluster, params["addon"], params.get("install_namespace", ""))
         hub_custom().create_namespaced_custom_object(
@@ -963,17 +991,22 @@ def _action_patch(cluster: str, action: str, params: dict[str, Any]) -> dict[str
     raise ValueError(f"Unknown cluster action '{action}'.")
 
 
-def _approve_pending_csrs(cluster: str) -> list[str]:
+def _approve_pending_csrs(cluster: str, allowed: list[dict[str, str]]) -> list[str]:
+    """Approve ONLY the exact CSRs captured (by name + uid) when the human approved.
+
+    A CSR created after the human review, or one whose uid/signer/username no longer
+    matches, is skipped - so approval cannot be widened between propose and apply.
+    """
     from kubernetes import client
 
+    wanted = {(a.get("name"), a.get("uid")) for a in allowed}
     certs = hub_certificates()
     approved: list[str] = []
     for c in certs.list_certificate_signing_request().items:
-        labels = c.metadata.labels or {}
-        if labels.get("open-cluster-management.io/cluster-name") != cluster:
+        if (c.metadata.name, c.metadata.uid or "") not in wanted:
             continue
-        if any(cond.type == "Approved" for cond in (c.status.conditions or [])):
-            continue
+        if not _is_ocm_join_csr(c):
+            continue  # re-verify signer/subject/not-already-approved at apply time
         c.status.conditions = (c.status.conditions or []) + [
             client.V1CertificateSigningRequestCondition(
                 type="Approved",

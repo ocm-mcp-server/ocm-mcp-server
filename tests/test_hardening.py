@@ -16,23 +16,33 @@ MANIFEST = {
 }
 
 
-# --- H1: the HMAC key is cached in-process and rotation invalidates it -----------
+# --- approval keys: server holds the public key only; rotation invalidates tokens ---
 
 
-def test_secret_is_cached(tmp_home):
-    first = SETTINGS.secret()
-    # Delete the file on disk; a cached read must still succeed with the same value.
-    (tmp_home / "secret").unlink()
-    assert SETTINGS.secret() == first
+def test_approval_keypair_generated_and_public_only_verifies(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "summary", [MANIFEST])
+    token = approvals.mint_token(prop)  # generates the Ed25519 keypair on first mint
+    assert SETTINGS.approval_private_key_path.exists()
+    assert SETTINGS.approval_public_key_path.exists()
+    # Verification uses only the public key - delete the private key and it still works.
+    SETTINGS.approval_private_key_path.unlink()
+    approvals.verify_token(prop, token, operation="apply")
 
 
-def test_rotate_secret_changes_key_and_invalidates_tokens(tmp_home):
+def test_rotate_approval_key_invalidates_tokens(tmp_home):
     prop = approvals.new_proposal("c2", "fix", "summary", [MANIFEST])
     token = approvals.mint_token(prop)
-    approvals.verify_token(prop, token)  # valid before rotation
-    SETTINGS.rotate_secret()
+    approvals.verify_token(prop, token, operation="apply")  # valid before rotation
+    SETTINGS.rotate_approval_key()
     with pytest.raises(approvals.ApprovalError):
-        approvals.verify_token(prop, token)  # old token is now worthless
+        approvals.verify_token(prop, token, operation="apply")  # old token is now worthless
+
+
+def test_apply_token_cannot_authorize_rollback(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "summary", [MANIFEST])
+    apply_token = approvals.mint_token(prop, operation="apply")
+    with pytest.raises(approvals.ApprovalError, match="authorizes 'apply', not 'rollback'"):
+        approvals.verify_token(prop, apply_token, operation="rollback")
 
 
 # --- M4: proposal IDs are full UUIDs, not 8 hex chars ---------------------------

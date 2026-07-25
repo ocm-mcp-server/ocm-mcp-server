@@ -53,7 +53,7 @@
       <rect width="230" height="120" rx="14" fill="#fefce8" stroke="#ca8a04" stroke-width="2"/>
       <circle cx="26" cy="30" r="15" fill="#ca8a04"/><text x="26" y="35" fill="#fff" text-anchor="middle" class="h" font-size="14">3</text>
       <text x="52" y="35" class="s" font-size="15" fill="#854d0e">Human approval</text>
-      <text x="20" y="66" fill="#334155">HMAC token bound to the</text>
+      <text x="20" y="66" fill="#334155">Ed25519 token bound to the</text>
       <text x="20" y="86" fill="#334155">proposal content hash,</text>
       <text x="20" y="106" fill="#334155">minted on a trusted terminal</text>
     </g>
