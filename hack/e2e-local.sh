@@ -200,9 +200,92 @@ if kubectl --context kind-hub patch clustermanager cluster-manager --type merge 
 else
   ENRICH="$ENRICH ManifestWorkReplicaSet(skip)"
 fi
+
+# The ACM (ManagedClusterInfo) and HyperShift (HostedCluster/NodePool) read tools need CRDs a
+# plain kind hub does not have. Install minimal CRDs plus clearly-labelled SAMPLE objects so
+# those tools are exercised end to end. A real hub gets these from ACM/MCE or HyperShift; on
+# kind these are e2e fixtures, not a running ACM/HyperShift install (a real hosted OpenShift
+# control plane needs OpenShift infra and several GB of RAM - impractical on a laptop kind fleet).
+if kubectl --context kind-hub apply -f - >/dev/null 2>&1 <<'CRDS'
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata: {name: managedclusterinfos.internal.open-cluster-management.io, labels: {ocm-mcp-e2e-fixture: "true"}}
+spec:
+  group: internal.open-cluster-management.io
+  scope: Namespaced
+  names: {plural: managedclusterinfos, singular: managedclusterinfo, kind: ManagedClusterInfo, listKind: ManagedClusterInfoList}
+  versions:
+  - {name: v1beta1, served: true, storage: true, schema: {openAPIV3Schema: {type: object, x-kubernetes-preserve-unknown-fields: true}}}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata: {name: hostedclusters.hypershift.openshift.io, labels: {ocm-mcp-e2e-fixture: "true"}}
+spec:
+  group: hypershift.openshift.io
+  scope: Namespaced
+  names: {plural: hostedclusters, singular: hostedcluster, kind: HostedCluster, listKind: HostedClusterList}
+  versions:
+  - {name: v1beta1, served: true, storage: true, schema: {openAPIV3Schema: {type: object, x-kubernetes-preserve-unknown-fields: true}}}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata: {name: nodepools.hypershift.openshift.io, labels: {ocm-mcp-e2e-fixture: "true"}}
+spec:
+  group: hypershift.openshift.io
+  scope: Namespaced
+  names: {plural: nodepools, singular: nodepool, kind: NodePool, listKind: NodePoolList}
+  versions:
+  - {name: v1beta1, served: true, storage: true, schema: {openAPIV3Schema: {type: object, x-kubernetes-preserve-unknown-fields: true}}}
+CRDS
+then
+  kubectl --context kind-hub wait --for=condition=established --timeout=30s \
+    crd/managedclusterinfos.internal.open-cluster-management.io \
+    crd/hostedclusters.hypershift.openshift.io \
+    crd/nodepools.hypershift.openshift.io >/dev/null 2>&1
+  if kubectl --context kind-hub apply -f - >/dev/null 2>&1 <<'CRS'
+apiVersion: v1
+kind: Namespace
+metadata: {name: clusters, labels: {ocm-mcp-e2e-fixture: "true"}}
+---
+apiVersion: internal.open-cluster-management.io/v1beta1
+kind: ManagedClusterInfo
+metadata: {name: cluster1, namespace: cluster1, labels: {ocm-mcp-e2e-fixture: "true"}}
+status:
+  consoleURL: https://console-openshift-console.apps.cluster1.example.com
+  kubeVendor: OpenShift
+  cloudVendor: BareMetal
+  distributionInfo: {type: OCP, ocp: {version: "4.16.7"}}
+  nodeList:
+  - {name: cluster1-control-plane, capacity: {cpu: "8", memory: "16Gi"}, labels: {node-role.kubernetes.io/control-plane: ""}}
+  conditions:
+  - {type: ManagedClusterInfoSynced, status: "True", reason: Synced}
+---
+apiVersion: hypershift.openshift.io/v1beta1
+kind: HostedCluster
+metadata: {name: demo-hcp, namespace: clusters, labels: {ocm-mcp-e2e-fixture: "true"}}
+spec: {}
+status:
+  version: {history: [{version: "4.16.7", state: Completed}]}
+  conditions:
+  - {type: Available, status: "True", reason: AsExpected}
+---
+apiVersion: hypershift.openshift.io/v1beta1
+kind: NodePool
+metadata: {name: demo-hcp-workers, namespace: clusters, labels: {ocm-mcp-e2e-fixture: "true"}}
+spec: {clusterName: demo-hcp, replicas: 2}
+status:
+  replicas: 2
+  conditions:
+  - {type: Ready, status: "True"}
+CRS
+  then ENRICH="$ENRICH acm+hypershift-fixtures"; else ENRICH="$ENRICH acm+hypershift-fixtures(crd-only)"; fi
+else
+  ENRICH="$ENRICH acm+hypershift-fixtures(skip)"
+fi
+
 sleep 8   # let the CRDs register / add-ons start
 ok "enrichment:${ENRICH}"
-rec "4b. Enrich fleet" "install add-on + feature gate" "Install the governance policy add-on and turn on ManifestWorkReplicaSet so the add-on, policy, and rollout tools return real objects instead of empty lists." OK "clusteradm install/enable hub-addon; kubectl patch clustermanager" "enrichment:${ENRICH}"
+rec "4b. Enrich fleet" "add-on, feature gate, and API fixtures" "Install the governance policy add-on, turn on ManifestWorkReplicaSet, and add minimal CRDs plus labelled sample objects for the ACM (ManagedClusterInfo) and HyperShift (HostedCluster/NodePool) APIs - so the add-on, policy, rollout, ACM, and HyperShift tools all return real objects. On a real hub those come from ACM/MCE or HyperShift; on kind they are clearly-labelled e2e fixtures." OK "clusteradm install/enable hub-addon; kubectl patch clustermanager; kubectl apply CRDs + samples" "enrichment:${ENRICH}"
 
 # ---------------------------------------------------------------- 5. exercise everything
 b "5. Exercising tools, prompts, the gated write flow, and a break-then-fix scenario"
