@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 import sys
 from pathlib import Path
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 """ocm-mcp: the human side of the approval flow.
 
 Run on a trusted terminal, never by the agent:

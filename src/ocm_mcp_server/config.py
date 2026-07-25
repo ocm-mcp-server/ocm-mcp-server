@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 """Configuration for ocm-mcp-server.
 
 All state lives under OCM_MCP_HOME (default: ~/.ocm-mcp):

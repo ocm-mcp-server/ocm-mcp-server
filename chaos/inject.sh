@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 # Inject a failure scenario into a managed cluster.
 #
 # Usage: ./chaos/inject.sh <scenario> <cluster>     e.g. ./chaos/inject.sh failing-rollout cluster2

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 # The demo workload: a tiny "shop" with a payments service, deployed to every
 # spoke by bootstrap.sh. Chaos scenarios break this app in various ways.
 apiVersion: v1

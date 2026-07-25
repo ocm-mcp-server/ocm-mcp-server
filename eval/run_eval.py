@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 """Evaluation harness for agent-driven fleet operations.
 
 For each scenario in eval/scenarios.yaml:

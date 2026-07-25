@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 """Static guardrails — defense in depth, evaluated before Kyverno ever sees a proposal.
 
 Layer model (a proposal must pass ALL of these, in order):

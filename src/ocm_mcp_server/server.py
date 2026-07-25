@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 """The MCP server: a deliberately small tool surface over an OCM hub.
 
 Read tools are free. Write tools are gated:
