@@ -1,0 +1,237 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+#
+# Test ManifestWorks for the guardrail policies. Runs entirely offline with
+# the Kyverno CLI — no cluster, no OCM installation required:
+#   kyverno test deploy/policies/tests
+---
+# A compliant agent proposal: allowed kind, safe namespace, pinned image.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: good-proposal
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: payments
+          namespace: shop
+        spec:
+          replicas: 2
+          selector:
+            matchLabels:
+              app: payments
+          template:
+            metadata:
+              labels:
+                app: payments
+            spec:
+              containers:
+                - name: payments
+                  image: registry.k8s.io/e2e-test-images/agnhost:2.47
+---
+# Privileged container + hostNetwork: must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-privileged
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: sneaky
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: sneaky
+          template:
+            metadata:
+              labels:
+                app: sneaky
+            spec:
+              hostNetwork: true
+              containers:
+                - name: sneaky
+                  image: registry.example.com/tools:1.0.0
+                  securityContext:
+                    privileged: true
+---
+# hostPath volume: must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-hostpath
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: logreader
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: logreader
+          template:
+            metadata:
+              labels:
+                app: logreader
+            spec:
+              volumes:
+                - name: logs
+                  hostPath:
+                    path: /var/log
+              containers:
+                - name: logreader
+                  image: registry.example.com/tools:1.0.0
+---
+# Targets kube-system: must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-namespace
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: debugger
+          namespace: kube-system
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: debugger
+          template:
+            metadata:
+              labels:
+                app: debugger
+            spec:
+              containers:
+                - name: debugger
+                  image: registry.example.com/tools:1.0.0
+---
+# Missing namespace entirely: must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-no-namespace
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: floating-config
+        data:
+          key: value
+---
+# Disallowed kind (ClusterRoleBinding): must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-kind
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: sneaky-admin
+          namespace: shop
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: cluster-admin
+        subjects:
+          - kind: ServiceAccount
+            name: default
+            namespace: shop
+---
+# :latest image tag: must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-latest-tag
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: payments
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: payments
+          template:
+            metadata:
+              labels:
+                app: payments
+            spec:
+              containers:
+                - name: payments
+                  image: registry.example.com/payments:latest
+---
+# Unlabeled ManifestWork (human-created): policies must NOT apply — passes.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: human-created
+  namespace: cluster2
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: platform-tool
+          namespace: kube-system
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: platform-tool
+          template:
+            metadata:
+              labels:
+                app: platform-tool
+            spec:
+              hostNetwork: true
+              containers:
+                - name: tool
+                  image: registry.example.com/platform:2.1.0
+                  securityContext:
+                    privileged: true
