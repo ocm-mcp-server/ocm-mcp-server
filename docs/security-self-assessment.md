@@ -59,7 +59,8 @@ four independent controls between the model and the clusters.
    action. It passes static guardrails and a Kyverno dry-run on the hub, then is stored
    pending.
 3. **Approve** (human, out of band): the operator runs `ocm-mcp approve <id>` on a
-   trusted terminal, which mints an HMAC token bound to the proposal's content hash.
+   trusted terminal, which signs an Ed25519 token bound to the proposal's content hash
+   and the intended operation. The server holds only the public verification key.
 4. **Apply** (gated): the agent submits the token; the server re-checks content
    integrity and re-runs guardrails, verifies the token, and applies through
    least-privilege RBAC.
@@ -83,12 +84,24 @@ four independent controls between the model and the clusters.
 
 ### Critical
 
-- **Content-bound human approval.** The approval token is an HMAC over the SHA-256 hash
-  of the exact proposal (`cluster`, `name`, `manifests`/`action`/`params`) plus an
-  expiry. Changing one byte invalidates it. Tokens are minted only by the `ocm-mcp` CLI
-  on a trusted terminal, never by any tool the agent can call. The key lives in
-  `OCM_MCP_HOME/secret` (mode 0600), is cached in-process, and is rotatable with
-  `ocm-mcp rotate-secret`.
+- **Asymmetric, operation-bound human approval.** Approval is an Ed25519 signature over
+  claims that bind the exact proposal content hash, the operation (`apply` or `rollback`),
+  and an expiry. The signing (private) key is used only by the `ocm-mcp` CLI; the MCP
+  server loads only the public key, so it can verify a token but can never mint one - even
+  if the server, or an agent that reads the server's key material, is compromised. An
+  apply token cannot authorize a rollback, and a change to any byte of the proposal
+  invalidates the signature. The keypair is rotatable with `ocm-mcp rotate-secret`. For
+  full isolation, run the CLI in a separate OS account, device, or chat-ops/ticket
+  service; until then, shell/filesystem isolation between the agent and the CLI is
+  mandatory.
+- **Bound CSR approval.** The `accept` lifecycle action captures the pending join CSRs
+  (name, UID, signer, subject) at propose time and approves only those exact CSRs at apply
+  time, re-verifying the OCM signer and username - it never sweeps every CSR with a
+  matching label, and never approves a CSR created after the human review.
+- **Rollback as a distinct operation.** Undoing an applied change requires a separate
+  rollback proposal bound to the ManifestWork's UID and a rollback-scoped token; the
+  server verifies the work is still ours (managed-by label) with the approved UID before
+  deleting it.
 - **Policy admission.** Every proposed ManifestWork is dry-run created on the hub so
   Kyverno validating policies run during admission and reject non-compliant content
   before anything is stored or applied.
@@ -102,8 +115,10 @@ four independent controls between the model and the clusters.
 
 ### Security-relevant
 
-- **Static guardrails** reject privileged/host access, protected namespaces, disallowed
-  kinds, and unpinned images before policy admission, and are re-run at apply time.
+- **Static guardrails** reject privileged/host access, protected namespaces, unpinned
+  images, and - by matching the full `apiVersion/kind` against an allow-list - group
+  spoofing, indirect Secret access (`secretKeyRef`, secret/projected volumes), and
+  arbitrary service accounts, before policy admission and again at apply time.
 - **Apply-time integrity re-check** recomputes the proposal's content hash and re-runs
   guardrails at apply, closing a time-of-check/time-of-use gap on the state directory.
 - **Bounded, timed spoke reads** cap result size and set request timeouts so one large
@@ -123,7 +138,7 @@ documented threat model.
 ## Secure development practices
 
 - **Development pipeline**: contributions arrive via pull request. CI runs linting
-  (ruff), the unit test suite (52 tests, no cluster required), and the offline Kyverno
+  (ruff), the unit test suite (57 tests, no cluster required), and the offline Kyverno
   policy tests (12 cases). A CodeQL workflow scans the code.
 - **Commits** are signed off under the Developer Certificate of Origin.
 - **Dependencies** are pinned by lower bound in `pyproject.toml`; the runtime surface is

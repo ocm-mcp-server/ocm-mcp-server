@@ -12,7 +12,6 @@ All state lives under OCM_MCP_HOME (default: ~/.ocm-mcp):
 from __future__ import annotations
 
 import os
-import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -42,6 +41,26 @@ ALLOWED_KINDS = frozenset(
         "NetworkPolicy",
     }
 )
+
+# Exact (apiVersion, kind) tuples an agent proposal may contain. Checking the kind alone
+# lets a manifest spoof the group - e.g. apiVersion: evil.example/v1, kind: Deployment - so
+# the guardrails match the full group/version/kind against this set.
+ALLOWED_GVK = frozenset(
+    {
+        ("apps/v1", "Deployment"),
+        ("v1", "Service"),
+        ("v1", "ConfigMap"),
+        ("v1", "ResourceQuota"),
+        ("autoscaling/v2", "HorizontalPodAutoscaler"),
+        ("autoscaling/v1", "HorizontalPodAutoscaler"),
+        ("policy/v1", "PodDisruptionBudget"),
+        ("networking.k8s.io/v1", "NetworkPolicy"),
+    }
+)
+
+# Service accounts a workload may run as. Anything else (e.g. a cluster-admin-bound SA)
+# is an escalation path and is rejected.
+ALLOWED_SERVICE_ACCOUNTS = frozenset({"", "default"})
 
 # The generic reader (list_resources / get_resource) works only against this
 # allow-list of Open Cluster Management API types. This is an allow-list, not a
@@ -131,10 +150,6 @@ class Settings:
         default_factory=lambda: os.environ.get("OCM_MCP_READ_ONLY", "").strip().lower()
         in ("1", "true", "yes", "on")
     )
-    # In-process cache of the HMAC key so mint/verify does not hit disk every call.
-    # Keyed by home so tests (which repoint home) and rotation invalidate correctly.
-    _secret_cache: bytes | None = field(default=None, init=False, repr=False, compare=False)
-    _secret_home: Path | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         raw = os.environ.get("OCM_MCP_SPOKE_CONTEXTS", "")
@@ -155,36 +170,25 @@ class Settings:
         self.home.mkdir(parents=True, exist_ok=True)
         return self.home / "audit.jsonl"
 
-    def secret(self) -> bytes:
-        """HMAC key for approval tokens; generated once, stored 0600, then cached.
+    # Approval keys. The signing (private) key is held by the human side (the ocm-mcp
+    # CLI); the MCP server loads only the public verification key, so a compromised
+    # server - or an agent that reads the server's key material - cannot mint tokens.
+    @property
+    def approval_private_key_path(self) -> Path:
+        return self.home / "approval_ed25519"
 
-        The key is read from disk only on the first use (or after the home directory
-        changes or the key is rotated), not on every token mint or verification.
-        """
-        if self._secret_cache is not None and self._secret_home == self.home:
-            return self._secret_cache
-        path = self.home / "secret"
-        if not path.exists():
-            self.home.mkdir(parents=True, exist_ok=True)
-            path.write_text(secrets.token_hex(32))
-            path.chmod(0o600)
-        self._secret_cache = path.read_text().strip().encode()
-        self._secret_home = self.home
-        return self._secret_cache
+    @property
+    def approval_public_key_path(self) -> Path:
+        return self.home / "approval_ed25519.pub"
 
-    def rotate_secret(self) -> bytes:
-        """Generate a fresh HMAC key and drop the cache.
+    def rotate_approval_key(self) -> None:
+        """Drop the approval keypair so a fresh one is generated on next mint.
 
         This invalidates every approval token minted before rotation - any pending
-        proposal must be approved again. Use it if the key may have been exposed.
+        proposal must be approved again. Use it if a key may have been exposed.
         """
-        path = self.home / "secret"
-        self.home.mkdir(parents=True, exist_ok=True)
-        path.write_text(secrets.token_hex(32))
-        path.chmod(0o600)
-        self._secret_cache = None
-        self._secret_home = None
-        return self.secret()
+        for p in (self.approval_private_key_path, self.approval_public_key_path):
+            p.unlink(missing_ok=True)
 
 
 SETTINGS = Settings()

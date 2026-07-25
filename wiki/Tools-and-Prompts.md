@@ -1,6 +1,6 @@
 # Tools and Prompts
 
-**33 tools across ten toolsets, plus ten prompts.** Almost all of it is read: the
+**34 tools across ten toolsets, plus ten prompts.** Almost all of it is read: the
 whole Open Cluster Management API is safe to inspect. Only two toolsets can change
 anything, and only through the propose -> approve -> apply gate.
 
@@ -31,7 +31,7 @@ print a `PASS / EMPTY / SKIP / FAIL` table before wiring up an agent.
 - **read** - safe, non-mutating, no gate. Annotated `readOnlyHint`.
 - **propose** - stores a pending change; mutates nothing on any cluster. Runs static
   guardrails and a hub dry-run first.
-- **apply** - delivers an already-approved change. Needs a human-minted HMAC token
+- **apply** - delivers an already-approved change. Needs an Ed25519 token
   bound to the exact content. Annotated `destructiveHint`.
 
 `OCM_MCP_READ_ONLY=1` makes every propose and apply tool refuse - a strictly-inspection

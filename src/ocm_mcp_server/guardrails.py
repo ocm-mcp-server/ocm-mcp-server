@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .config import ALLOWED_KINDS, PROTECTED_NAMESPACES
+from .config import ALLOWED_GVK, ALLOWED_SERVICE_ACCOUNTS, PROTECTED_NAMESPACES
 
 
 class GuardrailViolation(Exception):
@@ -44,16 +44,30 @@ def _containers(manifest: dict[str, Any]) -> list[dict[str, Any]]:
     return list(pod_spec.get("containers", [])) + list(pod_spec.get("initContainers", []))
 
 
+def _env_uses_secret(ctr: dict[str, Any]) -> bool:
+    for e in ctr.get("env", []) or []:
+        if isinstance(e, dict) and (e.get("valueFrom", {}) or {}).get("secretKeyRef"):
+            return True
+    for src in ctr.get("envFrom", []) or []:
+        if isinstance(src, dict) and src.get("secretRef"):
+            return True
+    return False
+
+
 def check_manifest(manifest: dict[str, Any]) -> list[str]:
     """Return a list of violation strings for a single manifest (empty = clean)."""
     violations: list[str] = []
+    api_version = manifest.get("apiVersion", "")
     kind = manifest.get("kind", "")
     namespace = manifest.get("metadata", {}).get("namespace", "")
 
-    if kind not in ALLOWED_KINDS:
+    # Match the FULL group/version/kind, not just the kind, so a manifest cannot spoof
+    # the group (e.g. apiVersion: evil.example/v1, kind: Deployment).
+    if (api_version, kind) not in ALLOWED_GVK:
+        allowed = ", ".join(f"{a}/{k}" for a, k in sorted(ALLOWED_GVK))
         violations.append(
-            f"kind '{kind or '(missing)'}' is not in the allowed set "
-            f"{sorted(ALLOWED_KINDS)} - agents may not manage this resource type."
+            f"'{api_version or '(missing)'}, {kind or '(missing)'}' is not an allowed "
+            f"apiVersion/kind. Allowed: {allowed}."
         )
     if not namespace:
         violations.append(
@@ -71,9 +85,23 @@ def check_manifest(manifest: dict[str, Any]) -> list[str]:
         violations.append("hostNetwork is not allowed.")
     if pod_spec.get("hostPID") or pod_spec.get("hostIPC"):
         violations.append("hostPID/hostIPC are not allowed.")
+    sa = pod_spec.get("serviceAccountName", pod_spec.get("serviceAccount", ""))
+    if sa and sa not in ALLOWED_SERVICE_ACCOUNTS:
+        violations.append(
+            f"serviceAccountName '{sa}' is not allowed - running as an arbitrary service "
+            "account is an escalation path. Use the default service account."
+        )
     for vol in pod_spec.get("volumes", []) or []:
+        name = vol.get("name", "?")
         if "hostPath" in vol:
-            violations.append(f"hostPath volume '{vol.get('name', '?')}' is not allowed.")
+            violations.append(f"hostPath volume '{name}' is not allowed.")
+        if "secret" in vol:
+            violations.append(f"secret volume '{name}' is not allowed (no indirect Secret access).")
+        projected = (vol.get("projected", {}) or {}).get("sources", []) or []
+        if any("serviceAccountToken" in (s or {}) or "secret" in (s or {}) for s in projected):
+            violations.append(
+                f"projected volume '{name}' mounting a serviceAccountToken or secret is not allowed."
+            )
 
     for ctr in _containers(manifest):
         sc = ctr.get("securityContext", {}) or {}
@@ -85,8 +113,13 @@ def check_manifest(manifest: dict[str, Any]) -> list[str]:
         caps = (sc.get("capabilities", {}) or {}).get("add", []) or []
         if caps:
             violations.append(f"container '{name}': adding capabilities {caps} is not allowed.")
+        if _env_uses_secret(ctr):
+            violations.append(
+                f"container '{name}': reading a Secret via env secretKeyRef/secretRef is not "
+                "allowed (there is no path to Secret contents)."
+            )
         image = ctr.get("image", "")
-        if image.endswith(":latest") or (":" not in image.split("/")[-1]):
+        if image.endswith(":latest") or (":" not in image.split("/")[-1] and "@" not in image):
             violations.append(
                 f"container '{name}': image '{image}' must be pinned to an explicit tag "
                 "or digest (no :latest, no floating tags)."

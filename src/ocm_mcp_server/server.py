@@ -368,7 +368,7 @@ def apply_manifestwork(proposal_id: str, approval_token: str) -> str:
             return f"REJECTED: proposal {proposal_id} is a '{prop.action}' action, not a ManifestWork."
         if prop.status != "pending":
             return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
-        approvals.verify_token(prop, approval_token)
+        approvals.verify_token(prop, approval_token, operation="apply")
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
 
@@ -377,50 +377,111 @@ def apply_manifestwork(proposal_id: str, approval_token: str) -> str:
 
     body = ocm.manifestwork_body(prop.name, prop.manifests)
     try:
-        ocm.create_manifestwork(prop.cluster, body)
+        created = ocm.create_manifestwork(prop.cluster, body)
     except ApiException as exc:
         return f"FAILED to create ManifestWork: {(exc.body or str(exc))[:1500]}"
 
     prop.status = "applied"
     prop.applied_work = prop.name
+    prop.applied_uid = created.get("metadata", {}).get("uid", "")
     prop.save()
     return _json(
         {
             "status": "applied",
             "cluster": prop.cluster,
             "manifestwork": prop.name,
-            "note": "Verify rollout with get_cluster_health / get_manifestwork.",
+            "note": "Verify rollout with get_cluster_health / get_manifestwork. To undo, call "
+            "propose_rollback then apply the rollback with a fresh approval.",
+        }
+    )
+
+
+@mcp.tool(annotations=PROPOSE)
+@traced_tool
+def propose_rollback(proposal_id: str) -> str:
+    """Propose rolling back an applied ManifestWork. Applies nothing; needs its own approval.
+
+    Args:
+        proposal_id: id of an already-applied ManifestWork proposal.
+
+    Creates a distinct rollback proposal bound to the exact ManifestWork name and UID.
+    The human approves it separately (`ocm-mcp approve <rollback-id>`), and the token can
+    only authorize a rollback - an old apply token can never delete a workload.
+    """
+    if (msg := _writable()):
+        return msg
+    try:
+        applied = approvals.load_proposal(proposal_id)
+    except approvals.ApprovalError as exc:
+        return f"REJECTED: {exc}"
+    if applied.kind != "manifestwork" or applied.status != "applied":
+        return f"REJECTED: proposal {proposal_id} is not an applied ManifestWork."
+    rb = approvals.new_rollback_proposal(
+        applied, f"Roll back ManifestWork '{applied.applied_work}' on {applied.cluster}."
+    )
+    return _json(
+        {
+            "rollback_proposal_id": rb.id,
+            "status": "pending_approval",
+            "next_step": (
+                f"Ask the human operator to run: ocm-mcp approve {rb.id} and give you the "
+                f"token, then call rollback_manifestwork({rb.id}, <token>)."
+            ),
         }
     )
 
 
 @mcp.tool(annotations=APPLY)
 @traced_tool
-def rollback_manifestwork(proposal_id: str, approval_token: str) -> str:
-    """Delete the ManifestWork created from an applied proposal. Requires approval.
+def rollback_manifestwork(rollback_proposal_id: str, approval_token: str) -> str:
+    """Delete a ManifestWork after a rollback proposal has been approved.
 
     Args:
-        proposal_id: id of an already-applied ManifestWork proposal.
-        approval_token: a fresh token from `ocm-mcp approve <id>`.
+        rollback_proposal_id: id returned by propose_rollback.
+        approval_token: a rollback token from `ocm-mcp approve <rollback-id>`.
     """
     if (msg := _writable()):
         return msg
     try:
-        prop = approvals.load_proposal(proposal_id)
-        if prop.status != "applied":
-            return f"REJECTED: proposal {proposal_id} is '{prop.status}', not applied."
-        approvals.verify_token(prop, approval_token)
+        prop = approvals.load_proposal(rollback_proposal_id)
+        if prop.kind != "rollback":
+            return f"REJECTED: {rollback_proposal_id} is not a rollback proposal (call propose_rollback first)."
+        if prop.status != "pending":
+            return f"REJECTED: rollback proposal {rollback_proposal_id} is '{prop.status}', not pending."
+        approvals.verify_token(prop, approval_token, operation="rollback")
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
 
+    if (msg := _content_intact(prop)):
+        return msg
+
+    work, uid = prop.params.get("target_work", ""), prop.params.get("target_uid", "")
+    # Ownership check: only delete a ManifestWork this server created and that still has
+    # the exact UID the human approved, so we never delete an unrelated or re-created work.
     try:
-        ocm.delete_manifestwork(prop.cluster, prop.applied_work)
+        current = ocm.get_manifestwork_object(prop.cluster, work)
+    except ApiException as exc:
+        return f"FAILED to read ManifestWork '{work}': {(exc.body or str(exc))[:800]}"
+    labels = current.get("metadata", {}).get("labels", {})
+    if labels.get("app.kubernetes.io/managed-by") != "ocm-mcp-server":
+        return f"REJECTED: ManifestWork '{work}' is not managed by ocm-mcp-server; refusing to delete."
+    if uid and current.get("metadata", {}).get("uid") != uid:
+        return f"REJECTED: ManifestWork '{work}' UID changed since approval; re-propose the rollback."
+
+    try:
+        ocm.delete_manifestwork(prop.cluster, work)
     except ApiException as exc:
         return f"FAILED to delete ManifestWork: {(exc.body or str(exc))[:1500]}"
 
-    prop.status = "rolled_back"
+    prop.status = "applied"
     prop.save()
-    return _json({"status": "rolled_back", "cluster": prop.cluster, "manifestwork": prop.name})
+    try:
+        origin = approvals.load_proposal(prop.params.get("origin", ""))
+        origin.status = "rolled_back"
+        origin.save()
+    except approvals.ApprovalError:
+        pass
+    return _json({"status": "rolled_back", "cluster": prop.cluster, "manifestwork": work})
 
 
 # ================================================================= toolset: addons
@@ -501,6 +562,10 @@ def propose_cluster_action(
 
     try:
         ocm.validate_cluster_action(cluster, action, params)
+        if action == "accept":
+            # Capture the exact pending join CSRs NOW, so apply approves only these - the
+            # human is approving these specific CSRs, not "whatever is pending at apply time".
+            params["csrs"] = ocm.pending_csr_identities(cluster)
     except ApiException as exc:
         return f"REJECTED by hub admission: {(exc.body or str(exc))[:1200]}"
     except (ValueError, KeyError) as exc:
@@ -537,7 +602,7 @@ def apply_cluster_action(proposal_id: str, approval_token: str) -> str:
             return f"REJECTED: proposal {proposal_id} is a ManifestWork, not a cluster action."
         if prop.status != "pending":
             return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
-        approvals.verify_token(prop, approval_token)
+        approvals.verify_token(prop, approval_token, operation="apply")
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
 
@@ -690,8 +755,12 @@ def get_audit_trail(last_n: int = 30) -> str:
     path = SETTINGS.audit_log
     if not path.exists():
         return "[]"
-    lines = path.read_text().strip().splitlines()[-last_n:]
-    return "[\n" + ",\n".join(lines) + "\n]"
+    # Stream the tail with a bounded deque so a large audit log is never fully read.
+    from collections import deque
+
+    with path.open() as f:
+        lines = [ln.strip() for ln in deque(f, maxlen=max(1, last_n)) if ln.strip()]
+    return "[\n" + ",\n".join(lines) + "\n]" if lines else "[]"
 
 
 # ===================================================================== prompts

@@ -11,18 +11,22 @@ The north star does not change: an AI agent must never be able to take a dangero
 action on a fleet without policy admission and a human approval, and every action must
 be auditable.
 
-## Now (0.1.x)
+## Now (0.2.x)
 
 - [x] Read coverage across the OCM API (inventory, placement, work, add-ons,
       registration, policy, ManagedClusterInfo) and HyperShift Hosted Control Planes.
 - [x] Gated write path for ManifestWorks and OCM lifecycle actions.
 - [x] Four-layer guardrail model with an offline Kyverno policy test suite.
 - [x] `ocm-mcp doctor` live read-path smoke test.
-- [x] RBAC that mirrors the full tool surface; HMAC key rotation.
+- [x] RBAC that mirrors the full tool surface; Ed25519 approval keypair rotation.
+- [x] Asymmetric, operation-bound approval (Ed25519): the CLI signs, the server
+      holds only the public key; rollback is a distinct, separately approved operation.
+- [x] Hardened static guardrails (exact GVK allow-list, indirect-Secret and
+      arbitrary-service-account blocking) and CSR approval bound to the exact join CSRs.
 - [ ] Published evaluation results across multiple models (`eval/results/`).
-- [ ] Recorded end-to-end demo of the remediation flow.
+- [ ] Recorded end-to-end demo of the remediation flow (MP4).
 
-## Next (0.2)
+## Next
 
 - [ ] **In-cluster deployment**: a Deployment manifest and a Helm chart so the server
       runs as a workload on the hub with its own ServiceAccount.
@@ -39,7 +43,7 @@ be auditable.
 
 - [ ] **Multi-tenancy**: per-team tool scoping and RBAC boundaries on one server.
 - [ ] **Approval integrations**: mint approval tokens from a chat-ops or ticketing flow
-      while keeping the content-bound HMAC guarantee.
+      while keeping the content-bound, asymmetric-signature guarantee.
 - [ ] **Progressive rollout tools**: first-class support for ManifestWorkReplicaSet
       progressive strategies and decision groups.
 - [ ] **Signed audit**: tamper-evident audit log (hash chaining or signing).

@@ -57,15 +57,16 @@ def cmd_approve(args: argparse.Namespace) -> int:
     if prop.status != "pending":
         print(f"Proposal {prop.id} is '{prop.status}', not pending.", file=sys.stderr)
         return 1
+    op = approvals.intended_operation(prop)
     if not args.yes:
-        print(f"About to approve on cluster '{prop.cluster}': {prop.summary}")
-        print(f"Review full manifests first with: ocm-mcp show {prop.id}")
-        answer = input("Approve? [y/N] ").strip().lower()
+        print(f"About to approve a {op.upper()} on cluster '{prop.cluster}': {prop.summary}")
+        print(f"Review the full proposal first with: ocm-mcp show {prop.id}")
+        answer = input(f"Approve this {op}? [y/N] ").strip().lower()
         if answer != "y":
             print("Not approved.")
             return 1
-    token = approvals.mint_token(prop)
-    print("Approval token (give this to the agent):")
+    token = approvals.mint_token(prop, operation=op)
+    print(f"Approval token for this {op} (give this to the agent):")
     print(token)
     return 0
 
@@ -97,13 +98,13 @@ def cmd_audit(args: argparse.Namespace) -> int:
 def cmd_rotate_secret(args: argparse.Namespace) -> int:
     if not args.yes:
         print(
-            "Rotating the HMAC key invalidates ALL previously minted approval tokens; "
+            "Rotating the approval key invalidates ALL previously minted approval tokens; "
             "any pending proposal must be approved again."
         )
         if input("Rotate now? [y/N] ").strip().lower() != "y":
             print("Not rotated.")
             return 1
-    SETTINGS.rotate_secret()
+    SETTINGS.rotate_approval_key()
     print("Rotated. Previously minted approval tokens are now invalid.")
     return 0
 

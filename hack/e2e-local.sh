@@ -10,7 +10,8 @@
 #      tool has real data to return
 #   3. exercises every tool and prompt, the REAL gated write flow, and a negative
 #      scenario (break something, then debug + fix it end to end)
-#   4. writes a detailed, graphical HTML report next to the repo (git-ignored)
+#   4. writes a detailed, graphical HTML report next to the repo (git-ignored),
+#      and a wiki-friendly Markdown copy to wiki/Test-Results.md (committed)
 #   5. tears down ONLY the clusters this run created (kind and podman stay installed)
 #
 # Safety: if a kind cluster named hub/cluster1..N already exists, the script refuses
@@ -30,6 +31,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUN_DIR="$ROOT/.e2e-run"
 RESULTS="$RUN_DIR/results.jsonl"
 REPORT="$ROOT/e2e-report.html"
+REPORT_MD="$ROOT/wiki/Test-Results.md"
 CREATED="$RUN_DIR/created-clusters"
 OS="$(uname -s)"
 PYBIN="$ROOT/.venv/bin/python"
@@ -71,8 +73,9 @@ cleanup(){
     ok "deleted:${deleted:- (none)}   (kind and podman remain installed)"
     rec "11. Cleanup" "teardown" "Delete only the clusters created by this run (recorded in .e2e-run/created-clusters); never touch pre-existing clusters." OK "kind delete cluster --name ..." "deleted:${deleted:- none}"
   fi
-  [[ -x "$PYBIN" ]] && "$PYBIN" "$ROOT/hack/e2e_report.py" --results "$RESULTS" --out "$REPORT" >/dev/null 2>&1
+  [[ -x "$PYBIN" ]] && "$PYBIN" "$ROOT/hack/e2e_report.py" --results "$RESULTS" --out "$REPORT" --md "$REPORT_MD" >/dev/null 2>&1
   printf '\n\033[1;32m==> HTML report: %s\033[0m\n' "$REPORT"
+  printf '\033[1;32m==> Wiki report: %s\033[0m\n' "$REPORT_MD"
 }
 
 # ---------------------------------------------------------------- 1. dependencies
@@ -293,8 +296,8 @@ b "5. Exercising tools, prompts, the gated write flow, and a break-then-fix scen
 HARNESS_RC=$?
 
 # ---------------------------------------------------------------- 6. report
-b "6. Rendering the HTML report"
-"$PYBIN" "$ROOT/hack/e2e_report.py" --results "$RESULTS" --out "$REPORT"
+b "6. Rendering the report (local HTML + wiki Markdown)"
+"$PYBIN" "$ROOT/hack/e2e_report.py" --results "$RESULTS" --out "$REPORT" --md "$REPORT_MD"
 [[ $HARNESS_RC -eq 0 ]] && ok "all steps passed" || warn "harness reported failures (exit $HARNESS_RC) - see the report"
 # cleanup() runs on EXIT and regenerates the report with the teardown step.
 exit "$HARNESS_RC"

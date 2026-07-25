@@ -35,6 +35,9 @@ flowchart LR
 10. **[Contributing](Contributing)** - how to help
 11. **[FAQ](FAQ)** - naming, comparisons, common questions
 
+Plus **[Test Results](Test-Results)** - the latest end-to-end run on a real kind
+fleet, tool by tool, refreshed by `./hack/e2e-local.sh`.
+
 ## The one-paragraph version
 
 Your team runs many Kubernetes clusters. People are asking whether an AI agent

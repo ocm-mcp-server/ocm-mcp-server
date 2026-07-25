@@ -11,6 +11,7 @@
 - [6. Getting Started](Getting-Started)
 - [7. Use Cases and Impact](Use-Cases-and-Impact)
 - [8. Evaluation](Evaluation)
+- [Test Results](Test-Results)
 - [9. What's Next](Roadmap)
 - [10. Contributing](Contributing)
 - [11. FAQ](FAQ)
