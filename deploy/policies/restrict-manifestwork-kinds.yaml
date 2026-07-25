@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 # Allowlist of resource kinds an agent proposal may contain, plus pinned-image
 # hygiene. Everything not explicitly allowed is denied.
 apiVersion: kyverno.io/v1

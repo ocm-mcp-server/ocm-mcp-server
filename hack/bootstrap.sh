@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 # Bootstrap a local OCM fleet for ocm-mcp-server:
 #   1 hub + 3 managed kind clusters, OCM via clusteradm, Kyverno on the hub,
 #   guardrail policies, least-privilege RBAC, read-only spoke ServiceAccounts,

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 # A new "v2" rollout of payments that can never become ready: bad image tag.
 # Expected diagnosis: ImagePullBackOff on payments-v2.
 # Expected fix: pin back to the known-good image (or delete the v2 rollout).

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 """Kubernetes client plumbing.
 
 The MCP server (not the agent) holds the kubeconfig. The hub context is used for

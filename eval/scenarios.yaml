@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 # Evaluation scenarios for agent-driven fleet operations.
 #
 # Each scenario: inject a failure, hand the agent a realistic on-call prompt,

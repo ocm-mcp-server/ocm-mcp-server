@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 """Open Cluster Management API operations (hub side).
 
 Wraps ManagedCluster (cluster.open-cluster-management.io/v1) and ManifestWork
