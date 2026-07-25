@@ -165,6 +165,27 @@ OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3
 ```
 </details>
 
+<details>
+<summary><b>IBM BOB</b> — Settings → MCP → Add MCP Server → Open Configuration File (<code>~/.bob/settings/mcp.json</code>)</summary>
+
+```json
+{
+  "mcpServers": {
+    "ocm-fleet": {
+      "command": "ocm-mcp-server",
+      "env": {
+        "OCM_MCP_HUB_CONTEXT": "kind-hub",
+        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+      }
+    }
+  }
+}
+```
+
+If `ocm-mcp-server` is not on the PATH BOB launches with, use the absolute path from
+`which ocm-mcp-server` as the `command` value.
+</details>
+
 Give the agent the runbook discipline in
 [`examples/system-prompt.md`](examples/system-prompt.md), then break something and watch
 the flow:
