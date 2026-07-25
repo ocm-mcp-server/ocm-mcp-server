@@ -1,0 +1,49 @@
+# Least-privilege identity for ocm-mcp-server on the hub.
+#
+# The server can: read ManagedClusters, and manage ONLY ManifestWorks that it
+# creates (all writes still pass Kyverno admission + human approval upstream).
+# It cannot read Secrets, exec, or touch anything else on the hub.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ocm-mcp-server
+  namespace: open-cluster-management
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ocm-mcp-server
+rules:
+  - apiGroups: ["cluster.open-cluster-management.io"]
+    resources: ["managedclusters"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["work.open-cluster-management.io"]
+    resources: ["manifestworks"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ocm-mcp-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ocm-mcp-server
+subjects:
+  - kind: ServiceAccount
+    name: ocm-mcp-server
+    namespace: open-cluster-management
+---
+# Read-only role bound on each SPOKE cluster for events/logs/health.
+# hack/bootstrap.sh creates the ServiceAccount + kubeconfig context per spoke.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ocm-mcp-reader
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events", "namespaces", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
