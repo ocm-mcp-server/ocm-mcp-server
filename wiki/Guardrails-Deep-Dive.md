@@ -45,14 +45,22 @@ The policies are scoped by the label
 not affected. They ship with an offline CLI test suite
 (`make policy-test`, 12 cases) that runs in CI.
 
-Because it is just Kyverno, your existing organizational policies apply here too
-with no extra wiring.
+Because it is just [Kyverno](https://kyverno.io/docs/introduction/) - a CNCF policy
+engine whose policies are ordinary Kubernetes resources in YAML and CEL, enforced by
+the cluster rather than by the prompt - your existing organizational policies apply
+here too with no extra wiring. And you do not have to write them from scratch: the
+community library [kyverno/policies](https://github.com/kyverno/policies) and the
+searchable [Kyverno Policies catalog](https://kyverno.io/policies/) are a ready source
+of validation, Pod Security Standards, and best-practice policies to adopt or adapt.
 
 ## Layer 3: human approval (content-bound)
 
-An HMAC token over the proposal's content hash plus an expiry. It approves
-*that exact change*, not a conversation. Minted only by the `ocm-mcp` CLI on a
-trusted terminal. See [How It Works](How-It-Works) for the token mechanics.
+An **Ed25519-signed** token whose claims bind the proposal's content hash, the
+operation (`apply` or `rollback`), and an expiry. It approves *that exact change*,
+not a conversation. Approval is asymmetric: the CLI holds the private signing key
+and the server only the public key, so the server can verify a token but can never
+mint one. Minted only by the `ocm-mcp` CLI on a trusted terminal. See
+[How It Works](How-It-Works) for the token mechanics.
 
 ## Layer 4: least-privilege RBAC
 

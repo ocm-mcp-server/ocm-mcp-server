@@ -183,11 +183,17 @@ def _setup_fixtures(srv, approvals, ocm, cl):
         pr = tj(srv.propose_manifestwork(cluster=cl, name="e2e-seed",
                 summary="Seed marker ConfigMap.", manifests_json=json.dumps(cm)))
         pid = pr.get("proposal_id")
-        prop = approvals.load_proposal(pid)
-        srv.apply_manifestwork(proposal_id=pid, approval_token=approvals.mint_token(prop))
-        rec(P, "seed ManifestWork (gated)", "Deploy a marker ManifestWork via propose+approve+apply so "
-            "the work tools report on something real.", "OK", "propose_manifestwork -> apply_manifestwork",
-            f"proposal_id={pid} applied")
+        if not pid:
+            rec(P, "seed ManifestWork", "Deploy a marker ManifestWork so the work tools report on "
+                "something real.", "SKIP", "propose_manifestwork", pr.get("_raw", json.dumps(pr)))
+        else:
+            prop = approvals.load_proposal(pid)
+            ar = srv.apply_manifestwork(proposal_id=pid,
+                                        approval_token=approvals.mint_token(prop, operation="apply"))
+            ok = "applied" in ar.lower() and "reject" not in ar.lower()
+            rec(P, "seed ManifestWork (gated)", "Deploy a marker ManifestWork via propose+approve+apply "
+                "so the work tools report on something real.", "OK" if ok else "SKIP",
+                "propose_manifestwork -> apply_manifestwork", f"proposal_id={pid}\n{ar[:160]}")
     except Exception as e:  # noqa: BLE001
         rec(P, "seed ManifestWork", "Seed a ManifestWork.", "SKIP", "", f"{type(e).__name__}: {e}")
 
@@ -244,8 +250,9 @@ def _write_flow(srv, approvals, cl):
         # Now the human mints a real token and the change applies.
         prop = approvals.load_proposal(pid)
         token = approvals.mint_token(prop)
-        rec(P, "ocm-mcp approve (human)", "A human on a trusted terminal mints an approval token bound by "
-            "HMAC to the exact content. The agent can never mint one itself.", "OK",
+        rec(P, "ocm-mcp approve (human)", "A human on a trusted terminal mints an approval token: an Ed25519 "
+            "signature binding the exact content and operation. The server holds only the public key, so it "
+            "can verify a token but can never mint one - and neither can the agent.", "OK",
             f"ocm-mcp approve {pid}", f"token minted (...{token[-12:]})")
         ar = srv.apply_manifestwork(proposal_id=pid, approval_token=token)
         applied = "applied" in ar.lower() and "reject" not in ar.lower()

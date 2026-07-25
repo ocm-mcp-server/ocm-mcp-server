@@ -23,14 +23,14 @@ flowchart TD
 | `guardrails.py` | Layer-1 static checks: kinds allowlist, namespaces, pod security, image pinning. Pure functions, no cluster needed. |
 | `ocm.py` | The OCM API layer: inventory, placement, work, add-on, registration and policy reads, the generic allow-listed reader, and the cordon/uncordon/set_label/accept lifecycle writes, summarized into agent-friendly shapes. |
 | `k8s.py` | Kubernetes client construction: hub context, read-only spoke contexts, the CSR client. |
-| `approvals.py` | Proposal store on disk + HMAC tokens bound to a content hash with TTL; ManifestWork and lifecycle-action proposals. |
+| `approvals.py` | Proposal store on disk + Ed25519 approval tokens whose claims bind the content hash, the operation (`apply`/`rollback`), and a TTL; ManifestWork, lifecycle-action, and rollback proposals. |
 | `tracing.py` | One OpenTelemetry span and one audit line per tool call. |
 | `cli.py` | `ocm-mcp`: the human side (pending, show, approve, reject, audit). |
 | `config.py` | Settings from env, the protected-namespace set, the allowed-kinds set, the readable-resource allow-list, the allowed lifecycle actions, and the read-only backstop. |
 
 ## The tools, precisely
 
-The surface is **33 tools across ten toolsets**, but the shape is simple: almost
+The surface is **34 tools across ten toolsets**, but the shape is simple: almost
 everything is a safe read of the Open Cluster Management API, and only two toolsets
 can change anything, always through the same gate.
 
@@ -82,16 +82,25 @@ operator remembering to set a flag.
 ## The approval token, in code terms
 
 ```
-token = proposal_id . expiry . HMAC(secret, "id:content_hash:expiry")
+claims = {id, hash: content_hash, op: "apply" | "rollback", exp: expiry}
+token  = base64(claims_json) . base64(Ed25519_sign(private_key, claims_json))
 ```
 
-- `secret` lives in `OCM_MCP_HOME/secret` (0600), read by the server, never
-  exposed by any tool.
+- The **private** signing key lives at `OCM_MCP_HOME/approval_ed25519` (0600) and
+  is used only by `ocm-mcp approve` on a trusted terminal. The MCP server loads
+  only the **public** key (`approval_ed25519.pub`), so it can verify a token but
+  can never mint one - even if the server, or an agent reading its key material,
+  is compromised.
 - `content_hash` is SHA-256 over the canonical JSON of the whole proposal
   (`{cluster, name, manifests, kind, action, params}`), so a token binds equally
-  to a ManifestWork bundle or a lifecycle action's exact parameters.
-- Verification checks: the id matches, the expiry is in the future, and the HMAC
-  recomputes. Change the proposal and the hash changes and the token dies.
+  to a ManifestWork bundle, a lifecycle action's exact parameters, or a rollback.
+- `op` binds the token to one operation: an `apply` token can never authorize a
+  `rollback`, which needs its own proposal and token.
+- Verification checks, in order: the Ed25519 signature is valid for the public
+  key, the id matches, the content hash matches, the operation matches, and the
+  expiry is in the future. Change any byte of the proposal and the signature no
+  longer verifies. Rotate the keypair with `ocm-mcp rotate-secret` to invalidate
+  every outstanding token at once.
 
 ## Static guardrail checks (layer 1)
 
@@ -121,13 +130,15 @@ back via `get_audit_trail` to write an accurate post-incident report.
 
 ## Tests
 
-- `tests/` unit tests (52): the full approval-token lifecycle (roundtrip,
-  wrong-proposal, content-change invalidation, expiry, tampering, malformed) for
-  both ManifestWork and lifecycle-action proposals, every static guardrail case,
-  the generic reader's allow-list (Secrets and core kinds cannot be named), the
-  HCP / ManagedClusterInfo / add-on shaping logic, and the hardening fixes
-  (key caching + rotation, apply-time content re-check, robust PodSpec extraction).
-  No cluster required.
+- `tests/` unit tests (57): the full approval-token lifecycle (roundtrip,
+  wrong-proposal, content-change invalidation, expiry, tampering, malformed,
+  public-key-only verification, operation binding, keypair rotation) for both
+  ManifestWork and lifecycle-action proposals, every static guardrail case
+  (including GVK spoofing, indirect Secret access, and arbitrary service
+  accounts), the generic reader's allow-list (Secrets and core kinds cannot be
+  named), the HCP / ManagedClusterInfo / add-on shaping logic, and the hardening
+  fixes (apply-time content re-check, robust PodSpec extraction). No cluster
+  required.
 - `deploy/policies/tests/` Kyverno CLI suite (12 cases): good, bad, and
   human-created ManifestWorks. Offline, runs in CI.
 

@@ -43,7 +43,37 @@ def test_too_many_manifests_rejected():
 
 def test_disallowed_kind():
     bad = deployment(kind="ClusterRoleBinding")
-    with pytest.raises(GuardrailViolation, match="not in the allowed set"):
+    with pytest.raises(GuardrailViolation, match="not an allowed apiVersion/kind"):
+        guardrails.validate_manifests([bad])
+
+
+def test_gvk_spoofing_blocked():
+    # An allowed kind under a spoofed group must be rejected (checks full GVK, not just kind).
+    bad = deployment(apiVersion="evil.example/v1")
+    with pytest.raises(GuardrailViolation, match="not an allowed apiVersion/kind"):
+        guardrails.validate_manifests([bad])
+
+
+def test_secret_env_ref_blocked():
+    bad = deployment()
+    bad["spec"]["template"]["spec"]["containers"][0]["env"] = [
+        {"name": "PW", "valueFrom": {"secretKeyRef": {"name": "db", "key": "pw"}}}
+    ]
+    with pytest.raises(GuardrailViolation, match="secretKeyRef"):
+        guardrails.validate_manifests([bad])
+
+
+def test_secret_volume_blocked():
+    bad = deployment()
+    bad["spec"]["template"]["spec"]["volumes"] = [{"name": "s", "secret": {"secretName": "db"}}]
+    with pytest.raises(GuardrailViolation, match="secret volume"):
+        guardrails.validate_manifests([bad])
+
+
+def test_arbitrary_service_account_blocked():
+    bad = deployment()
+    bad["spec"]["template"]["spec"]["serviceAccountName"] = "admin"
+    with pytest.raises(GuardrailViolation, match="serviceAccountName"):
         guardrails.validate_manifests([bad])
 
 

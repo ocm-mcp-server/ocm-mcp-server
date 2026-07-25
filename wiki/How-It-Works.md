@@ -86,10 +86,14 @@ one is covered by the others. Details in
 ## Why approval is a token, not a chat "yes"
 
 A "yes" in chat approves a conversation. The token approves *content*. It is an
-HMAC over the proposal's SHA-256 hash plus an expiry. If the agent changes even
-one byte of the proposal after approval, the token no longer verifies. Tokens
-expire (default one hour) and are minted only by the `ocm-mcp` CLI on a trusted
-terminal, never by any tool the agent can call.
+**Ed25519 signature** over claims that bind the proposal's SHA-256 hash, the
+operation (`apply` or `rollback`), and an expiry. If the agent changes even one
+byte of the proposal after approval, the signature no longer verifies. Approval
+is **asymmetric**: the private signing key belongs to the `ocm-mcp` CLI on a
+trusted terminal, and the server holds only the public verification key - so it
+can check a token but can never mint one, even if it is compromised. Tokens
+expire (default one hour) and are minted only by the CLI, never by any tool the
+agent can call.
 
 ## What the human sees
 

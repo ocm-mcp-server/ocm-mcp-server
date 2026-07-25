@@ -25,7 +25,7 @@ and audit between the model and your clusters.**
 
 **[✨ Why](#why-this-exists) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
-<img src="docs/assets/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
+<img src="demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
 <sub>The whole safe-remediation loop: investigate with free reads, propose a change, get rejected by the guardrails and correct it, wait for a human-signed token, apply, verify, and report from the audit log.</sub>
 
@@ -59,7 +59,7 @@ between the model and your clusters:
 |---|-------|-------------|---------------|
 | 1 | **Static checks** | this server, before anything else | privileged pods, host access, system namespaces, unpinned images, disallowed kinds |
 | 2 | **Policy admission** | [Kyverno](https://kyverno.io/) dry-run on the hub | anything your org's policies reject, evaluated inside the `ManifestWork` envelope |
-| 3 | **Human approval** | HMAC token minted by `ocm-mcp approve` on a trusted terminal | any change reaching a cluster without a person consenting to that exact content |
+| 3 | **Human approval** | Ed25519 token signed by `ocm-mcp approve` on a trusted terminal (the server holds only the public key) | any change reaching a cluster without a person consenting to that exact content and operation |
 | 4 | **Least-privilege RBAC** | Kubernetes | everything else; no Secrets, no exec, no deletes outside its own ManifestWorks |
 
 None of these layers live in the system prompt, so none of them can be talked out of.
@@ -129,7 +129,7 @@ control that governs every human `kubectl apply`.
 
 ## Toolsets
 
-The surface is **33 tools across ten toolsets**. Almost all of it is read: the whole
+The surface is **34 tools across ten toolsets**. Almost all of it is read: the whole
 Open Cluster Management API is safe to inspect. Only two toolsets can change
 anything, and only through the propose -> approve -> apply gate. Every hub-level
 tool works for any managed spoke - a standalone OpenShift cluster, a HyperShift
@@ -140,7 +140,7 @@ hosted cluster, or a cloud cluster - because on the hub they are all `ManagedClu
 | **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims, ManagedClusterInfo | 6 | - |
 | **observability** | cluster health, events, pod logs | 3 | - |
 | **placement** | Placements, PlacementDecisions, AddOnPlacementScores | 3 | - |
-| **work** | ManifestWork status feedback + the gated deploy flow | 6 | gated |
+| **work** | ManifestWork status feedback + the gated deploy and rollback flow | 7 | gated |
 | **addons** | ClusterManagementAddOns, fleet + per-cluster add-on health | 3 | - |
 | **registration** | pending join CSRs + gated cluster lifecycle actions | 3 | gated |
 | **policy** | governance compliance + violations rollup (if the add-on is installed) | 2 | - |
@@ -229,8 +229,10 @@ approved change; needs a human token).
   - `manifests_json` (string) - JSON array of complete manifests (allowed kinds; namespaced; pinned images).
 - **`apply_manifestwork`** *(apply)* - deliver an approved ManifestWork.
   - `proposal_id` (string), `approval_token` (string) - from `ocm-mcp approve <id>`.
-- **`rollback_manifestwork`** *(apply)* - delete the ManifestWork from an applied proposal (needs a fresh token).
-  - `proposal_id` (string), `approval_token` (string).
+- **`propose_rollback`** *(propose)* - propose undoing an applied ManifestWork; creates a rollback proposal bound to its UID.
+  - `proposal_id` (string) - the applied ManifestWork proposal to undo.
+- **`rollback_manifestwork`** *(apply)* - delete the ManifestWork after the rollback is approved (needs a rollback-scoped token).
+  - `rollback_proposal_id` (string), `approval_token` (string).
 </details>
 
 <details>
@@ -351,8 +353,9 @@ ready-to-paste values at the end).
 | `OCM_MCP_SPOKE_TIMEOUT` | no | Read timeout (seconds) for spoke health/event/log calls, so one large cluster cannot hang a tool. Default `30`. |
 | `OCM_MCP_HEALTH_LIMIT` | no | Max pods/deployments `get_cluster_health` fetches per cluster; the result notes truncation. Default `500`. |
 
-For key management, `ocm-mcp rotate-secret` mints a fresh HMAC key (invalidating every
-outstanding approval token), and `ocm-mcp doctor` runs the live read-path smoke test.
+For key management, `ocm-mcp rotate-secret` generates a fresh Ed25519 approval keypair
+(invalidating every outstanding approval token), and `ocm-mcp doctor` runs the live
+read-path smoke test.
 
 ```bash
 # the values make bootstrap prints, spelled out:

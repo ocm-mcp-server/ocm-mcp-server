@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ocm-mcp-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "A guardrailed MCP server that lets AI agents operate multi-cluster Kubernetes fleets through an Open Cluster Management hub"
 readme = "README.md"
 license = "Apache-2.0"
@@ -12,8 +12,11 @@ requires-python = ">=3.11"
 authors = [{ name = "Sandeep Bazar" }]
 keywords = ["mcp", "kubernetes", "open-cluster-management", "ai-agents", "multicluster"]
 dependencies = [
-    "mcp>=1.2.0",
-    "kubernetes>=29.0.0",
+    # Upper bounds are deliberate: MCP v2 is a major rewrite and the Kubernetes client
+    # bumps its major on each K8s minor, so we cap to a tested range and widen on purpose.
+    "mcp>=1.9,<2",
+    "kubernetes>=29.0.0,<37",
+    "cryptography>=42",
     "PyYAML>=6.0",
 ]
 
@@ -25,6 +28,7 @@ tracing = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.5",
+    "mypy>=1.10",
 ]
 
 [project.scripts]

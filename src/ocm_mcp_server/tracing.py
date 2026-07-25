@@ -54,6 +54,26 @@ def audit(entry: dict[str, Any]) -> None:
         f.write(json.dumps(entry, default=str) + "\n")
 
 
+def classify_outcome(result: Any) -> str:
+    """Turn a tool's return value into a truthful audit outcome.
+
+    Tools return normally even when they refuse: a string beginning REJECTED / FAILED /
+    ERROR / UNAVAILABLE is NOT a success, and must not be audited as 'ok', or the audit
+    log (and the eval harness that scores from it) reports false successes.
+    """
+    if isinstance(result, str):
+        s = result.lstrip()
+        if s.startswith("REJECTED"):
+            return "rejected"
+        if s.startswith("FAILED"):
+            return "failed"
+        if s.startswith("ERROR"):
+            return "error"
+        if s.startswith("UNAVAILABLE"):
+            return "unavailable"
+    return "ok"
+
+
 def traced_tool(fn: Callable) -> Callable:
     """Wrap an MCP tool: one OTel span + one audit line per invocation."""
 
@@ -72,8 +92,11 @@ def traced_tool(fn: Callable) -> Callable:
                     for key, value in kwargs.items():
                         if key not in ("approval_token",):
                             span.set_attribute(f"arg.{key}", str(value)[:200])
-                    return run()
-            return run()
+                    result = run()
+            else:
+                result = run()
+            outcome = classify_outcome(result)
+            return result
         except Exception as exc:
             outcome, error = "error", f"{type(exc).__name__}: {exc}"
             raise

@@ -2,19 +2,26 @@
 
 ## The four layers
 
-1. **Static checks** (`guardrails.py`) - fast, local, no cluster needed. Reject
-   privileged/host access, protected namespaces, disallowed kinds, unpinned
-   images, oversized proposals. These run first so the agent gets instant,
-   actionable feedback.
+1. **Static checks** (`guardrails.py`) - fast, local, no cluster needed. Match the
+   full `apiVersion/kind` against an allow-list (so a spoofed group like
+   `evil.example/v1, Deployment` is rejected), and reject privileged/host access,
+   protected namespaces, unpinned images, indirect Secret access
+   (`env.secretKeyRef`, secret and projected-token volumes), arbitrary service
+   accounts, and oversized proposals. These run first so the agent gets instant,
+   actionable feedback, and again at apply time.
 2. **Kyverno dry-run on the hub** (`deploy/policies/`) - organizational policy,
    evaluated inside the ManifestWork envelope via server-side dry-run at
    proposal time. Your existing policy library applies here too.
-3. **Human approval** (`approvals.py`) - HMAC token bound to the proposal's
-   content hash, minted by `ocm-mcp approve` on a trusted terminal, with TTL.
-   The agent can request approval; it can never mint one.
-4. **RBAC** (`deploy/rbac.yaml`) - the server's own identity can read
-   ManagedClusters and manage ManifestWorks. Nothing else. Even a bug in this
-   server cannot read a Secret.
+3. **Human approval** (`approvals.py`) - an **Ed25519** token whose claims bind the
+   proposal's content hash, the operation (`apply` or `rollback`), and an expiry,
+   signed by `ocm-mcp approve` on a trusted terminal. Approval is **asymmetric**:
+   the CLI holds the private signing key, the server holds only the public key, so
+   the server can verify a token but can never mint one - even if it (or an agent
+   reading its key material) is compromised. An apply token cannot authorize a
+   rollback; rollback needs its own proposal and token.
+4. **RBAC** (`deploy/rbac.yaml`) - the server's own identity can read the OCM API
+   and manage only the ManifestWorks and add-ons it creates. Nothing else. Even a
+   bug in this server cannot read a Secret.
 
 Defense in depth matters because each layer fails differently: static checks
 can lag policy; policy can have gaps; humans approve too fast; RBAC is the
