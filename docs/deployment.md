@@ -47,9 +47,10 @@ kubectl --context kind-hub get clusterpolicies
 # three policies, all READY
 ```
 
-Export the environment bootstrap printed, register the server with your MCP
-client ([examples/](../examples/)), and run the smoke test from the
-[worked examples](examples.md).
+Export the environment bootstrap printed (if you are unsure what those context
+names mean, the [context names guide](kubeconfig-contexts.md) explains them),
+register the server with your MCP client ([examples/](../examples/)), and run
+the smoke test from the [worked examples](examples.md).
 
 Tear down with `make teardown`.
 
@@ -121,7 +122,9 @@ ocm-mcp-server
 ```
 
 Cluster names on the left must match `kubectl --context <hub> get managedclusters`
-exactly.
+exactly; the context names on the right come from your kubeconfig. If that
+left-vs-right distinction is unfamiliar, read the
+[context names guide](kubeconfig-contexts.md) first, it walks through both.
 
 ## Path C: Docker
 

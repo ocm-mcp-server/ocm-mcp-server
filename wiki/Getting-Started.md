@@ -23,8 +23,12 @@ make bootstrap     # 1 hub + 3 kind clusters, OCM, Kyverno, policies, demo app
 make install
 ```
 
-`make bootstrap` prints the exact environment to export. Register the server
-with your MCP client (Claude Code, Codex CLI, Gemini CLI, or IBM BOB, all in
+`make bootstrap` prints the exact environment to export. (Not sure what those
+`kind-hub` / `cluster1=kind-cluster1` values mean? The
+[context names guide](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/kubeconfig-contexts.md)
+explains kubeconfig contexts from scratch and how to find yours, including cloud
+logins.) Register the server with your MCP client (Claude Code, Codex CLI,
+Gemini CLI, or IBM BOB, all in
 [`examples/`](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/examples)),
 then run the smoke test:
 
@@ -66,5 +70,10 @@ an OTLP endpoint, and tune the approval TTL to your change windows.
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | optional tracing collector |
 | `OCM_MCP_HOME` | state dir (secret, proposals, audit); default `~/.ocm-mcp` |
 | `OCM_MCP_APPROVAL_TTL` | approval token lifetime, seconds; default 3600 |
+
+New to kubeconfig contexts? The
+[context names guide](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/kubeconfig-contexts.md)
+explains `OCM_MCP_HUB_CONTEXT` and `OCM_MCP_SPOKE_CONTEXTS` from scratch, with the
+exact commands to find your values.
 
 Next: [Use Cases and Impact](Use-Cases-and-Impact).
