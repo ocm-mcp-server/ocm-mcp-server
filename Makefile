@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 # ocm-mcp-server developer entry points.
 #
 #   make bootstrap          create the local fleet (1 hub + 3 spokes) end to end
@@ -7,13 +9,14 @@
 #   make lint               ruff
 #   make inject SCENARIO=failing-rollout CLUSTER=cluster2
 #   make reset CLUSTER=cluster2
+#   make policy-test        offline Kyverno policy tests (needs kyverno CLI)
 #   make eval               run the evaluation harness (see eval/README.md)
 #   make audit              tail the tool-call audit log
 
 SCENARIO ?= failing-rollout
 CLUSTER  ?= cluster2
 
-.PHONY: bootstrap teardown install test lint inject reset eval audit
+.PHONY: bootstrap teardown install test lint policy-test inject reset eval audit
 
 bootstrap:
 	./hack/bootstrap.sh
@@ -29,6 +32,9 @@ test:
 
 lint:
 	python3 -m ruff check src tests eval
+
+policy-test:
+	kyverno test deploy/policies/tests
 
 inject:
 	./chaos/inject.sh $(SCENARIO) $(CLUSTER)

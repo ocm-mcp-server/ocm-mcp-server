@@ -1,0 +1,71 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <sandeepbazar@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+#
+# Offline test suite for the guardrail policies, following the
+# kyverno/policies repository conventions:
+#   kyverno test deploy/policies/tests
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: manifestwork-guardrails
+policies:
+  - ../disallow-privileged-manifestwork.yaml
+  - ../protect-system-namespaces.yaml
+  - ../restrict-manifestwork-kinds.yaml
+resources:
+  - resources.yaml
+results:
+  # ---- disallow-privileged-manifestwork
+  - policy: disallow-privileged-manifestwork
+    rule: deny-privileged-embedded-specs
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: disallow-privileged-manifestwork
+    rule: deny-privileged-embedded-specs
+    kind: ManifestWork
+    resources: [cluster2/bad-privileged, cluster2/bad-hostpath]
+    result: fail
+  # ---- protect-system-namespaces-manifestwork
+  - policy: protect-system-namespaces-manifestwork
+    rule: require-safe-namespace
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: protect-system-namespaces-manifestwork
+    rule: require-safe-namespace
+    kind: ManifestWork
+    resources: [cluster2/bad-namespace, cluster2/bad-no-namespace]
+    result: fail
+  # ---- restrict-manifestwork-kinds
+  - policy: restrict-manifestwork-kinds
+    rule: allowlist-kinds
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: restrict-manifestwork-kinds
+    rule: allowlist-kinds
+    kind: ManifestWork
+    resources: [cluster2/bad-kind]
+    result: fail
+  - policy: restrict-manifestwork-kinds
+    rule: require-pinned-images
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: restrict-manifestwork-kinds
+    rule: require-pinned-images
+    kind: ManifestWork
+    resources: [cluster2/bad-latest-tag]
+    result: fail
+  # ---- label scoping: human-created (unlabeled) work is not matched → skip
+  - policy: disallow-privileged-manifestwork
+    rule: deny-privileged-embedded-specs
+    kind: ManifestWork
+    resources: [cluster2/human-created]
+    result: skip
+  - policy: protect-system-namespaces-manifestwork
+    rule: require-safe-namespace
+    kind: ManifestWork
+    resources: [cluster2/human-created]
+    result: skip
