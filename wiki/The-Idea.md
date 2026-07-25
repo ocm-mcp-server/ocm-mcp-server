@@ -21,7 +21,7 @@ a natural place to insert validation and approval.
 Instead of handing the agent a kubeconfig, we expose the hub as a handful of
 [MCP](https://modelcontextprotocol.io/) tools. MCP (Model Context Protocol) is
 the open standard for connecting agents to tools, so any MCP-capable client
-works: Claude Code, Codex CLI, Gemini CLI, IBM BOB, or your own.
+works: Claude Code, Codex CLI, Gemini CLI, or your own.
 
 ```mermaid
 flowchart LR
