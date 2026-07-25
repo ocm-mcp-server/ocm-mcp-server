@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 Sandeep Bazar <xxxxxxxxxxxx@xxxxx.xxx>
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 # A ConfigMap the app reads gets a wrong value; the app stays up but misbehaves.
 # Expected diagnosis: recent ConfigMap change; app logs show the bad value.
