@@ -10,7 +10,7 @@ This project adopts the
 [CNCF Community Code of Conduct](https://github.com/cncf/foundation/blob/main/code-of-conduct.md),
 which is based on the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/),
 version 2.1. Adopting the CNCF Code of Conduct keeps this project aligned with the wider
-cloud native community as it works toward CNCF Sandbox consideration.
+cloud native community and the standards expected of cloud native projects.
 
 ## In short
 

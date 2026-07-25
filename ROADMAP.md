@@ -44,13 +44,15 @@ be auditable.
       progressive strategies and decision groups.
 - [ ] **Signed audit**: tamper-evident audit log (hash chaining or signing).
 
-## Project maturity and CNCF
+## Project maturity
+
+The project holds itself to CNCF-style community, governance, and security practices as a
+quality bar.
 
 - [x] Governance, maintainers, adopters, code of conduct, security policy, DCO.
 - [x] Security self-assessment ([docs/security-self-assessment.md](docs/security-self-assessment.md)).
+- [x] Self-check against CNCF Sandbox expectations ([docs/cncf-sandbox-readiness.md](docs/cncf-sandbox-readiness.md)).
 - [ ] OpenSSF Best Practices badge (self-assessment in progress).
-- [ ] CNCF Sandbox application, once there is demonstrable adoption and a second
-      maintainer. See [docs/cncf-sandbox-readiness.md](docs/cncf-sandbox-readiness.md).
 
 ## How to influence the roadmap
 
