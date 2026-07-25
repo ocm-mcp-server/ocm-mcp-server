@@ -23,17 +23,25 @@ class GuardrailViolation(Exception):
     """A proposal failed a static guardrail. The message is agent-readable."""
 
 
-def _containers(manifest: dict[str, Any]) -> list[dict[str, Any]]:
-    spec = manifest.get("spec", {})
-    pod_spec = spec.get("template", {}).get("spec", spec if manifest.get("kind") == "Pod" else {})
-    return list(pod_spec.get("containers", [])) + list(pod_spec.get("initContainers", []))
-
-
 def _pod_spec(manifest: dict[str, Any]) -> dict[str, Any]:
+    """Locate the PodSpec regardless of the enclosing workload kind.
+
+    Pod embeds it directly; CronJob nests it under jobTemplate; every other workload
+    (Deployment, StatefulSet, DaemonSet, ReplicaSet, Job) uses spec.template.spec. This
+    keeps the security checks correct if ALLOWED_KINDS grows beyond Deployment.
+    """
     spec = manifest.get("spec", {})
-    if manifest.get("kind") == "Pod":
+    kind = manifest.get("kind")
+    if kind == "Pod":
         return spec
+    if kind == "CronJob":
+        return spec.get("jobTemplate", {}).get("spec", {}).get("template", {}).get("spec", {})
     return spec.get("template", {}).get("spec", {})
+
+
+def _containers(manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    pod_spec = _pod_spec(manifest)
+    return list(pod_spec.get("containers", [])) + list(pod_spec.get("initContainers", []))
 
 
 def check_manifest(manifest: dict[str, Any]) -> list[str]:

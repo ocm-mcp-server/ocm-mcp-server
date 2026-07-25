@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Least-privilege identity for ocm-mcp-server on the hub.
 #
-# The server can: read ManagedClusters, and manage ONLY ManifestWorks that it
-# creates (all writes still pass Kyverno admission + human approval upstream).
-# It cannot read Secrets, exec, or touch anything else on the hub.
+# The verbs mirror the tool surface exactly: read across the OCM API, plus the
+# few mutations the gated write path needs (create/delete ManifestWorks and
+# ManagedClusterAddOns, patch ManagedClusters, approve OCM join CSRs). Every one
+# of those mutations still passes Kyverno admission and human approval upstream.
+# There is NO get on Secrets, no exec, no arbitrary delete anywhere in this role.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -16,12 +18,62 @@ kind: ClusterRole
 metadata:
   name: ocm-mcp-server
 rules:
+  # Cluster inventory, sets, placement. Read, plus patch on ManagedClusters for the
+  # cordon / uncordon / set_label / accept lifecycle actions.
+  - apiGroups: ["cluster.open-cluster-management.io"]
+    resources:
+      - managedclusters
+      - managedclustersets
+      - managedclustersetbindings
+      - placements
+      - placementdecisions
+      - addonplacementscores
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["cluster.open-cluster-management.io"]
     resources: ["managedclusters"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["patch"]
+  # Work distribution. Create/delete ManifestWorks it manages; read replica sets.
   - apiGroups: ["work.open-cluster-management.io"]
     resources: ["manifestworks"]
     verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: ["work.open-cluster-management.io"]
+    resources: ["manifestworkreplicasets"]
+    verbs: ["get", "list", "watch"]
+  # Add-ons. Read definitions/health; create/delete ManagedClusterAddOn for the
+  # enable_addon / disable_addon actions.
+  - apiGroups: ["addon.open-cluster-management.io"]
+    resources: ["clustermanagementaddons", "addontemplates", "addondeploymentconfigs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["addon.open-cluster-management.io"]
+    resources: ["managedclusteraddons"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  # Control-plane config (read only) to confirm enabled features and agent health.
+  - apiGroups: ["operator.open-cluster-management.io"]
+    resources: ["clustermanagers", "klusterlets"]
+    verbs: ["get", "list", "watch"]
+  # ACM extended inventory (ManagedClusterInfo) and governance policy compliance.
+  - apiGroups: ["internal.open-cluster-management.io"]
+    resources: ["managedclusterinfos"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["policy.open-cluster-management.io"]
+    resources: ["policies", "policysets", "placementbindings"]
+    verbs: ["get", "list", "watch"]
+  # HyperShift Hosted Control Planes, when the hub is the hosting cluster.
+  - apiGroups: ["hypershift.openshift.io"]
+    resources: ["hostedclusters", "nodepools"]
+    verbs: ["get", "list", "watch"]
+  # Cluster-join handshake: read pending CSRs and approve OCM join CSRs (the
+  # 'accept' action). Approval needs both the /approval subresource and the signer.
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["certificatesigningrequests"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["certificatesigningrequests/approval"]
+    verbs: ["update"]
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["signers"]
+    resourceNames: ["kubernetes.io/kube-apiserver-client"]
+    verbs: ["approve"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
