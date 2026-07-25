@@ -27,9 +27,20 @@ make bootstrap   # full local fleet, if you want end-to-end
 ## Commit conventions
 
 - Conventional-style subjects: `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`.
-- Sign your work with `git commit -s` (DCO, `Signed-off-by`); no other trailers
-  in commit messages.
 - One logical change per commit; keep diffs reviewable.
+
+## Sign-off
+
+Every commit must be signed off under the
+[Developer Certificate of Origin](https://developercertificate.org/) (DCO): by signing
+off you certify you wrote the change, or otherwise have the right to submit it under the
+project's license. Add the `Signed-off-by` trailer with:
+
+```bash
+git commit -s
+```
+
+Do not add any other trailers to commit messages.
 
 ## Reporting security issues
 

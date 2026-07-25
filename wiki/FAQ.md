@@ -42,7 +42,7 @@ any declarative multi-cluster delivery API. OCM is the reference implementation.
 ## Does it only work with Claude?
 
 No. It speaks standard MCP over stdio. Ready-made configs ship for Claude Code,
-Codex CLI, Gemini CLI, and IBM BOB, and any MCP-capable client works. See
+Codex CLI, and Gemini CLI, and any MCP-capable client works. See
 [Getting Started](Getting-Started).
 
 ## What does it cost to run?
