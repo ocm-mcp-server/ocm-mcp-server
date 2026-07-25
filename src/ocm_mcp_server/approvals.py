@@ -43,6 +43,14 @@ class Proposal:
     content_hash: str = ""
     status: str = "pending"  # pending | applied | rolled_back | rejected
     applied_work: str = ""
+    # "manifestwork" (deploy a bundle) or an OCM lifecycle action (cordon, accept...).
+    kind: str = "manifestwork"
+    action: str = ""
+    params: dict[str, Any] = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.params is None:
+            self.params = {}
 
     def path(self):
         return SETTINGS.proposals_dir / f"{self.id}.json"
@@ -51,9 +59,24 @@ class Proposal:
         self.path().write_text(json.dumps(asdict(self), indent=2, sort_keys=True))
 
 
-def content_hash(cluster: str, name: str, manifests: list[dict[str, Any]]) -> str:
+def content_hash(
+    cluster: str,
+    name: str,
+    manifests: list[dict[str, Any]],
+    kind: str = "manifestwork",
+    action: str = "",
+    params: dict[str, Any] | None = None,
+) -> str:
+    """A token binds to this hash. Changing any field below invalidates approval."""
     canonical = json.dumps(
-        {"cluster": cluster, "name": name, "manifests": manifests},
+        {
+            "cluster": cluster,
+            "name": name,
+            "manifests": manifests,
+            "kind": kind,
+            "action": action,
+            "params": params or {},
+        },
         sort_keys=True,
         separators=(",", ":"),
     )
@@ -70,8 +93,31 @@ def new_proposal(
         summary=summary,
         manifests=manifests,
         created_at=time.time(),
+        kind="manifestwork",
     )
-    prop.content_hash = content_hash(cluster, name, manifests)
+    prop.content_hash = content_hash(cluster, name, manifests, kind="manifestwork")
+    prop.save()
+    return prop
+
+
+def new_action_proposal(
+    cluster: str, action: str, summary: str, params: dict[str, Any]
+) -> Proposal:
+    """A proposed OCM lifecycle action (cordon/uncordon/set_label/accept) awaiting approval."""
+    prop = Proposal(
+        id=uuid.uuid4().hex[:8],
+        cluster=cluster,
+        name=f"{action}-{cluster}",
+        summary=summary,
+        manifests=[],
+        created_at=time.time(),
+        kind="action",
+        action=action,
+        params=params,
+    )
+    prop.content_hash = content_hash(
+        cluster, prop.name, [], kind="action", action=action, params=params
+    )
     prop.save()
     return prop
 

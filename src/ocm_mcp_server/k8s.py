@@ -19,6 +19,9 @@ from .config import SETTINGS
 
 OCM_CLUSTER_GROUP = "cluster.open-cluster-management.io"
 OCM_WORK_GROUP = "work.open-cluster-management.io"
+OCM_ADDON_GROUP = "addon.open-cluster-management.io"
+OCM_OPERATOR_GROUP = "operator.open-cluster-management.io"
+OCM_POLICY_GROUP = "policy.open-cluster-management.io"
 
 
 @cache
@@ -32,6 +35,11 @@ def api_client(context: str = "") -> client.ApiClient:
 
 def hub_custom(_api: client.CustomObjectsApi | None = None) -> client.CustomObjectsApi:
     return _api or client.CustomObjectsApi(api_client())
+
+
+def hub_certificates() -> client.CertificatesV1Api:
+    """CertificateSigningRequest client on the hub (cluster-join handshake)."""
+    return client.CertificatesV1Api(api_client())
 
 
 def spoke_core(cluster: str) -> client.CoreV1Api:

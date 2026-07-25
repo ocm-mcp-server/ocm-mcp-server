@@ -6,6 +6,7 @@
 - [2. The Idea](The-Idea)
 - [3. How It Works](How-It-Works)
 - [4. Implementation](Implementation)
+- [Tools and Prompts](Tools-and-Prompts)
 - [5. Guardrails Deep Dive](Guardrails-Deep-Dive)
 - [6. Getting Started](Getting-Started)
 - [7. Use Cases and Impact](Use-Cases-and-Impact)

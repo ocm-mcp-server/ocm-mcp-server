@@ -43,6 +43,65 @@ ALLOWED_KINDS = frozenset(
     }
 )
 
+# The generic reader (list_resources / get_resource) works only against this
+# allow-list of Open Cluster Management API types. This is an allow-list, not a
+# deny-list, on purpose: Secrets, ConfigMaps with credentials, and every other
+# core or third-party kind are simply not expressible through the generic reader,
+# so no prompt can coax it into reading them. Each entry is
+#   friendly-name -> (group, version, plural, namespaced)
+# "namespaced" resources on an OCM hub usually live in the cluster namespace (a
+# hub namespace named after each ManagedCluster) or a user namespace.
+READABLE_RESOURCES: dict[str, tuple[str, str, str, bool]] = {
+    # inventory
+    "managedclusters": ("cluster.open-cluster-management.io", "v1", "managedclusters", False),
+    "managedclustersets": (
+        "cluster.open-cluster-management.io", "v1beta2", "managedclustersets", False,
+    ),
+    "managedclustersetbindings": (
+        "cluster.open-cluster-management.io", "v1beta2", "managedclustersetbindings", True,
+    ),
+    # placement / scheduling
+    "placements": ("cluster.open-cluster-management.io", "v1beta1", "placements", True),
+    "placementdecisions": (
+        "cluster.open-cluster-management.io", "v1beta1", "placementdecisions", True,
+    ),
+    "addonplacementscores": (
+        "cluster.open-cluster-management.io", "v1alpha1", "addonplacementscores", True,
+    ),
+    # work distribution
+    "manifestworks": ("work.open-cluster-management.io", "v1", "manifestworks", True),
+    "manifestworkreplicasets": (
+        "work.open-cluster-management.io", "v1alpha1", "manifestworkreplicasets", True,
+    ),
+    # add-ons
+    "clustermanagementaddons": (
+        "addon.open-cluster-management.io", "v1alpha1", "clustermanagementaddons", False,
+    ),
+    "managedclusteraddons": (
+        "addon.open-cluster-management.io", "v1alpha1", "managedclusteraddons", True,
+    ),
+    "addondeploymentconfigs": (
+        "addon.open-cluster-management.io", "v1alpha1", "addondeploymentconfigs", True,
+    ),
+    "addontemplates": ("addon.open-cluster-management.io", "v1alpha1", "addontemplates", False),
+    # operator / control plane (read to confirm features and health)
+    "clustermanagers": ("operator.open-cluster-management.io", "v1", "clustermanagers", False),
+    "klusterlets": ("operator.open-cluster-management.io", "v1", "klusterlets", False),
+    # governance policy add-on (present only if installed; feature-detected at call time)
+    "policies": ("policy.open-cluster-management.io", "v1", "policies", True),
+    "policysets": ("policy.open-cluster-management.io", "v1beta1", "policysets", True),
+    "placementbindings": ("policy.open-cluster-management.io", "v1", "placementbindings", True),
+}
+
+# OCM-native lifecycle actions an agent may PROPOSE. Each still routes through the
+# same propose -> human approval token -> apply gate as a ManifestWork; none is
+# ever applied inline. Everything not listed here cannot be proposed at all.
+ALLOWED_CLUSTER_ACTIONS = frozenset({"cordon", "uncordon", "set_label", "accept"})
+
+# The NoSelect taint the cordon/uncordon actions add to or remove from a
+# ManagedCluster to pull it out of (or back into) Placement scheduling.
+CORDON_TAINT_KEY = "ocm-mcp-server.io/cordoned"
+
 
 @dataclass
 class Settings:
@@ -58,6 +117,13 @@ class Settings:
         default_factory=lambda: os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "")
     )
     approval_ttl_seconds: int = int(os.environ.get("OCM_MCP_APPROVAL_TTL", "3600"))
+    # Coarse defense-in-depth backstop, layered UNDER the per-tool HMAC gate. When
+    # set truthy (OCM_MCP_READ_ONLY=1/true/yes), every write tool refuses before it
+    # does anything, so a hub operator can run a strictly-inspection deployment.
+    read_only: bool = field(
+        default_factory=lambda: os.environ.get("OCM_MCP_READ_ONLY", "").strip().lower()
+        in ("1", "true", "yes", "on")
+    )
 
     def __post_init__(self) -> None:
         raw = os.environ.get("OCM_MCP_SPOKE_CONTEXTS", "")

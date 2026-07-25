@@ -4,6 +4,40 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Expanded the tool surface to 27 tools across nine toolsets** (inventory,
+  observability, placement, work, addons, registration, policy, resources,
+  audit), covering the Open Cluster Management read API end to end: cluster sets
+  and bindings, cluster claims, per-cluster detail, Placements and
+  PlacementDecisions, AddOnPlacementScores, ManifestWork status feedback,
+  ManifestWorkReplicaSets, ClusterManagementAddOns and per-cluster add-on health,
+  pending join CSRs, and governance Policy compliance.
+- **Generic allow-listed reader** (`list_resources`, `get_resource`) over OCM API
+  types. Secrets and core kinds are not on the allow-list and cannot be named, so
+  the dangerous read does not exist rather than being merely restricted.
+- **Gated OCM lifecycle actions** (`propose_cluster_action`,
+  `apply_cluster_action`): cordon, uncordon, set_label, accept. Each routes
+  through the same static-guardrail, hub dry-run, and HMAC-token gate as a
+  ManifestWork; none is applied inline.
+- **Four MCP prompts**: `diagnose_fleet`, `remediate_with_approval`,
+  `incident_postmortem`, `why_not_scheduled`, encoding the safe workflow.
+- **MCP tool annotations** (`readOnlyHint` / `destructiveHint`) on every tool, and
+  an `OCM_MCP_READ_ONLY` backstop that disables both write toolsets for
+  inspection-only deployments.
+- **Homepage demo** (animated terminal GIF) plus a
+  [Tools and Prompts reference](docs/tools.md) and a matching wiki page.
+
+### Changed
+
+- Approval proposals now carry a `kind` (manifestwork or action) and typed
+  `params`; the content hash binds the whole proposal, so a token approves an
+  exact ManifestWork bundle or an exact lifecycle action.
+- Unit tests: 37 (from 26), adding lifecycle-action approvals and the reader
+  allow-list.
+
 ## [0.1.0] - 2026-07-25
 
 First public release: the complete guardrailed-AgentOps pattern, end to end.
