@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.ocm-mcp/
+kubeconfig*
+!examples/kubeconfig.example
+eval/results/*.json
+.DS_Store
