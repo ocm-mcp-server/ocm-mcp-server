@@ -8,7 +8,9 @@ venv/
 .pytest_cache/
 .ruff_cache/
 .ocm-mcp/
-kubeconfig*
+# real kubeconfig files only (not docs about kubeconfig)
+/kubeconfig
+*.kubeconfig
 !examples/kubeconfig.example
 eval/results/*.json
 .DS_Store
