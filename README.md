@@ -88,6 +88,42 @@ and a Kyverno **dry-run** validate it; a **human** reviews the exact content and
 approval token bound to its hash; only then does `apply` deliver it, with every step traced
 and logged.
 
+## Policy admission with Kyverno
+
+The second guardrail layer does not live in this server - it lives in the cluster. Before a
+proposed change is ever stored, the server does a **server-side dry-run create** of the
+`ManifestWork` on the hub, so the hub's [Kyverno](https://kyverno.io/) validating admission
+runs against the exact manifests the agent wants to apply. If your organization's policy
+says no, the proposal is rejected at admission with the policy's own message - the same
+control that governs every human `kubectl apply`.
+
+**Why Kyverno:**
+
+- **Policy as code, no new language.** [Kyverno](https://kyverno.io/docs/introduction/) is a
+  CNCF policy engine whose policies are ordinary Kubernetes resources in YAML and CEL -
+  reviewable, versioned, and testable like any manifest. This is the policy-as-code approach
+  the CNCF Kubernetes Policy Management whitepaper (CNCF
+  [TAG Security](https://github.com/cncf/tag-security)) recommends: keep policy declarative
+  and separate from application code.
+- **Enforced by the cluster, not the prompt.** Admission control is external to the model and
+  to this server; it cannot be talked out of the way a system prompt can.
+- **The right tool for the job.** Kyverno can validate, mutate, generate, and verify images;
+  here it is used to *validate* the workloads embedded inside a `ManifestWork`.
+
+**Where it is used here:**
+
+- [`deploy/policies/`](deploy/policies/) ships three `ClusterPolicy` objects that `foreach`
+  over `spec.workload.manifests` inside a `ManifestWork` (block privileged/host access,
+  protect system namespaces, enforce a kind allow-list), scoped by the
+  `app.kubernetes.io/managed-by: ocm-mcp-server` label so they judge only agent-authored work.
+- `make policy-test` runs a **12-case offline suite** with the `kyverno` CLI - good, bad, and
+  human-authored `ManifestWork`s - needing no cluster and no dependencies. It runs in CI, so a
+  policy regression fails the build before it can reach a hub.
+- Don't start from scratch: the community library
+  [kyverno/policies](https://github.com/kyverno/policies) and the searchable
+  [Kyverno Policies catalog](https://kyverno.io/policies/) are a ready source of validation,
+  Pod Security Standards, and best-practice policies to adopt or take inspiration from.
+
 ## Toolsets
 
 The surface is **33 tools across ten toolsets**. Almost all of it is read: the whole
@@ -476,7 +512,7 @@ report is git-ignored. Works on macOS (Homebrew + Podman) and Linux.
 | [Architecture](docs/architecture.md) | the choke-point idea, components, design decisions worth arguing about |
 | [Guardrails](docs/guardrails.md) | the four layers, deliberate absences, threat model, what we refuse to automate |
 | [Security self-assessment](docs/security-self-assessment.md) | CNCF TAG-Security-style assessment: actors, actions, security functions, limits |
-| [CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md) | how the project maps to CNCF Sandbox expectations; honest gaps |
+| [CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md) | a self-check against CNCF Sandbox expectations, used as a quality bar; honest gaps |
 | [Demo script](docs/demo-script.md) | a timed 3-act live demo with fallbacks |
 | [Upstream notes](docs/upstream-notes.md) | gaps found while building this; proposals for MCP, OCM, and Kyverno |
 | [Eval harness](eval/README.md) | scenario classes, scoring, how to run against your model |
@@ -546,14 +582,15 @@ If this project is useful to you, a ⭐ helps others find it.
 
 ## Project governance and maturity
 
-This project is built to be picked up by a community and, in time, to stand as a CNCF
-Sandbox candidate. The scaffolding is already in place:
+This project holds itself to CNCF community, governance, and security practices as a quality
+bar - the same standards expected of a CNCF Sandbox project - so it is easy to adopt,
+contribute to, and trust. The scaffolding is in place:
 
 - **[Governance](GOVERNANCE.md)** - how decisions are made and how to become a maintainer.
 - **[Maintainers](MAINTAINERS.md)** and **[Adopters](ADOPTERS.md)** - who maintains it, and an open page to record who uses it.
 - **[Roadmap](ROADMAP.md)** - direction by theme, safety-first.
 - **[Security self-assessment](docs/security-self-assessment.md)** - a CNCF TAG-Security-style assessment of what the guarantees are and where they end.
-- **[CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md)** - a transparent checklist of what is done and what is still open.
+- **[CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md)** - a self-check against CNCF Sandbox expectations, used as a quality bar.
 - **[Code of Conduct](CODE_OF_CONDUCT.md)** - the CNCF Community Code of Conduct; report privately via [LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
 
 Every change is signed off under the [DCO](CONTRIBUTING.md), and any change that touches

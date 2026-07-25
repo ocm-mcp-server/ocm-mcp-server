@@ -3,10 +3,10 @@
 
 # CNCF Sandbox readiness
 
-This document tracks how ocm-mcp-server maps to the expectations for a
-[CNCF Sandbox](https://github.com/cncf/sandbox) project. It is a transparent checklist,
-not a claim of acceptance. The project is independently maintained and has not yet
-applied; this page exists so the path is legible and the gaps are honest.
+This document is a self-check of how ocm-mcp-server measures up against the community,
+governance, and security practices expected of a
+[CNCF Sandbox](https://github.com/cncf/sandbox) project. It is used as a quality bar: a
+transparent checklist of what is in place and where the project can go further.
 
 ## Project health and governance
 
@@ -44,15 +44,15 @@ applied; this page exists so the path is legible and the gaps are honest.
 | Documentation for new users | Done | README, wiki, deployment and context guides |
 | Evaluation evidence | Partial | eval harness present; multi-model results pending |
 
-## What is deliberately still open
+## Where the project can go further
 
-CNCF Sandbox is aimed at early projects, but a credible application benefits from a
-little community around the code. The honest gaps today:
+The practices above are strongest when a community forms around the code. The honest gaps
+today:
 
 - **A second maintainer.** The project is currently single-maintainer. Growing to at
   least two maintainers from different affiliations is the most important step.
 - **Demonstrable adoption.** [ADOPTERS.md](../ADOPTERS.md) is open; even one or two
-  public evaluators strengthen the case.
+  public evaluators strengthen it.
 - **Published evaluation results.** Running the harness against several models and
   publishing the numbers (including failures) turns the safety claims into evidence.
 - **In-cluster deployment artifacts.** A Helm chart and Deployment manifest (see the
@@ -60,6 +60,6 @@ little community around the code. The honest gaps today:
 
 ## How to help
 
-If you want to see this become a CNCF project, the highest-leverage contributions are:
-add yourself to [ADOPTERS.md](../ADOPTERS.md), publish evaluation results, or step up as
-a maintainer per [GOVERNANCE.md](../GOVERNANCE.md).
+The highest-leverage contributions are: add yourself to [ADOPTERS.md](../ADOPTERS.md),
+publish evaluation results, or step up as a maintainer per
+[GOVERNANCE.md](../GOVERNANCE.md).
