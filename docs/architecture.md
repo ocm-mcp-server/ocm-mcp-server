@@ -5,7 +5,7 @@
 Fleet operations already flow through a hub: Open Cluster Management gives us
 cluster inventory (`ManagedCluster`), scheduling (`Placement`), and delivery
 (`ManifestWork`). Instead of handing an agent N kubeconfigs, we hand it a
-narrow, typed view of that hub — one place to observe, one place to constrain.
+narrow, typed view of that hub - one place to observe, one place to constrain.
 
 ```
 agent (any MCP client)
@@ -32,7 +32,7 @@ ManifestWork → work agent on each managed cluster
 | `guardrails.py` | layer-1 static checks (kinds allowlist, namespaces, pod security, image pinning) |
 | `approvals.py` | proposal store + HMAC tokens bound to a content hash with TTL |
 | `tracing.py` | OTel span + audit line per tool call |
-| `cli.py` | `ocm-mcp` — the human approval terminal |
+| `cli.py` | `ocm-mcp` - the human approval terminal |
 | `deploy/policies/` | Kyverno ClusterPolicies validating **inside** the ManifestWork envelope |
 | `deploy/rbac.yaml` | hub ServiceAccount: ManagedClusters read, ManifestWorks manage, nothing else |
 
@@ -40,7 +40,7 @@ ManifestWork → work agent on each managed cluster
 
 **Why validate ManifestWorks, not Pods?** Policies on the managed clusters see
 resources only after delivery. Validating the *envelope* on the hub rejects bad
-content before it ever leaves — at proposal time, via server-side dry-run, so
+content before it ever leaves - at proposal time, via server-side dry-run, so
 the agent gets the policy message as feedback and can self-correct.
 
 **Why an HMAC token instead of a "yes" in chat?** A chat approval approves a
@@ -58,7 +58,7 @@ called. Capabilities that are absent cannot be prompt-injected into use.
 
 ## Scaling the pattern
 
-- More clusters: nothing changes — the hub is the fan-out point.
+- More clusters: nothing changes - the hub is the fan-out point.
 - More agents: one server per agent identity, each with its own RBAC and audit.
 - Other hubs: the guardrail pattern (static → policy dry-run → human token →
   RBAC) ports to any declarative delivery API, not just OCM.

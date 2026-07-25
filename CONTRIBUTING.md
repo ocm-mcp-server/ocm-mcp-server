@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest — issues, discussion, and PRs are all welcome.
+Thanks for your interest - issues, discussion, and PRs are all welcome.
 
 ## Development setup
 
@@ -33,4 +33,4 @@ make bootstrap   # full local fleet, if you want end-to-end
 
 ## Reporting security issues
 
-Please do not open public issues for security reports — see [SECURITY.md](SECURITY.md).
+Please do not open public issues for security reports - see [SECURITY.md](SECURITY.md).

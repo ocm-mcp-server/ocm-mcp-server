@@ -181,7 +181,7 @@ def dry_run_manifestwork(cluster: str, body: dict[str, Any]) -> None:
     """Server-side dry-run create on the hub.
 
     Kyverno's validating webhooks run during admission, so hub policies reject
-    non-compliant ManifestWorks here — before anything is stored or applied.
+    non-compliant ManifestWorks here - before anything is stored or applied.
     Raises kubernetes.client.ApiException on rejection.
     """
     hub_custom().create_namespaced_custom_object(

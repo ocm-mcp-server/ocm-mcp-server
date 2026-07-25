@@ -6,7 +6,7 @@
 The MCP server (not the agent) holds the kubeconfig. The hub context is used for
 all OCM API access; spoke contexts are optional read-only ServiceAccounts used
 for events/logs. In production, replace direct spoke contexts with the OCM
-cluster-proxy add-on — see docs/architecture.md.
+cluster-proxy add-on - see docs/architecture.md.
 """
 
 from __future__ import annotations

@@ -9,7 +9,7 @@ Read tools are free. Write tools are gated:
     rollback_manifestwork -> requires a human-minted approval token
 
 The agent never sees a kubeconfig, a secret, or an exec socket. There is no
-tool that can read Secrets, exec into pods, or delete arbitrary resources —
+tool that can read Secrets, exec into pods, or delete arbitrary resources  - 
 by design, not by prompt.
 """
 
@@ -105,7 +105,7 @@ def get_audit_trail(last_n: int = 30) -> str:
 
     Use this at the end of an incident to write an accurate post-incident
     report of what was inspected, what was proposed, what was approved, and
-    what was applied — from the record, not from memory.
+    what was applied - from the record, not from memory.
     """
     path = SETTINGS.audit_log
     if not path.exists():

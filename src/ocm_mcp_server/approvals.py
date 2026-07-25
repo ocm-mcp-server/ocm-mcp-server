@@ -119,5 +119,5 @@ def verify_token(prop: Proposal, token: str) -> None:
     ).hexdigest()
     if not hmac.compare_digest(expected, sig):
         raise ApprovalError(
-            "Invalid approval token (content mismatch — the proposal may have changed)."
+            "Invalid approval token (content mismatch - the proposal may have changed)."
         )
