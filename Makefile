@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # ocm-mcp-server developer entry points.
 #
+#   make e2e                one-command local end-to-end test + HTML report
 #   make bootstrap          create the local fleet (1 hub + 3 spokes) end to end
 #   make teardown           delete the fleet
 #   make install            install the package (editable) + dev deps
@@ -16,7 +17,10 @@
 SCENARIO ?= failing-rollout
 CLUSTER  ?= cluster2
 
-.PHONY: bootstrap teardown install test lint policy-test inject reset eval audit
+.PHONY: e2e bootstrap teardown install test lint policy-test inject reset eval audit
+
+e2e:
+	./hack/e2e-local.sh
 
 bootstrap:
 	./hack/bootstrap.sh

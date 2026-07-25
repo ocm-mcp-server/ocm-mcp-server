@@ -445,6 +445,26 @@ cases ([`deploy/policies/tests/`](deploy/policies/tests/)) against good, bad, an
 human-created ManifestWorks with no cluster and no dependencies. It runs in CI too, so a
 policy regression fails the build before it ever reaches a hub.
 
+## Try it end to end (one command)
+
+Want proof it works against real clusters, not mocks? One script stands up a real
+Open Cluster Management fleet on kind, exercises every tool and prompt, runs a
+break-then-fix scenario, and writes a graphical HTML report:
+
+```bash
+./hack/e2e-local.sh          # 2 spokes, auto-cleanup   (SPOKES=1 for a lighter run)
+```
+
+It (1) installs or version-checks the dependencies (Podman, kind, kubectl, clusteradm,
+helm; Docker is not required), (2) bootstraps a hub plus spokes, (3) runs the read
+tools, the gated propose -> approve -> apply write flow, a lifecycle action, and the
+prompts - each with a plain-language explanation of what it does and why, (4) injects a
+failing rollout and shows the diagnose-and-fix loop end to end, then (5) writes
+`e2e-report.html` and tears the fleet back down (kind and Podman stay installed). The
+report is git-ignored. Works on macOS (Homebrew + Podman) and Linux.
+
+`ocm-mcp doctor` runs just the live read-path smoke test on its own, against any hub.
+
 ## Documentation
 
 | Page | What it covers |
