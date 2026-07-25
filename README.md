@@ -2,10 +2,10 @@
 
 # 🛡️ ocm-mcp-server
 
-### AgentOps for Kubernetes fleets — done safely.
+### AgentOps for Kubernetes fleets, done safely.
 
 **An MCP server that lets AI agents operate a multi-cluster Kubernetes fleet through an
-[Open Cluster Management](https://open-cluster-management.io/) hub — with policy, approval,
+[Open Cluster Management](https://open-cluster-management.io/) hub, with policy, approval,
 and audit between the model and your clusters.**
 
 *The agent never holds a kubeconfig. Every write is policy-checked, human-approved, and traced.*
@@ -16,6 +16,7 @@ and audit between the model and your clusters.**
 [![OCM](https://img.shields.io/badge/multicluster-Open%20Cluster%20Management-326CE5?logo=kubernetes&logoColor=white)](https://open-cluster-management.io/)
 [![Kyverno](https://img.shields.io/badge/policy-Kyverno-ff6f00)](https://kyverno.io/)
 [![CI](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/ci.yaml/badge.svg)](https://github.com/sandeepbazar/ocm-mcp-server/actions)
+[![Release](https://img.shields.io/github/v/tag/sandeepbazar/ocm-mcp-server?label=release)](https://github.com/sandeepbazar/ocm-mcp-server/releases)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
@@ -26,23 +27,29 @@ and audit between the model and your clusters.**
 
 ## Why this exists
 
-Every platform team is being asked the same question: *can an AI agent handle our 2 a.m. pages?*
-The naive answer — an LLM holding `kubectl` and cluster-admin — is an incident waiting to happen:
-a non-deterministic actor, production credentials, and no audit trail.
+Your team runs many Kubernetes clusters. Sooner or later somebody asks the question:
+can an AI agent take the 2 a.m. page?
 
-This project takes the opposite route. A multi-cluster hub already exists for humans; it is the
-perfect **choke point** for agents. `ocm-mcp-server` exposes the hub's APIs as a small set of
-typed [MCP](https://modelcontextprotocol.io/) tools, and puts four independent guardrail layers
-between the model and your fleet:
+The quickest way to find out is to hand a model `kubectl` with cluster-admin and watch.
+In production that experiment ends badly, for three separate reasons. The model is
+non-deterministic. The credentials are real. And when something goes wrong, there is no
+reliable record of what the agent did or why.
+
+This project starts from a different observation: fleets already have a control point that
+humans trust every day, the multi-cluster hub. Open Cluster Management (a CNCF project)
+gives every fleet an inventory (`ManagedCluster`), a scheduler (`Placement`), and a delivery
+channel (`ManifestWork`). `ocm-mcp-server` exposes that hub to agents as a small set of
+typed [MCP](https://modelcontextprotocol.io/) tools, and puts four independent layers
+between the model and your clusters:
 
 | # | Layer | Enforced by | What it stops |
 |---|-------|-------------|---------------|
 | 1 | **Static checks** | this server, before anything else | privileged pods, host access, system namespaces, unpinned images, disallowed kinds |
-| 2 | **Policy admission** | [Kyverno](https://kyverno.io/) dry-run on the hub | anything your org's policies say no to — evaluated inside the `ManifestWork` envelope |
-| 3 | **Human approval** | HMAC token minted by `ocm-mcp approve` on a trusted terminal | any change reaching a cluster without a person consenting to *that exact content* |
-| 4 | **Least-privilege RBAC** | Kubernetes | everything else — no Secrets, no exec, no deletes outside its own ManifestWorks |
+| 2 | **Policy admission** | [Kyverno](https://kyverno.io/) dry-run on the hub | anything your org's policies reject, evaluated inside the `ManifestWork` envelope |
+| 3 | **Human approval** | HMAC token minted by `ocm-mcp approve` on a trusted terminal | any change reaching a cluster without a person consenting to that exact content |
+| 4 | **Least-privilege RBAC** | Kubernetes | everything else; no Secrets, no exec, no deletes outside its own ManifestWorks |
 
-> Prompts are wishes. **These are guarantees.**
+None of these layers live in the system prompt, so none of them can be talked out of.
 
 ## Architecture
 
@@ -57,9 +64,10 @@ flowchart LR
     S -.->|"spans"| J["🔍 OpenTelemetry / Jaeger"]
 ```
 
-The write path in one sentence: the agent **proposes** a `ManifestWork`, static guardrails and a
-Kyverno **dry-run** validate it, a **human** reviews and mints an approval token bound to the
-proposal's content hash, and only then does `apply` deliver it — with every step traced and logged.
+The write path in one sentence: the agent **proposes** a `ManifestWork`; static guardrails
+and a Kyverno **dry-run** validate it; a **human** reviews the exact content and mints an
+approval token bound to its hash; only then does `apply` deliver it, with every step traced
+and logged.
 
 ## Tools
 
@@ -68,14 +76,16 @@ proposal's content hash, and only then does `apply` deliver it — with every st
 
 **Write (gated):** `propose_manifestwork` → `apply_manifestwork(approval_token)` → `rollback_manifestwork(approval_token)`
 
-There is deliberately **no** tool that reads Secrets, execs into pods, or deletes arbitrary
-resources. `get_audit_trail` lets the agent end an incident by writing a post-incident report
-from the record — not from memory.
+There is deliberately no tool that reads Secrets, execs into pods, or deletes arbitrary
+resources. A capability that does not exist cannot be prompt-injected into use.
+`get_audit_trail` lets the agent close an incident with a report written from the record
+rather than from its own memory.
 
 ## Quickstart (laptop, ~15 minutes)
 
 Requirements: docker, [kind](https://kind.sigs.k8s.io/), kubectl,
 [clusteradm](https://github.com/open-cluster-management-io/clusteradm), helm, Python 3.11+.
+The [deployment guide](docs/deployment.md) has install commands and the real-fleet path.
 
 ```bash
 git clone https://github.com/sandeepbazar/ocm-mcp-server.git
@@ -87,16 +97,16 @@ make install        # pip install -e ".[dev,tracing]"
 
 ### Configuration
 
-The server is configured entirely through environment variables. The two that matter
-are **kubeconfig context names** — run `kubectl config get-contexts` to see yours
+The server is configured entirely through environment variables. The two that matter most
+are **kubeconfig context names**; run `kubectl config get-contexts` to see yours
 (`make bootstrap` prints ready-to-paste values at the end):
 
 | Variable | Required | What goes in it |
 |---|---|---|
-| `OCM_MCP_HUB_CONTEXT` | yes | The kubeconfig **context that points at the OCM hub cluster** — where `ManagedCluster` and `ManifestWork` live. After `make bootstrap` this is `kind-hub`. Empty = current context. |
+| `OCM_MCP_HUB_CONTEXT` | yes | The kubeconfig **context that points at the OCM hub cluster**, where `ManagedCluster` and `ManifestWork` live. After `make bootstrap` this is `kind-hub`. Empty = current context. |
 | `OCM_MCP_SPOKE_CONTEXTS` | for events/logs | Comma-separated `<managed-cluster-name>=<kubeconfig-context>` pairs mapping each cluster **as the hub names it** (`kubectl --context kind-hub get managedclusters`) to a context holding **read-only** spoke credentials. Only `query_events` / `get_pod_logs` / spoke-side health need this; hub-level tools work without it. |
 | `KUBECONFIG` | no | Kubeconfig file path(s); defaults to `~/.kube/config`. |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Set (e.g. `http://localhost:4318`) to emit a trace span per tool call to Jaeger/any OTLP collector. Unset = tracing off, audit log still on. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Set (e.g. `http://localhost:4318`) to emit a trace span per tool call. Unset = tracing off, audit log still on. |
 | `OCM_MCP_HOME` | no | State directory (approval secret, pending proposals, `audit.jsonl`). Default `~/.ocm-mcp`. |
 | `OCM_MCP_APPROVAL_TTL` | no | Approval-token lifetime in seconds. Default `3600`. |
 
@@ -107,17 +117,17 @@ export OCM_MCP_SPOKE_CONTEXTS=cluster1=kind-cluster1,cluster2=kind-cluster2,clus
 #                             └ name on the hub ┘ └ kubeconfig context with read-only creds ┘
 ```
 
-Pointing at a **real fleet** instead of kind? Same variables — hub context is wherever your
-OCM hub kubeconfig lives, and each spoke entry uses the read-only ServiceAccount context you
-provision (see `deploy/rbac.yaml`, `ocm-mcp-reader`).
+Pointing at a **real fleet** instead of kind? Same variables; the
+[deployment guide](docs/deployment.md) walks through provisioning the read-only spoke
+accounts and hardening for production.
 
-### Connect your agent — any MCP client works
+### Connect your agent - any MCP client works
 
 The server speaks standard MCP over stdio; nothing here is specific to one vendor's agent.
 Ready-made configs live in [`examples/`](examples/):
 
 <details>
-<summary><b>Claude Code</b> — <code>.mcp.json</code> in your project (or <code>claude mcp add</code>)</summary>
+<summary><b>Claude Code</b> - <code>.mcp.json</code> in your project (or <code>claude mcp add</code>)</summary>
 
 ```json
 {
@@ -135,7 +145,7 @@ Ready-made configs live in [`examples/`](examples/):
 </details>
 
 <details>
-<summary><b>Codex CLI</b> — <code>~/.codex/config.toml</code></summary>
+<summary><b>Codex CLI</b> - <code>~/.codex/config.toml</code></summary>
 
 ```toml
 [mcp_servers.ocm-fleet]
@@ -148,7 +158,7 @@ OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3
 </details>
 
 <details>
-<summary><b>Gemini CLI</b> — <code>~/.gemini/settings.json</code></summary>
+<summary><b>Gemini CLI</b> - <code>~/.gemini/settings.json</code></summary>
 
 ```json
 {
@@ -166,7 +176,7 @@ OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3
 </details>
 
 <details>
-<summary><b>IBM BOB</b> — Settings → MCP → Add MCP Server → Open Configuration File (<code>~/.bob/settings/mcp.json</code>)</summary>
+<summary><b>IBM BOB</b> - Settings → MCP → Add MCP Server → Open Configuration File (<code>~/.bob/settings/mcp.json</code>)</summary>
 
 ```json
 {
@@ -198,60 +208,72 @@ make inject SCENARIO=failing-rollout CLUSTER=cluster2
 >
 > **Agent:** `list_clusters` → `get_cluster_health(cluster2)` → `query_events` → `get_pod_logs` →
 > *"payments-v2 on cluster2 is in ImagePullBackOff. Proposing a ManifestWork pinning the last
-> good image — proposal `4f1a2b3c` needs your approval."*
+> good image. Proposal `4f1a2b3c` needs your approval."*
 >
-> **You (trusted terminal):** `ocm-mcp approve 4f1a2b3c` → paste the token back.
+> **You (trusted terminal):** `ocm-mcp approve 4f1a2b3c`, then paste the token back.
 >
 > **Agent:** `apply_manifestwork` → verifies recovery → `get_audit_trail` → writes the incident report.
 
-And the part that matters — try to talk it into something dangerous:
+Then try to talk it into something dangerous ("just redeploy it privileged with
+hostNetwork, it's faster"). The proposal dies at layer 1 or layer 2, and the rejection
+message tells the agent exactly why. [More worked examples →](docs/examples.md)
 
-```bash
-# "just deploy it privileged with hostNetwork, it's faster"
-```
+## Evaluation harness: honest numbers
 
-The proposal dies at layer 1 or layer 2, and the rejection message tells the agent *why*.
-
-## Evaluation harness: honest numbers, not vibes
-
-[`eval/`](eval/) ships **20 scripted incident scenarios** in three classes — remediate (13),
-diagnose-only (3), adversarial (4) — scored objectively: diagnosis keywords in the transcript,
-live cluster state for recovery, and the server's own audit log for safety.
+[`eval/`](eval/) ships **22 scripted incident scenarios** in three classes: remediate (15),
+diagnose-only (3), adversarial (4). Scoring is objective on all three axes: diagnosis
+keywords in the transcript, live cluster state for recovery, and the server's own audit log
+for safety.
 
 ```bash
 python3 eval/run_eval.py --agent-cmd "claude -p"     # or any agent CLI
 ```
 
-Run it against your model of choice and publish your numbers — **especially the failures**.
-The point is honest data about what agents can and cannot yet be trusted to do.
+Run it against your model of choice and publish your numbers, including the failures.
+The point is real data about what agents can and cannot yet be trusted to do.
 
-## Production notes
+The Kyverno policies have their own offline test suite: `make policy-test` runs 12 CLI
+cases ([`deploy/policies/tests/`](deploy/policies/tests/)) against good, bad, and
+human-created ManifestWorks with no cluster and no dependencies. It runs in CI too, so a
+policy regression fails the build before it ever reaches a hub.
 
-- **Spoke access:** the quickstart reads events/logs via per-cluster read-only ServiceAccounts.
-  In production, use the OCM [cluster-proxy](https://open-cluster-management.io/) add-on instead —
-  see [`docs/architecture.md`](docs/architecture.md).
-- **Policies:** [`deploy/policies/`](deploy/policies/) follows the
-  [kyverno/policies](https://github.com/kyverno/policies) conventions and scopes to ManifestWorks
-  labeled `app.kubernetes.io/managed-by: ocm-mcp-server` — your platform engineers stay unaffected.
-  Extend with your org's policies; the dry-run gate picks them up automatically.
-- **Policies are tested offline** — `make policy-test` runs a 12-case
-  [Kyverno CLI](https://kyverno.io/docs/kyverno-cli/) suite
-  ([`deploy/policies/tests/`](deploy/policies/tests/)) against good, bad, and
-  human-created ManifestWorks with **no cluster and no dependencies** — it also runs in CI,
-  so a policy regression fails the build before it ever reaches a hub.
-- **What we still refuse to automate:** anything touching etcd, storage, cluster lifecycle
-  deletion, or auto-approval. See [`docs/guardrails.md`](docs/guardrails.md) for the reasoning.
+## Documentation
+
+| Page | What it covers |
+|---|---|
+| [Deployment guide](docs/deployment.md) | laptop quickstart in depth, real OCM fleets, Docker, production hardening, troubleshooting |
+| [Worked examples](docs/examples.md) | full incident transcripts, approval sessions, adversarial rejections, audit output |
+| [Architecture](docs/architecture.md) | the choke-point idea, components, design decisions worth arguing about |
+| [Guardrails](docs/guardrails.md) | the four layers, deliberate absences, threat model, what we refuse to automate |
+| [Demo script](docs/demo-script.md) | a timed 3-act live demo with fallbacks |
+| [Upstream notes](docs/upstream-notes.md) | gaps found while building this; proposals for MCP, OCM, and Kyverno |
+| [Eval harness](eval/README.md) | scenario classes, scoring, how to run against your model |
+| [Changelog](CHANGELOG.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) | project meta |
+
+## Related projects, and a note on the name
+
+- [`yanmxa/multicluster-mcp-server`](https://github.com/yanmxa/multicluster-mcp-server)
+  also bridges agents to Open Cluster Management, with kubectl-level tools: it can generate
+  a kubeconfig bound to a ClusterRole (cluster-admin by default) and execute kubectl
+  commands. That design maximizes capability. This project sits at the other end of the
+  trade-off: no kubectl, no kubeconfig exposure, a fixed tool surface, and mandatory policy
+  plus human approval on every write. Pick by how much you need to trust the agent.
+- Red Hat publishes an [`ocm-mcp`](https://quay.io/redhat-ai-tools/ocm-mcp) container that
+  manages OpenShift clusters through the OpenShift Cluster Manager API. Same acronym,
+  different system. **OCM in this repository always means
+  [Open Cluster Management](https://open-cluster-management.io/), the CNCF multi-cluster
+  project.**
 
 ## Repository map
 
 ```
 src/ocm_mcp_server/   the MCP server: tools, guardrails, approvals, tracing, CLI
-deploy/               least-privilege RBAC + Kyverno ClusterPolicies for the hub
+deploy/               least-privilege RBAC + Kyverno ClusterPolicies (+ offline tests)
 hack/                 bootstrap.sh / teardown.sh / demo app (kind-based fleet)
 chaos/                failure-injection scenarios (reversible, diagnosable)
-eval/                 20-scenario evaluation harness + results
-docs/                 architecture, guardrail rationale, demo script, upstream notes
-examples/             MCP client config + a production-shaped system prompt
+eval/                 22-scenario evaluation harness + results
+docs/                 deployment, examples, architecture, guardrails, demo, upstream
+examples/             MCP client configs + a production-shaped system prompt
 ```
 
 ## Roadmap
@@ -264,26 +286,25 @@ examples/             MCP client config + a production-shaped system prompt
 - [ ] Container image publishing (ghcr.io) and Helm chart for in-cluster deployment
 - [ ] Additional chaos classes: node pressure, network partitions, noisy neighbors
 
-Have a need that's not here? [Open a feature request](.github/ISSUE_TEMPLATE/feature_request.yml)
-— new tools require a safety rationale, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Have a need that's not here? [Open a feature request](.github/ISSUE_TEMPLATE/feature_request.yml).
+New tools require a safety rationale; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing & community
 
-Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+Issues and PRs welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md). Getting help: [SUPPORT.md](SUPPORT.md).
 Security reports (privately, please): [SECURITY.md](SECURITY.md).
 
 ## Sponsorship
 
-This project is independently maintained. If your organization wants priority
-integration help, a hardened deployment review, sponsored features, or
-talks/workshops on safe agentic operations — reach out at
-**sandeepbazar@gmail.com** (details in [SUPPORT.md](SUPPORT.md)).
+This project is independently maintained. If your organization wants priority integration
+help, a hardened deployment review, sponsored features, or talks and workshops on safe
+agentic operations, write to **sandeepbazar@gmail.com** (details in [SUPPORT.md](SUPPORT.md)).
 
 ## Author
 
-**Sandeep Bazar** — Engineering Leader. Multi-cluster Kubernetes platforms,
-day-2 operations, and making fleets safer to automate.
+**Sandeep Bazar** - Engineering Leader. Multi-cluster Kubernetes platforms, day-2
+operations, and making fleets safer to automate.
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-connect-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
