@@ -89,12 +89,20 @@ and logged.
 
 **Write (gated):** `propose_manifestwork` → `apply_manifestwork(approval_token)` → `rollback_manifestwork(approval_token)`
 
+<div align="center">
+<img src="docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
+</div>
+
 There is deliberately no tool that reads Secrets, execs into pods, or deletes arbitrary
 resources. A capability that does not exist cannot be prompt-injected into use.
 `get_audit_trail` lets the agent close an incident with a report written from the record
 rather than from its own memory.
 
 ## Quickstart (laptop, ~15 minutes)
+
+<div align="center">
+<img src="docs/assets/deploy-paths.svg" alt="Three deployment paths: laptop, real fleet, production" width="100%">
+</div>
 
 Requirements: docker, [kind](https://kind.sigs.k8s.io/), kubectl,
 [clusteradm](https://github.com/open-cluster-management-io/clusteradm), helm, Python 3.11+.

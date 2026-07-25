@@ -5,14 +5,7 @@ commands live in the
 [deployment guide](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/deployment.md);
 this page is the shape of the journey.
 
-```mermaid
-flowchart LR
-    A[Path A<br/>laptop kind fleet] --> B[Path B<br/>real OCM fleet]
-    B --> C[Path C<br/>hardened production]
-    A -.15 min.-> A2[try the whole flow]
-    B -.apply RBAC + policies.-> B2[point at your hub]
-    C -.checklist.-> C2[cluster-proxy, audit shipping, TTLs]
-```
+![Three deployment paths](https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/deploy-paths.svg)
 
 ## Path A: laptop fleet (about 15 minutes)
 
