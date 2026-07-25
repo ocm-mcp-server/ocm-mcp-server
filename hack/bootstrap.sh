@@ -6,14 +6,15 @@
 #   guardrail policies, least-privilege RBAC, read-only spoke ServiceAccounts,
 #   and (optionally) a Jaeger container for traces.
 #
-# Requirements: docker, kind, kubectl, clusteradm, helm.
+# Requirements: a container engine (docker OR podman), kind, kubectl, clusteradm, helm.
 #   brew install kind kubectl helm
 #   curl -L https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh | bash
 #
 # Usage:
-#   ./hack/bootstrap.sh              # full fleet
-#   SPOKES=2 ./hack/bootstrap.sh     # fewer spokes (laptop-friendly)
-#   ./hack/bootstrap.sh --no-jaeger  # skip the tracing container
+#   ./hack/bootstrap.sh                    # full fleet
+#   SPOKES=2 ./hack/bootstrap.sh           # fewer spokes (laptop-friendly)
+#   ./hack/bootstrap.sh --no-jaeger        # skip the tracing container
+#   CONTAINER_ENGINE=podman ./hack/bootstrap.sh   # force the engine (auto-detected otherwise)
 set -euo pipefail
 
 SPOKES="${SPOKES:-3}"
@@ -24,22 +25,48 @@ JAEGER=1
 say() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
 die() { printf '\033[1;31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
 
-for bin in docker kind kubectl clusteradm helm; do
+for bin in kind kubectl clusteradm helm; do
   command -v "$bin" >/dev/null || die "'$bin' is required. See header of this script."
 done
-docker info >/dev/null 2>&1 || die "docker daemon is not running."
+
+# Pick a container engine: honor CONTAINER_ENGINE, else prefer a working docker, else podman.
+ENGINE="${CONTAINER_ENGINE:-}"
+if [[ -z "$ENGINE" ]]; then
+  if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
+    ENGINE=docker
+  elif command -v podman >/dev/null && podman info >/dev/null 2>&1; then
+    ENGINE=podman
+  else
+    die "no working container engine found (need docker or podman running)."
+  fi
+fi
+command -v "$ENGINE" >/dev/null || die "container engine '$ENGINE' is not installed."
+"$ENGINE" info >/dev/null 2>&1 || die "container engine '$ENGINE' is not running."
+# kind talks to podman only when told to; harmless when the engine is docker.
+[[ "$ENGINE" == "podman" ]] && export KIND_EXPERIMENTAL_PROVIDER=podman
+say "Using container engine: ${ENGINE}"
+
+# kind names each node container "<cluster>-control-plane" on both docker and podman.
+# We check that directly instead of `kind get clusters`, whose label template is
+# broken on some podman 5.x releases.
+cluster_exists() { "$ENGINE" ps -a --format '{{.Names}}' | grep -qx "${1}-control-plane"; }
 
 say "Creating kind clusters (1 hub + ${SPOKES} spokes)"
-kind get clusters | grep -qx "$HUB" || kind create cluster --name "$HUB" --wait 120s
+cluster_exists "$HUB" || kind create cluster --name "$HUB" --wait 120s
 for i in $(seq 1 "$SPOKES"); do
-  kind get clusters | grep -qx "cluster${i}" || kind create cluster --name "cluster${i}" --wait 120s
+  cluster_exists "cluster${i}" || kind create cluster --name "cluster${i}" --wait 120s
 done
 
 HUB_CTX="kind-${HUB}"
 
 say "Initializing OCM hub (clusteradm init)"
 clusteradm init --wait --context "$HUB_CTX" >/dev/null
-JOIN_CMD=$(clusteradm get token --context "$HUB_CTX" | grep -o 'clusteradm join.*')
+# Recent clusteradm prints a "--cluster-name <cluster_name>" placeholder. The literal
+# angle brackets would be read by the shell as a file redirect, so strip it here; we
+# append our own --cluster-name per spoke below.
+JOIN_CMD=$(clusteradm get token --context "$HUB_CTX" \
+  | grep -o 'clusteradm join.*' \
+  | sed -E 's/--cluster-name[[:space:]]*<[^>]*>//')
 
 say "Joining ${SPOKES} spoke clusters to the hub"
 # --force-internal-endpoint-lookup makes spokes reach the hub over the
@@ -50,7 +77,8 @@ for i in $(seq 1 "$SPOKES"); do
 done
 
 say "Accepting cluster registrations on the hub"
-clusteradm accept --clusters "$(seq -s, -f 'cluster%g' 1 "$SPOKES")" --context "$HUB_CTX" --wait
+CLUSTER_LIST=$(for i in $(seq 1 "$SPOKES"); do printf 'cluster%d,' "$i"; done | sed 's/,$//')
+clusteradm accept --clusters "$CLUSTER_LIST" --context "$HUB_CTX" --wait
 
 say "Installing Kyverno on the hub"
 helm repo add kyverno https://kyverno.github.io/kyverno >/dev/null 2>&1 || true
@@ -98,8 +126,8 @@ done
 
 if [[ "$JAEGER" == "1" ]]; then
   say "Starting Jaeger (all-in-one) for traces at http://localhost:16686"
-  docker rm -f ocm-mcp-jaeger >/dev/null 2>&1 || true
-  docker run -d --name ocm-mcp-jaeger \
+  "$ENGINE" rm -f ocm-mcp-jaeger >/dev/null 2>&1 || true
+  "$ENGINE" run -d --name ocm-mcp-jaeger \
     -p 16686:16686 -p 4318:4318 \
     jaegertracing/all-in-one:1.60 >/dev/null
 fi
@@ -109,7 +137,7 @@ for i in $(seq 1 "$SPOKES"); do
   kubectl --context "kind-cluster${i}" apply -f "$(dirname "$0")/demo-app.yaml"
 done
 
-SPOKE_CONTEXTS=$(seq -f 'cluster%g=kind-cluster%g' 1 "$SPOKES" | paste -sd, -)
+SPOKE_CONTEXTS=$(for i in $(seq 1 "$SPOKES"); do printf 'cluster%d=kind-cluster%d,' "$i" "$i"; done | sed 's/,$//')
 say "Done. Configure your MCP client environment:"
 cat <<EOF
 
