@@ -28,7 +28,8 @@ def cmd_pending(_args: argparse.Namespace) -> int:
         print("No pending proposals.")
         return 0
     for p in pending:
-        print(f"  {p.id}  cluster={p.cluster}  name={p.name}")
+        kind = p.action if p.kind == "action" else "manifestwork"
+        print(f"  {p.id}  cluster={p.cluster}  kind={kind}  name={p.name}")
         print(f"          {p.summary}")
     return 0
 
@@ -40,8 +41,12 @@ def cmd_show(args: argparse.Namespace) -> int:
     print(f"name:     {prop.name}")
     print(f"status:   {prop.status}")
     print(f"summary:  {prop.summary}")
-    print("manifests:")
-    print(json.dumps(prop.manifests, indent=2))
+    if prop.kind == "action":
+        print(f"action:   {prop.action}")
+        print(f"params:   {json.dumps(prop.params)}")
+    else:
+        print("manifests:")
+        print(json.dumps(prop.manifests, indent=2))
     return 0
 
 

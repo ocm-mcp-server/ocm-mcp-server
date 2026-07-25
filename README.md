@@ -25,6 +25,12 @@ and audit between the model and your clusters.**
 
 ### [Architecture](docs/architecture.md) &nbsp;·&nbsp; [Deployment Guide](docs/deployment.md) &nbsp;·&nbsp; [Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [Examples](docs/examples.md) &nbsp;·&nbsp; [Guardrails](docs/guardrails.md)
 
+**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📚 Docs](#documentation)**
+
+<img src="docs/assets/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
+
+<sub>The whole safe-remediation loop: investigate with free reads, propose a change, get rejected by the guardrails and correct it, wait for a human-signed token, apply, verify, and report from the audit log.</sub>
+
 </div>
 
 ---
@@ -82,21 +88,160 @@ and a Kyverno **dry-run** validate it; a **human** reviews the exact content and
 approval token bound to its hash; only then does `apply` deliver it, with every step traced
 and logged.
 
-## Tools
+## Toolsets
 
-**Read (free):** `list_clusters` · `get_cluster_health` · `query_events` · `get_pod_logs` ·
-`list_manifestworks` · `list_pending_proposals` · `get_audit_trail`
+The surface is **27 tools across nine toolsets**. Almost all of it is read: the
+whole Open Cluster Management API is safe to inspect. Only two toolsets can change
+anything, and only through the propose -> approve -> apply gate.
 
-**Write (gated):** `propose_manifestwork` → `apply_manifestwork(approval_token)` → `rollback_manifestwork(approval_token)`
+| Toolset | What it covers | Tools | Writes |
+|---|---|---|---|
+| **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims | 5 | - |
+| **observability** | cluster health, events, pod logs | 3 | - |
+| **placement** | Placements, PlacementDecisions, AddOnPlacementScores | 3 | - |
+| **work** | ManifestWork status feedback + the gated deploy flow | 6 | gated |
+| **addons** | ClusterManagementAddOns, per-cluster add-on health | 2 | - |
+| **registration** | pending join CSRs + gated cluster lifecycle actions | 3 | gated |
+| **policy** | governance policy compliance (if the add-on is installed) | 1 | - |
+| **resources** | generic get/list over an allow-list of OCM API types | 2 | - |
+| **audit** | pending proposals, this server's own audit trail | 2 | - |
+
+Every read tool is annotated `readOnlyHint`; every write tool is annotated
+`destructiveHint` and enforced by the gate. Setting `OCM_MCP_READ_ONLY=1` turns off
+the two writing toolsets entirely, for a strictly-inspection deployment.
 
 <div align="center">
 <img src="docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
 </div>
 
-There is deliberately no tool that reads Secrets, execs into pods, or deletes arbitrary
-resources. A capability that does not exist cannot be prompt-injected into use.
-`get_audit_trail` lets the agent close an incident with a report written from the record
-rather than from its own memory.
+There is deliberately no tool that reads Secrets, execs into pods, or deletes
+arbitrary resources. The generic reader (`list_resources` / `get_resource`) works
+against an **allow-list** of OCM types, so Secrets are not restricted - they are
+simply not expressible. A capability that does not exist cannot be prompt-injected
+into use.
+
+## Tools
+
+Each tool below is annotated with its class: **read** (free, no gate),
+**propose** (stores a pending change, mutates nothing), or **apply** (delivers an
+approved change; needs a human token).
+
+<details>
+<summary><b>inventory</b> - who is in the fleet</summary>
+
+- **`list_clusters`** *(read)* - all managed clusters with availability, version, labels, capacity.
+- **`get_cluster`** *(read)* - full view of one cluster.
+  - `cluster` (string) - managed cluster name.
+- **`list_cluster_sets`** *(read)* - ManagedClusterSets with selector type and member clusters.
+- **`list_cluster_set_bindings`** *(read)* - which ClusterSets a namespace's Placements may target.
+  - `namespace` (string, optional) - limit to one namespace; empty lists all.
+- **`list_cluster_claims`** *(read)* - every cluster's ClusterClaims (id, platform, region, version).
+</details>
+
+<details>
+<summary><b>observability</b> - why a cluster is unhealthy</summary>
+
+- **`get_cluster_health`** *(read)* - hub conditions, unhealthy pods, degraded deployments.
+  - `cluster` (string) - managed cluster name.
+- **`query_events`** *(read)* - recent Kubernetes events, newest first.
+  - `cluster` (string) - managed cluster name.
+  - `namespace` (string, optional) - namespace filter; empty means all.
+  - `limit` (int, optional) - max events (default 40).
+- **`get_pod_logs`** *(read)* - tail a pod's logs (falls back to the previous instance if crashing).
+  - `cluster` (string), `namespace` (string), `pod` (string) - target.
+  - `container` (string, optional) - container name; empty picks the default.
+  - `lines` (int, optional) - trailing lines (default 80).
+</details>
+
+<details>
+<summary><b>placement</b> - which clusters were chosen, and why</summary>
+
+- **`list_placements`** *(read)* - Placements and how many clusters each selects.
+  - `namespace` (string, optional) - limit to one namespace.
+- **`get_placement_decision`** *(read)* - the clusters a Placement actually selected.
+  - `placement` (string) - Placement name.
+  - `namespace` (string) - the Placement's namespace.
+- **`list_addon_placement_scores`** *(read)* - custom scores prioritizers consume.
+  - `cluster` (string) - managed cluster name.
+</details>
+
+<details>
+<summary><b>work</b> - what the hub is delivering, and the gated deploy flow</summary>
+
+- **`list_manifestworks`** *(read)* - ManifestWorks targeting a cluster.
+  - `cluster` (string) - managed cluster name.
+- **`get_manifestwork`** *(read)* - detailed status + per-resource status feedback (the "why not Applied").
+  - `cluster` (string), `name` (string) - target.
+- **`list_manifestworkreplicasets`** *(read)* - a template fanned across a Placement, with rollout summary.
+  - `namespace` (string, optional) - limit to one namespace.
+- **`propose_manifestwork`** *(propose)* - propose a change as a ManifestWork. Applies nothing.
+  - `cluster` (string) - target cluster.
+  - `name` (string) - short kebab-case ManifestWork name.
+  - `summary` (string) - one or two sentences the human approver reads.
+  - `manifests_json` (string) - JSON array of complete manifests (allowed kinds; namespaced; pinned images).
+- **`apply_manifestwork`** *(apply)* - deliver an approved ManifestWork.
+  - `proposal_id` (string), `approval_token` (string) - from `ocm-mcp approve <id>`.
+- **`rollback_manifestwork`** *(apply)* - delete the ManifestWork from an applied proposal (needs a fresh token).
+  - `proposal_id` (string), `approval_token` (string).
+</details>
+
+<details>
+<summary><b>addons</b> - add-on health across the fleet</summary>
+
+- **`list_cluster_management_addons`** *(read)* - fleet-level add-on definitions and install strategy.
+- **`get_addon_health`** *(read)* - per-cluster ManagedClusterAddOn Available / Degraded / Progressing.
+</details>
+
+<details>
+<summary><b>registration</b> - onboarding and cluster lifecycle (gated)</summary>
+
+- **`list_pending_csrs`** *(read)* - pending cluster-join / add-on registration CSRs awaiting approval.
+- **`propose_cluster_action`** *(propose)* - propose a lifecycle action. Applies nothing.
+  - `cluster` (string) - target cluster.
+  - `action` (string) - one of `cordon` (taint out of scheduling), `uncordon`, `set_label`, `accept` (hubAcceptsClient + approve join CSRs).
+  - `summary` (string) - what the human approver reads.
+  - `params_json` (string, optional) - action parameters; only `set_label` needs `{"key","value"}`.
+- **`apply_cluster_action`** *(apply)* - apply an approved lifecycle action.
+  - `proposal_id` (string), `approval_token` (string).
+</details>
+
+<details>
+<summary><b>policy</b> - governance compliance (optional add-on)</summary>
+
+- **`list_policies`** *(read)* - Policies and per-cluster compliance. Reports clearly if the governance add-on is not installed.
+  - `namespace` (string, optional) - limit to one namespace.
+</details>
+
+<details>
+<summary><b>resources</b> - generic, allow-listed OCM reads</summary>
+
+- **`list_resources`** *(read)* - list any allow-listed OCM type (identity + conditions).
+  - `resource` (string) - e.g. `managedclusters`, `placements`, `manifestworks`, `managedclusteraddons`, `klusterlets`.
+  - `namespace` (string, optional) - for namespaced types.
+- **`get_resource`** *(read)* - get one allow-listed OCM object in full. Never returns a Secret (not on the allow-list).
+  - `resource` (string), `name` (string) - target.
+  - `namespace` (string, optional) - required for namespaced types.
+</details>
+
+<details>
+<summary><b>audit</b> - the record</summary>
+
+- **`list_pending_proposals`** *(read)* - ManifestWorks and cluster actions awaiting approval.
+- **`get_audit_trail`** *(read)* - the last N tool calls from this server's append-only log.
+  - `last_n` (int, optional) - trailing entries (default 30).
+</details>
+
+## Prompts
+
+The server also ships four MCP **prompts** - reusable templates that encode the safe
+workflow so any client can start from a good runbook instead of a blank box.
+
+| Prompt | What it drives | Arguments |
+|---|---|---|
+| **`diagnose_fleet`** | sweep every cluster and add-on, summarize what is unhealthy and why - reads only | - |
+| **`remediate_with_approval`** | investigate a symptom, propose the smallest safe fix, wait for the human token, apply, verify, report | `symptom` |
+| **`incident_postmortem`** | write the post-incident report strictly from `get_audit_trail`, not from memory | - |
+| **`why_not_scheduled`** | explain why a cluster was or was not selected by a Placement, from the live objects | `cluster`, `placement`, `namespace` |
 
 ## Quickstart (laptop, ~15 minutes)
 
@@ -133,6 +278,7 @@ ready-to-paste values at the end).
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Set (e.g. `http://localhost:4318`) to emit a trace span per tool call. Unset = tracing off, audit log still on. |
 | `OCM_MCP_HOME` | no | State directory (approval secret, pending proposals, `audit.jsonl`). Default `~/.ocm-mcp`. |
 | `OCM_MCP_APPROVAL_TTL` | no | Approval-token lifetime in seconds. Default `3600`. |
+| `OCM_MCP_READ_ONLY` | no | Set to `1`/`true` for a strictly-inspection deployment: every propose/apply tool refuses, a coarse backstop under the token gate. Default off. |
 
 ```bash
 # the values make bootstrap prints, spelled out:
@@ -267,6 +413,7 @@ policy regression fails the build before it ever reaches a hub.
 
 | Page | What it covers |
 |---|---|
+| [Tools and Prompts reference](docs/tools.md) | every tool by toolset, its class (read / propose / apply), arguments, and the OCM API it touches; the four MCP prompts |
 | [Context names guide](docs/kubeconfig-contexts.md) | zero-background: what a kubeconfig context is and the exact commands to find yours (kind, EKS, GKE, AKS, OpenShift) |
 | [Deployment guide](docs/deployment.md) | laptop quickstart in depth, real OCM fleets, Docker, production hardening, troubleshooting |
 | [Worked examples](docs/examples.md) | full incident transcripts, approval sessions, adversarial rejections, audit output |
