@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="200" viewBox="0 0 1280 200" role="img" aria-label="Three deployment paths: laptop, real fleet, production">
+  <defs>
+    <style>.t{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;} .h{font-weight:800;} .s{font-weight:600;}</style>
+    <marker id="a3" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#64748b"/></marker>
+  </defs>
+  <rect width="1280" height="200" fill="#ffffff"/>
+
+  <g transform="translate(60,50)">
+    <rect width="340" height="100" rx="16" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+    <text x="28" y="42" class="t h" font-size="20" fill="#1e3a8a">A · Laptop</text>
+    <text x="28" y="72" class="t s" font-size="14" fill="#334155">kind fleet, ~15 min, one command</text>
+  </g>
+  <line x1="410" y1="100" x2="452" y2="100" stroke="#64748b" stroke-width="2.5" marker-end="url(#a3)"/>
+
+  <g transform="translate(460,50)">
+    <rect width="340" height="100" rx="16" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+    <text x="28" y="42" class="t h" font-size="20" fill="#9a3412">B · Real fleet</text>
+    <text x="28" y="72" class="t s" font-size="14" fill="#334155">apply RBAC + policies, point at hub</text>
+  </g>
+  <line x1="810" y1="100" x2="852" y2="100" stroke="#64748b" stroke-width="2.5" marker-end="url(#a3)"/>
+
+  <g transform="translate(860,50)">
+    <rect width="360" height="100" rx="16" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+    <text x="28" y="42" class="t h" font-size="20" fill="#065f46">C · Production</text>
+    <text x="28" y="72" class="t s" font-size="14" fill="#334155">cluster-proxy, audit shipping, TTLs</text>
+  </g>
+</svg>

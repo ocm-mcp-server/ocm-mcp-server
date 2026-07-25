@@ -18,6 +18,8 @@ static guardrails, writes an audit line and a trace span for every call, and
 talks to the hub. The hub enforces Kyverno policy and RBAC. A human, on a
 separate trusted terminal, is the only source of approval tokens.
 
+![Reads are free; writes are gated](https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/read-write-paths.svg)
+
 ## The read path (free)
 
 Investigation has no gate. The agent can call any read tool as often as it
