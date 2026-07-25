@@ -21,6 +21,8 @@ and audit between the model and your clusters.**
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
+### [Architecture](docs/architecture.md) &nbsp;·&nbsp; [Deployment Guide](docs/deployment.md) &nbsp;·&nbsp; [Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [Examples](docs/examples.md) &nbsp;·&nbsp; [Guardrails](docs/guardrails.md)
+
 </div>
 
 ---
@@ -98,8 +100,11 @@ make install        # pip install -e ".[dev,tracing]"
 ### Configuration
 
 The server is configured entirely through environment variables. The two that matter most
-are **kubeconfig context names**; run `kubectl config get-contexts` to see yours
-(`make bootstrap` prints ready-to-paste values at the end):
+are **kubeconfig context names**. New to those? The
+[context names guide](docs/kubeconfig-contexts.md) explains what they are and the exact
+commands to find yours, from a laptop kind cluster to a cloud login. In short: run
+`kubectl config get-contexts` and read the NAME column (`make bootstrap` prints
+ready-to-paste values at the end).
 
 | Variable | Required | What goes in it |
 |---|---|---|
@@ -117,9 +122,11 @@ export OCM_MCP_SPOKE_CONTEXTS=cluster1=kind-cluster1,cluster2=kind-cluster2,clus
 #                             └ name on the hub ┘ └ kubeconfig context with read-only creds ┘
 ```
 
-Pointing at a **real fleet** instead of kind? Same variables; the
-[deployment guide](docs/deployment.md) walks through provisioning the read-only spoke
-accounts and hardening for production.
+Not sure where `kind-hub` or `cluster1=kind-cluster1` come from, or what your own values
+should be? The [context names guide](docs/kubeconfig-contexts.md) walks through it
+step by step, including cloud logins (EKS, GKE, AKS, OpenShift). Pointing at a **real
+fleet** instead of kind? Same variables; the [deployment guide](docs/deployment.md) covers
+the read-only spoke accounts and production hardening.
 
 ### Connect your agent - any MCP client works
 
@@ -241,6 +248,7 @@ policy regression fails the build before it ever reaches a hub.
 
 | Page | What it covers |
 |---|---|
+| [Context names guide](docs/kubeconfig-contexts.md) | zero-background: what a kubeconfig context is and the exact commands to find yours (kind, EKS, GKE, AKS, OpenShift) |
 | [Deployment guide](docs/deployment.md) | laptop quickstart in depth, real OCM fleets, Docker, production hardening, troubleshooting |
 | [Worked examples](docs/examples.md) | full incident transcripts, approval sessions, adversarial rejections, audit output |
 | [Architecture](docs/architecture.md) | the choke-point idea, components, design decisions worth arguing about |
