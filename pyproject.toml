@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ocm-mcp-server"
+version = "0.1.0"
+description = "A guardrailed MCP server that lets AI agents operate multi-cluster Kubernetes fleets through an Open Cluster Management hub"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [{ name = "Sandeep Bazar" }]
+keywords = ["mcp", "kubernetes", "open-cluster-management", "ai-agents", "multicluster"]
+dependencies = [
+    "mcp>=1.2.0",
+    "kubernetes>=29.0.0",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+tracing = [
+    "opentelemetry-sdk>=1.25.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.25.0",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+ocm-mcp-server = "ocm_mcp_server.server:main"
+ocm-mcp = "ocm_mcp_server.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ocm_mcp_server"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
