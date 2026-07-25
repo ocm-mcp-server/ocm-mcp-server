@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <xxxxxxxxxxxx@xxxxx.xxx>
+# SPDX-License-Identifier: Apache-2.0
+
 import time
 
 import pytest

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar <xxxxxxxxxxxx@xxxxx.xxx>
+# SPDX-License-Identifier: Apache-2.0
 # Least-privilege identity for ocm-mcp-server on the hub.
 #
 # The server can: read ManagedClusters, and manage ONLY ManifestWorks that it
