@@ -35,9 +35,14 @@ Your team runs many Kubernetes clusters. Sooner or later somebody asks the quest
 can an AI agent take the 2 a.m. page?
 
 The quickest way to find out is to hand a model `kubectl` with cluster-admin and watch.
-In production that experiment ends badly, for three separate reasons. The model is
-non-deterministic. The credentials are real. And when something goes wrong, there is no
-reliable record of what the agent did or why.
+In production that experiment ends badly, for three separate reasons:
+
+- **The model is non-deterministic.** The same alert can produce a careful diagnosis one
+  run and a `kubectl delete` the next.
+- **The credentials are real.** There is no dry run between the model's decision and your
+  production cluster.
+- **There is no record.** When something breaks, you cannot reconstruct what the agent did,
+  in what order, or on whose authority.
 
 This project starts from a different observation: fleets already have a control point that
 humans trust every day, the multi-cluster hub. Open Cluster Management (a CNCF project)
