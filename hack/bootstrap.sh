@@ -71,7 +71,12 @@ JOIN_CMD=$(clusteradm get token --context "$HUB_CTX" \
 say "Joining ${SPOKES} spoke clusters to the hub"
 # --force-internal-endpoint-lookup makes spokes reach the hub over the
 # docker network (kind-specific), instead of the host-mapped port.
+# Skip a spoke that is already registered so re-runs (E2E_KEEP) are idempotent.
 for i in $(seq 1 "$SPOKES"); do
+  if kubectl --context "$HUB_CTX" get managedcluster "cluster${i}" >/dev/null 2>&1; then
+    say "cluster${i} already registered - skipping join"
+    continue
+  fi
   eval "$JOIN_CMD --context kind-cluster${i} --cluster-name cluster${i} --force-internal-endpoint-lookup --wait" \
     || die "join failed for cluster${i}"
 done

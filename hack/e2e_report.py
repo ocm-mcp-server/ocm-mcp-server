@@ -42,8 +42,13 @@ def main() -> None:
     with open(args.results) as f:
         for line in f:
             line = line.strip()
-            if line:
+            if not line:
+                continue
+            try:
                 records.append(json.loads(line))
+            except json.JSONDecodeError:
+                # a truncated final line from an interrupted run must not kill the report
+                continue
 
     phases: OrderedDict[str, list] = OrderedDict()
     counts: dict[str, int] = {}
