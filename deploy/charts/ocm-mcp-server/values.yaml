@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+image:
+  repository: ghcr.io/sandeepbazar/ocm-mcp-server
+  # Pin to an immutable digest in production, e.g. sha256:...
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Safe default posture for a shared deployment: reads only, no writes.
+readOnly: true
+
+# The server's least-privilege ServiceAccount (created by deploy/rbac.yaml).
+serviceAccountName: ocm-mcp-server
+
+# Name of a Secret holding ONLY the public approval verifier key
+# (key: approval_ed25519.pub). The private signer never runs here.
+verifierKeySecret: ocm-mcp-approval-pub
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

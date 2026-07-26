@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: ocm-mcp-server
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ocm-mcp-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ocm-mcp-server
+    spec:
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: OCM_MCP_READ_ONLY
+              value: {{ if .Values.readOnly }}"1"{{ else }}"0"{{ end }}
+            - name: OCM_MCP_HOME
+              value: /var/lib/ocm-mcp
+            - name: OCM_MCP_VERIFIER_KEY
+              value: /etc/ocm-mcp/approval_ed25519.pub
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: state
+              mountPath: /var/lib/ocm-mcp
+            - name: verifier-key
+              mountPath: /etc/ocm-mcp
+              readOnly: true
+      volumes:
+        - name: state
+          emptyDir: {}
+        - name: verifier-key
+          secret:
+            secretName: {{ .Values.verifierKeySecret }}
+            optional: true

@@ -235,3 +235,21 @@ spec:
                   image: registry.example.com/platform:2.1.0
                   securityContext:
                     privileged: true
+---
+# A ManifestWork the server SA tried to create WITHOUT the managed-by label - the
+# bypass require-ocm-mcp-managed-by-label closes. Content is otherwise clean.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: unlabeled-bypass
+  namespace: cluster2
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: sneak
+          namespace: shop
+        data:
+          a: b

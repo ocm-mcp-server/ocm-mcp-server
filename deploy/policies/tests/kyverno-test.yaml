@@ -12,9 +12,22 @@ policies:
   - ../disallow-privileged-manifestwork.yaml
   - ../protect-system-namespaces.yaml
   - ../restrict-manifestwork-kinds.yaml
+  - ../require-managed-by-label.yaml
 resources:
   - resources.yaml
+userinfo: userinfo.yaml
 results:
+  # ---- require-ocm-mcp-managed-by-label (closes the label-bypass)
+  - policy: require-ocm-mcp-managed-by-label
+    rule: require-label-from-server-sa
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: require-ocm-mcp-managed-by-label
+    rule: require-label-from-server-sa
+    kind: ManifestWork
+    resources: [cluster2/unlabeled-bypass]
+    result: fail
   # ---- disallow-privileged-manifestwork
   - policy: disallow-privileged-manifestwork
     rule: deny-privileged-embedded-specs

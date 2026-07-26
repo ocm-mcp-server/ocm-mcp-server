@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+#
+# Reference in-cluster Deployment for ocm-mcp-server on the OCM hub. It shows the
+# security-correct pod shape: the least-privilege ServiceAccount from rbac.yaml, a
+# Restricted Pod Security context, a read-only root filesystem, no auto-mounted API
+# token, and the approval *verifier* key mounted read-only (the private signer never
+# lives here - keep it on the operator's terminal or an external signer).
+#
+# Transport note: the server speaks MCP over stdio today, so it is normally run attached
+# to a client (sidecar or `kubectl exec`); a standalone authenticated HTTP transport is on
+# the roadmap (set OCM_MCP_TRANSPORT=http once available). This manifest ships with
+# OCM_MCP_READ_ONLY=1 - the safe default posture for a shared deployment.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocm-mcp-server
+  namespace: open-cluster-management
+  labels:
+    app.kubernetes.io/name: ocm-mcp-server
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ocm-mcp-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ocm-mcp-server
+    spec:
+      serviceAccountName: ocm-mcp-server
+      automountServiceAccountToken: true # needed to read the hub API; RBAC is read + own-ManifestWorks only
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: ghcr.io/sandeepbazar/ocm-mcp-server:latest # pin to a @sha256 digest in production
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OCM_MCP_READ_ONLY
+              value: "1"
+            - name: OCM_MCP_HOME
+              value: /var/lib/ocm-mcp
+            - name: OCM_MCP_VERIFIER_KEY
+              value: /etc/ocm-mcp/approval_ed25519.pub
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: state
+              mountPath: /var/lib/ocm-mcp
+            - name: verifier-key
+              mountPath: /etc/ocm-mcp
+              readOnly: true
+      volumes:
+        - name: state
+          emptyDir: {}
+        # The PUBLIC verifier key only. Create with:
+        #   kubectl -n open-cluster-management create secret generic ocm-mcp-approval-pub \
+        #     --from-file=approval_ed25519.pub=$HOME/.ocm-mcp/approval_ed25519.pub
+        - name: verifier-key
+          secret:
+            secretName: ocm-mcp-approval-pub
+            optional: true
