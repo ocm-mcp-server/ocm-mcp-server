@@ -29,8 +29,11 @@ spec:
       labels:
         app.kubernetes.io/name: ocm-mcp-server
     spec:
+      # The server itself needs its API token to read the hub (its RBAC is read + own
+      # ManifestWorks/add-ons only - see rbac.yaml). This is the SERVER's token; it is
+      # unrelated to the guardrail that forbids agent-proposed *workloads* from mounting one.
       serviceAccountName: ocm-mcp-server
-      automountServiceAccountToken: true # needed to read the hub API; RBAC is read + own-ManifestWorks only
+      automountServiceAccountToken: true
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -40,7 +43,8 @@ spec:
           type: RuntimeDefault
       containers:
         - name: server
-          image: ghcr.io/sandeepbazar/ocm-mcp-server:latest # pin to a @sha256 digest in production
+          # Pin to an immutable digest in production: ghcr.io/...@sha256:<64-hex>.
+          image: ghcr.io/sandeepbazar/ocm-mcp-server:v0.2.1
           imagePullPolicy: IfNotPresent
           env:
             - name: OCM_MCP_READ_ONLY
@@ -68,6 +72,10 @@ spec:
               mountPath: /etc/ocm-mcp
               readOnly: true
       volumes:
+        # emptyDir means proposals, the spent-token ledger, and the audit log do NOT
+        # survive a restart. For anything beyond evaluation, back this with a
+        # PersistentVolumeClaim (the Helm chart exposes `persistence.enabled`) and ship the
+        # audit log to an external sink.
         - name: state
           emptyDir: {}
         # The PUBLIC verifier key only. Create with:

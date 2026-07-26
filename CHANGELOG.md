@@ -4,6 +4,49 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] - 2026-07-26
+
+A second hardening release addressing two follow-up enterprise-readiness audits. It brings
+hub-side admission to parity with the server's guardrails, deepens CSR and supply-chain
+integrity, and raises test coverage from ~40% to 85%.
+
+### Security
+
+- **Kyverno parity with the static guardrails.** A new `restrict-manifestwork-pod-security`
+  policy enforces the Restricted Pod Security baseline (automountServiceAccountToken=false,
+  default/empty service account, and per-container runAsNonRoot, allowPrivilegeEscalation=false,
+  drop-ALL, seccomp, and no Secret/hostPath/PVC/CSI/NFS volumes) on embedded workloads, so a
+  compromised server cannot slip a correctly-labelled but unsafe ManifestWork past admission.
+  Verified by an offline adversarial test (16 Kyverno cases total).
+- **CSR request binding.** The `accept` action now captures a hash of the PKCS#10 request at
+  propose time, re-verifies it is unchanged at apply, and validates the parsed certificate
+  subject Common Name is the OCM agent identity for the target cluster.
+- **Concurrency-safe apply.** Each proposal apply now runs under a per-proposal lock, so two
+  separately-minted valid tokens can no longer race on the same pending proposal.
+- **More guardrail limits.** Exact 64-hex `@sha256` digest validation, `runAsUser: 0`
+  rejection, an expanded protected-namespace set (kube-*/openshift-*/default), a per-proposal
+  byte ceiling, and an HPA `maxReplicas` cap.
+- **Spent-token ledger** is created 0600 and pruned of expired ids so it cannot grow forever.
+
+### Supply chain / CI
+
+- All GitHub Actions are pinned to commit SHAs; the base image is pinned by digest and the
+  container builds from the hash-pinned `requirements.lock`. Dependabot now also watches the
+  docker ecosystem.
+- The image-publish workflow triggers on the tag push (a Release created by GITHUB_TOKEN does
+  not start it) and now runs a Trivy scan and verifies the Cosign signature it just created.
+- CI type-checks the security modules strictly (`check_untyped_defs`), lints `hack/`, and
+  enforces an 80% coverage floor. Unit tests: 222; branch coverage 85%.
+
+### Fixed
+
+- Documentation narrowed further: the audit hash chain is described as detecting edits,
+  reordering, and mid-log deletion but not tail-truncation (which needs external anchoring);
+  the deployment/Helm chart no longer defaults to `:latest`, supports a digest and a
+  persistence PVC, ships a NetworkPolicy and PDB, and its service-account-token comment is
+  corrected. The `.github/FUNDING.yml` and the e2e "ALL GREEN" wording (now noting
+  expected-unavailable steps) are fixed.
+
 ## [0.2.1] - 2026-07-26
 
 A hardening release addressing two independent external enterprise-readiness audits. It

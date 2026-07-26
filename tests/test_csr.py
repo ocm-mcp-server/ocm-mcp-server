@@ -4,15 +4,34 @@
 """CSR validation for the `accept` path: only genuine, pending, cluster-bound OCM join
 CSRs may ride the human approval into kube-apiserver trust."""
 
+import base64
 from types import SimpleNamespace
+
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
 
 from ocm_mcp_server import ocm
 from ocm_mcp_server.ocm import (
     OCM_CSR_SIGNER,
     _approve_pending_csrs,
     _csr_matches_cluster,
+    _csr_request_hash,
+    _csr_subject_cn_ok,
     _is_ocm_join_csr,
 )
+
+
+def pkcs10(cn: str) -> str:
+    """A real, self-signed PKCS#10 request with the given subject CN (base64 DER)."""
+    key = ec.generate_private_key(ec.SECP256R1())
+    req = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)]))
+        .sign(key, hashes.SHA256())
+    )
+    return base64.b64encode(req.public_bytes(serialization.Encoding.DER)).decode()
 
 
 def csr(
@@ -25,6 +44,8 @@ def csr(
     usages=None,
     condition_types=(),
     label_cluster="__default__",
+    request="__default__",
+    subject_cn=None,
 ):
     username = (
         username if username is not None else f"system:open-cluster-management:{cluster}:agent"
@@ -41,9 +62,14 @@ def csr(
     labels = (
         {} if label_cluster is None else {"open-cluster-management.io/cluster-name": label_cluster}
     )
+    # By default the request's subject CN matches the bootstrap username for the cluster.
+    if request == "__default__":
+        request = pkcs10(subject_cn if subject_cn is not None else username)
     return SimpleNamespace(
         metadata=SimpleNamespace(name=name, uid=uid, labels=labels),
-        spec=SimpleNamespace(username=username, signer_name=signer, groups=groups, usages=usages),
+        spec=SimpleNamespace(
+            username=username, signer_name=signer, groups=groups, usages=usages, request=request
+        ),
         status=SimpleNamespace(conditions=[SimpleNamespace(type=t) for t in condition_types]),
     )
 
@@ -137,3 +163,43 @@ def test_approve_skips_now_denied(monkeypatch):
     monkeypatch.setattr(ocm, "hub_certificates", lambda: fake)
     approved = _approve_pending_csrs("cluster1", [{"name": "reviewed", "uid": "u-rev"}])
     assert approved == []
+
+
+# --------------------------------------------------------------- PKCS#10 subject + request hash
+
+
+def test_subject_cn_matches_cluster():
+    assert _csr_subject_cn_ok(csr(cluster="cluster1"), "cluster1") is True
+
+
+def test_subject_cn_wrong_cluster_rejected():
+    # A request whose certificate CN names a different cluster than the join target.
+    c = csr(cluster="cluster1", subject_cn="system:open-cluster-management:clusterB:agent")
+    assert _csr_subject_cn_ok(c, "cluster1") is False
+
+
+def test_subject_cn_unparseable_request_rejected():
+    assert _csr_subject_cn_ok(csr(request="not-base64-pkcs10"), "cluster1") is False
+
+
+def test_approve_skips_request_hash_changed(monkeypatch):
+    # Human captured one request; the live CSR now carries a different PKCS#10 request.
+    live = csr(name="reviewed", uid="u-rev", cluster="cluster1")
+    fake = _FakeCerts([live])
+    monkeypatch.setattr(ocm, "hub_certificates", lambda: fake)
+    approved = _approve_pending_csrs(
+        "cluster1",
+        [{"name": "reviewed", "uid": "u-rev", "request_hash": "deadbeef-not-the-live-hash"}],
+    )
+    assert approved == []
+
+
+def test_approve_accepts_matching_request_hash(monkeypatch):
+    live = csr(name="reviewed", uid="u-rev", cluster="cluster1")
+    fake = _FakeCerts([live])
+    monkeypatch.setattr(ocm, "hub_certificates", lambda: fake)
+    approved = _approve_pending_csrs(
+        "cluster1",
+        [{"name": "reviewed", "uid": "u-rev", "request_hash": _csr_request_hash(live)}],
+    )
+    assert approved == ["reviewed"]

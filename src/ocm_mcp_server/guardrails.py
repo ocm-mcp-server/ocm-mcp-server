@@ -20,6 +20,8 @@ Prompts are wishes; these are guarantees.
 
 from __future__ import annotations
 
+import json
+import re
 from typing import Any
 
 from .config import (
@@ -28,9 +30,15 @@ from .config import (
     ALLOWED_SERVICE_ACCOUNTS,
     ALLOWED_SERVICE_TYPES,
     ALLOWED_VOLUME_TYPES,
+    MAX_HPA_REPLICAS,
+    MAX_PROPOSAL_BYTES,
+    PROTECTED_NAMESPACE_PREFIXES,
     PROTECTED_NAMESPACES,
     SETTINGS,
 )
+
+# A valid image digest is @sha256: followed by exactly 64 lowercase hex chars.
+_DIGEST_RE = re.compile(r"@sha256:[0-9a-f]{64}(?:$|@)")
 
 
 class GuardrailViolation(Exception):
@@ -101,10 +109,11 @@ def _env_uses_secret(ctr: dict[str, Any]) -> bool:
 
 def _image_pinned(image: str) -> bool:
     """Reject :latest and floating (untagged) images. In strict mode
-    (OCM_MCP_REQUIRE_DIGEST) require a @sha256: digest, not merely a tag."""
+    (OCM_MCP_REQUIRE_DIGEST) require a well-formed @sha256:<64-hex> digest, not
+    merely the substring '@sha256:' and not merely a tag."""
     if not image or image.endswith(":latest"):
         return False
-    has_digest = "@sha256:" in image
+    has_digest = bool(_DIGEST_RE.search(image))
     if SETTINGS.require_image_digest:
         return has_digest
     last = image.split("/")[-1]
@@ -220,6 +229,19 @@ def _check_service(manifest: dict[str, Any]) -> list[str]:
     return violations
 
 
+def _check_hpa(manifest: dict[str, Any]) -> list[str]:
+    spec = _as_dict(manifest.get("spec"))
+    max_replicas = spec.get("maxReplicas")
+    if isinstance(max_replicas, int) and max_replicas > MAX_HPA_REPLICAS:
+        return [
+            (
+                f"HorizontalPodAutoscaler.spec.maxReplicas {max_replicas} exceeds the limit "
+                f"of {MAX_HPA_REPLICAS}; a runaway scale-up is a denial-of-service path."
+            )
+        ]
+    return []
+
+
 def check_manifest(manifest: dict[str, Any]) -> list[str]:
     """Return a list of violation strings for a single (already schema-valid) manifest."""
     violations: list[str] = []
@@ -241,16 +263,18 @@ def check_manifest(manifest: dict[str, Any]) -> list[str]:
             f"{kind}/{metadata.get('name', '?')}: metadata.namespace is required - "
             "cluster-scoped or default-namespace writes are not allowed."
         )
-    elif namespace in PROTECTED_NAMESPACES:
+    elif namespace in PROTECTED_NAMESPACES or namespace.startswith(PROTECTED_NAMESPACE_PREFIXES):
         violations.append(
-            f"namespace '{namespace}' is protected - agent writes to system namespaces are "
-            "never allowed."
+            f"namespace '{namespace}' is protected - agent writes to system/platform "
+            "namespaces are never allowed."
         )
 
     if _has_pod_spec(manifest):
         violations += _check_pod_security(manifest)
     if kind == "Service":
         violations += _check_service(manifest)
+    if kind == "HorizontalPodAutoscaler":
+        violations += _check_hpa(manifest)
     return violations
 
 
@@ -262,6 +286,12 @@ def validate_manifests(manifests: list[dict[str, Any]]) -> None:
         raise GuardrailViolation(
             f"Proposal contains {len(manifests)} manifests; the per-proposal limit is 10. "
             "Split large changes into reviewable pieces."
+        )
+    size = len(json.dumps(manifests, default=str).encode())
+    if size > MAX_PROPOSAL_BYTES:
+        raise GuardrailViolation(
+            f"Proposal is {size} bytes; the limit is {MAX_PROPOSAL_BYTES}. Large embedded "
+            "payloads (e.g. a ConfigMap stuffed with data) are rejected."
         )
     all_violations: list[str] = []
     for i, manifest in enumerate(manifests):

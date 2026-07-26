@@ -68,7 +68,8 @@ def main():
     RESULTS = args.results
     cl = args.cluster
 
-    from ocm_mcp_server import approvals, ocm  # noqa: after env is set
+    # Imported here (not at module top) so OCM_MCP_* env is set before config loads.
+    from ocm_mcp_server import approvals, ocm
     from ocm_mcp_server import server as srv
 
     _setup_fixtures(srv, approvals, ocm, cl)
@@ -154,7 +155,7 @@ def main():
 # --------------------------------------------------------------------- fixtures
 def _setup_fixtures(srv, approvals, ocm, cl):
     P = "4c. Setup fixtures - create the objects the read tools will report on"
-    from ocm_mcp_server.k8s import OCM_CLUSTER_GROUP, OCM_WORK_GROUP, OCM_POLICY_GROUP, hub_custom
+    from ocm_mcp_server.k8s import OCM_CLUSTER_GROUP, OCM_POLICY_GROUP, OCM_WORK_GROUP, hub_custom
     api = hub_custom()
 
     def _create(kind_desc, fn):
@@ -351,13 +352,14 @@ def _negative_scenario(srv, approvals, ocm, cl):
             "spec": {"replicas": 2, "selector": {"matchLabels": {"app": "payments", "version": "v2"}},
                      "template": {"metadata": {"labels": {"app": "payments", "version": "v2"}},
                                   "spec": {"automountServiceAccountToken": False,
-                                           "securityContext": {"runAsNonRoot": True, "runAsUser": 65532,
-                                               "runAsGroup": 65532, "seccompProfile": {"type": "RuntimeDefault"}},
+                                           "securityContext": {"runAsUser": 65532, "runAsGroup": 65532},
                                            "containers": [{"name": "payments",
                                            "image": "registry.k8s.io/e2e-test-images/agnhost:2.47",
                                            "args": ["netexec", "--http-port=8080"],
                                            "ports": [{"containerPort": 8080}],
-                                           "securityContext": {"allowPrivilegeEscalation": False,
+                                           "securityContext": {"runAsNonRoot": True,
+                                               "allowPrivilegeEscalation": False,
+                                               "seccompProfile": {"type": "RuntimeDefault"},
                                                "capabilities": {"drop": ["ALL"]}}}]}}}}]
     try:
         pr = tj(srv.propose_manifestwork(cluster=cl, name="fix-payments-v2",

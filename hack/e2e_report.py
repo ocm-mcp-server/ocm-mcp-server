@@ -86,7 +86,12 @@ def markdown_report(records, phases, counts, title, generated) -> str:
     ok = counts.get("OK", 0) + counts.get("PASS", 0)
     fail = counts.get("FAIL", 0)
     warn = counts.get("UNAVAILABLE", 0) + counts.get("SKIP", 0)
-    verdict = "🟢 ALL GREEN" if fail == 0 else f"🔴 {fail} FAILED"
+    if fail:
+        verdict = f"🔴 {fail} FAILED"
+    elif warn:
+        verdict = f"🟢 PASSED ({warn} expected-unavailable)"
+    else:
+        verdict = "🟢 ALL GREEN"
 
     out = [
         f"# {title}",
@@ -148,7 +153,11 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--md", help="also write a wiki-friendly Markdown report to this path")
     ap.add_argument("--title", default="ocm-mcp-server - end-to-end test report")
-    ap.add_argument("--generated", default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    # Local wall-clock is intentional for a human-facing report header.
+    ap.add_argument(
+        "--generated",
+        default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # noqa: DTZ005
+    )
     args = ap.parse_args()
 
     records = []
@@ -172,7 +181,12 @@ def main() -> None:
     ok = counts.get("OK", 0) + counts.get("PASS", 0)
     fail = counts.get("FAIL", 0)
     warn = counts.get("UNAVAILABLE", 0) + counts.get("SKIP", 0)
-    verdict = "ALL GREEN" if fail == 0 else f"{fail} FAILED"
+    if fail:
+        verdict = f"{fail} FAILED"
+    elif warn:
+        verdict = f"PASSED ({warn} expected-unavailable)"
+    else:
+        verdict = "ALL GREEN"
     verdict_col = "#1a7f37" if fail == 0 else "#cf222e"
 
     cards = []

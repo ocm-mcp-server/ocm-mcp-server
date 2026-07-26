@@ -10,6 +10,9 @@ no raw multi-thousand-line objects, just the fields an operator would look at.
 
 from __future__ import annotations
 
+import base64
+import binascii
+import hashlib
 import os
 from typing import Any
 
@@ -585,6 +588,47 @@ def _csr_matches_cluster(c: Any, cluster: str) -> bool:
     return (c.spec.username or "").startswith(f"{OCM_CSR_USERNAME_PREFIX}{cluster}:")
 
 
+def _csr_request_der(c: Any) -> bytes | None:
+    """The DER-encoded PKCS#10 request bytes from spec.request (base64 in the API)."""
+    req = getattr(c.spec, "request", None)
+    if not req:
+        return None
+    raw = req.encode() if isinstance(req, str) else bytes(req)
+    try:
+        return base64.b64decode(raw, validate=True)
+    except (binascii.Error, ValueError):
+        return None
+
+
+def _csr_request_hash(c: Any) -> str:
+    """SHA-256 of the exact PKCS#10 request bytes, so an approval binds the certificate
+    request itself - not just the CSR object's metadata - and a swapped request is caught."""
+    der = _csr_request_der(c)
+    return hashlib.sha256(der).hexdigest() if der else ""
+
+
+def _csr_subject_cn_ok(c: Any, cluster: str) -> bool:
+    """Parse the PKCS#10 request and require its subject Common Name to be the OCM agent
+    identity for this cluster (system:open-cluster-management:<cluster>:...). The API-level
+    username records who *submitted* the CSR; the CN is what the issued certificate will
+    actually assert, so it must be validated too."""
+    der = _csr_request_der(c)
+    if der is None:
+        return False
+    try:
+        from cryptography import x509
+        from cryptography.x509.oid import NameOID
+
+        csr = x509.load_der_x509_csr(der)
+        if not csr.is_signature_valid:
+            return False
+        cns = csr.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        cn = cns[0].value if cns else ""
+    except Exception:  # noqa: BLE001 - any parse/verify failure means it is not approvable
+        return False
+    return str(cn).startswith(f"{OCM_CSR_USERNAME_PREFIX}{cluster}:")
+
+
 def list_pending_csrs() -> list[dict[str, Any]]:
     """Pending cluster-join / add-on registration CSRs awaiting hub approval."""
     out = []
@@ -617,6 +661,7 @@ def pending_csr_identities(cluster: str) -> list[dict[str, str]]:
                 "uid": c.metadata.uid or "",
                 "signer": c.spec.signer_name,
                 "username": c.spec.username or "",
+                "request_hash": _csr_request_hash(c),
             }
         )
     return out
@@ -1016,15 +1061,24 @@ def _approve_pending_csrs(cluster: str, allowed: list[dict[str, str]]) -> list[s
     """
     from kubernetes import client
 
-    wanted = {(a.get("name"), a.get("uid")) for a in allowed}
+    # (name, uid) -> the request hash captured at propose time.
+    wanted = {(a.get("name"), a.get("uid")): a.get("request_hash", "") for a in allowed}
     certs = hub_certificates()
     approved: list[str] = []
     for c in certs.list_certificate_signing_request().items:
-        if (c.metadata.name, c.metadata.uid or "") not in wanted:
+        key = (c.metadata.name, c.metadata.uid or "")
+        if key not in wanted:
             continue
         # Re-verify at apply time: still a pending OCM client-auth join CSR (signer, groups,
-        # usages, not approved/denied) AND still bound to this exact cluster.
+        # usages, not approved/denied), still bound to this exact cluster, the PKCS#10
+        # request bytes are unchanged since the human reviewed, and the certificate subject
+        # CN is the OCM agent identity for this cluster.
         if not _is_ocm_join_csr(c) or not _csr_matches_cluster(c, cluster):
+            continue
+        captured_hash = wanted[key]
+        if captured_hash and _csr_request_hash(c) != captured_hash:
+            continue  # the certificate request changed after review
+        if not _csr_subject_cn_ok(c, cluster):
             continue
         c.status.conditions = (c.status.conditions or []) + [
             client.V1CertificateSigningRequestCondition(

@@ -67,4 +67,4 @@ Rule of thumb: **automate diagnosis aggressively, mutation conservatively.**
 | stolen approval token | TTL + single-proposal binding + one-time use |
 | crafted/late CSR on the accept path | signer + group + usage + cluster-bound username, re-checked at apply |
 | compromised server host | RBAC scope; no Secrets/exec; off-box signer cannot be read to mint |
-| audit tampering by the agent | append-only hash chain (`audit-verify`) outside the tool surface |
+| audit edit/reorder/mid-deletion by the agent | append-only hash chain (`audit-verify`); tail-truncation needs external anchoring (roadmap) |

@@ -31,9 +31,49 @@ spec:
               labels:
                 app: payments
             spec:
+              automountServiceAccountToken: false
               containers:
                 - name: payments
                   image: registry.k8s.io/e2e-test-images/agnhost:2.47
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# Restricted-PSS violation: no automount:false, no securityContext. Must be denied by
+# restrict-manifestwork-pod-security (but it is correctly labelled, so it passes the
+# label and kind policies - proving PSS is enforced independently of the label).
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-pod-security
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: sloppy
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: sloppy
+          template:
+            metadata:
+              labels:
+                app: sloppy
+            spec:
+              containers:
+                - name: sloppy
+                  image: registry.example.com/app:1.0.0
 ---
 # Privileged container + hostNetwork: must be denied.
 apiVersion: work.open-cluster-management.io/v1
