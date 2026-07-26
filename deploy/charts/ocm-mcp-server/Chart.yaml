@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: ocm-mcp-server
+description: Guardrailed MCP server for operating an Open Cluster Management fleet
+type: application
+version: 0.2.1
+appVersion: "0.2.1"
+home: https://github.com/sandeepbazar/ocm-mcp-server
+sources:
+  - https://github.com/sandeepbazar/ocm-mcp-server
+maintainers:
+  - name: Sandeep Bazar

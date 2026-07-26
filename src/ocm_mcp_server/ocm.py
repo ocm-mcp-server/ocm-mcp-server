@@ -70,9 +70,7 @@ def _summarize(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def list_managed_clusters() -> list[dict[str, Any]]:
-    res = hub_custom().list_cluster_custom_object(
-        OCM_CLUSTER_GROUP, "v1", "managedclusters"
-    )
+    res = hub_custom().list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1", "managedclusters")
     out = []
     for item in res.get("items", []):
         conds = _condition_map(item)
@@ -166,7 +164,7 @@ def cluster_events(cluster: str, namespace: str = "", limit: int = 40) -> list[d
         events = core.list_event_for_all_namespaces(limit=fetch, _request_timeout=SPOKE_TIMEOUT)
     items = sorted(
         events.items,
-        key=lambda e: (e.last_timestamp or e.event_time or e.metadata.creation_timestamp),
+        key=lambda e: e.last_timestamp or e.event_time or e.metadata.creation_timestamp,
         reverse=True,
     )
     return [
@@ -208,9 +206,7 @@ def pod_logs(cluster: str, namespace: str, pod: str, container: str = "", lines:
 
 
 def list_manifestworks(cluster: str) -> list[dict[str, Any]]:
-    res = hub_custom().list_namespaced_custom_object(
-        OCM_WORK_GROUP, "v1", cluster, "manifestworks"
-    )
+    res = hub_custom().list_namespaced_custom_object(OCM_WORK_GROUP, "v1", cluster, "manifestworks")
     out = []
     for item in res.get("items", []):
         conds = _condition_map(item)
@@ -221,9 +217,7 @@ def list_manifestworks(cluster: str) -> list[dict[str, Any]]:
                 "available": conds.get("Available", "Unknown"),
                 "resources": [
                     f"{rm.get('kind', '?')}/{rm.get('name', '?')} ({rm.get('namespace', '-')})"
-                    for man in item.get("status", {})
-                    .get("resourceStatus", {})
-                    .get("manifests", [])
+                    for man in item.get("status", {}).get("resourceStatus", {}).get("manifests", [])
                     for rm in (man.get("resourceMeta", {}),)
                 ],
             }
@@ -276,9 +270,7 @@ def get_manifestwork_object(cluster: str, name: str) -> dict[str, Any]:
 
 def get_managed_cluster(name: str) -> dict[str, Any]:
     """Full-but-trimmed view of one ManagedCluster: acceptance, version, capacity, taints."""
-    obj = hub_custom().get_cluster_custom_object(
-        OCM_CLUSTER_GROUP, "v1", "managedclusters", name
-    )
+    obj = hub_custom().get_cluster_custom_object(OCM_CLUSTER_GROUP, "v1", "managedclusters", name)
     status = obj.get("status", {})
     return {
         "name": name,
@@ -289,9 +281,7 @@ def get_managed_cluster(name: str) -> dict[str, Any]:
         "kubernetes_version": status.get("version", {}).get("kubernetes", "unknown"),
         "capacity": status.get("capacity", {}),
         "allocatable": status.get("allocatable", {}),
-        "cluster_claims": {
-            c.get("name"): c.get("value") for c in status.get("clusterClaims", [])
-        },
+        "cluster_claims": {c.get("name"): c.get("value") for c in status.get("clusterClaims", [])},
     }
 
 
@@ -300,9 +290,11 @@ def list_cluster_sets() -> list[dict[str, Any]]:
     sets = hub_custom().list_cluster_custom_object(
         OCM_CLUSTER_GROUP, "v1beta2", "managedclustersets"
     )
-    clusters = hub_custom().list_cluster_custom_object(
-        OCM_CLUSTER_GROUP, "v1", "managedclusters"
-    ).get("items", [])
+    clusters = (
+        hub_custom()
+        .list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1", "managedclusters")
+        .get("items", [])
+    )
     out = []
     for cs in sets.get("items", []):
         name = cs["metadata"]["name"]
@@ -347,9 +339,7 @@ def list_cluster_set_bindings(namespace: str = "") -> list[dict[str, Any]]:
 
 def list_cluster_claims() -> list[dict[str, Any]]:
     """Every cluster's ClusterClaims (id, platform, region, version...) rolled up from status."""
-    clusters = hub_custom().list_cluster_custom_object(
-        OCM_CLUSTER_GROUP, "v1", "managedclusters"
-    )
+    clusters = hub_custom().list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1", "managedclusters")
     return [
         {
             "cluster": c["metadata"]["name"],
@@ -401,9 +391,7 @@ def get_placement_decision(placement: str, namespace: str) -> dict[str, Any]:
     )
     decisions: list[str] = []
     for pd in res.get("items", []):
-        decisions.extend(
-            d.get("clusterName") for d in pd.get("status", {}).get("decisions", [])
-        )
+        decisions.extend(d.get("clusterName") for d in pd.get("status", {}).get("decisions", []))
     return {
         "placement": placement,
         "namespace": namespace,
@@ -421,8 +409,7 @@ def list_addon_placement_scores(cluster: str) -> list[dict[str, Any]]:
         {
             "name": s["metadata"]["name"],
             "scores": {
-                sc.get("name"): sc.get("value")
-                for sc in s.get("status", {}).get("scores", [])
+                sc.get("name"): sc.get("value") for sc in s.get("status", {}).get("scores", [])
             },
             "valid_until": s.get("status", {}).get("validUntil"),
         }
@@ -466,9 +453,7 @@ def get_manifestwork(cluster: str, name: str) -> dict[str, Any]:
             {
                 "resource": f"{meta.get('kind', '?')}/{meta.get('name', '?')}",
                 "namespace": meta.get("namespace"),
-                "conditions": {
-                    c.get("type"): c.get("status") for c in man.get("conditions", [])
-                },
+                "conditions": {c.get("type"): c.get("status") for c in man.get("conditions", [])},
                 "status_feedback": feedback,
             }
         )
@@ -566,16 +551,38 @@ def addon_health() -> list[dict[str, Any]]:
 
 
 OCM_CSR_USERNAME_PREFIX = "system:open-cluster-management:"
+OCM_CSR_GROUP_PREFIX = "system:open-cluster-management:"
 OCM_CSR_SIGNER = "kubernetes.io/kube-apiserver-client"
 CSR_CLUSTER_LABEL = "open-cluster-management.io/cluster-name"
+CSR_REQUIRED_USAGE = "client auth"
 
 
 def _is_ocm_join_csr(c: Any) -> bool:
-    if any(cond.type == "Approved" for cond in (c.status.conditions or [])):
+    """A CSR is an approvable OCM join request only if it is a pending (not approved, not
+    denied) client-auth CSR from the OCM signer, requested by an OCM bootstrap identity in
+    an OCM group, for client authentication. Approving anything looser would let a crafted
+    CSR ride the accept path, so every field the kube-apiserver will trust is checked."""
+    conditions = c.status.conditions or []
+    if any(cond.type in ("Approved", "Denied") for cond in conditions):
         return False
-    return (c.spec.username or "").startswith(OCM_CSR_USERNAME_PREFIX) and (
-        c.spec.signer_name == OCM_CSR_SIGNER
-    )
+    if c.spec.signer_name != OCM_CSR_SIGNER:
+        return False
+    if not (c.spec.username or "").startswith(OCM_CSR_USERNAME_PREFIX):
+        return False
+    groups = c.spec.groups or []
+    if not any((g or "").startswith(OCM_CSR_GROUP_PREFIX) for g in groups):
+        return False
+    usages = [str(u).lower() for u in (c.spec.usages or [])]
+    return CSR_REQUIRED_USAGE in usages
+
+
+def _csr_matches_cluster(c: Any, cluster: str) -> bool:
+    """The CSR's own labelled cluster and bootstrap username must both name `cluster`, so
+    an approval captured for one cluster cannot approve a join for another."""
+    labels = c.metadata.labels or {}
+    if labels.get(CSR_CLUSTER_LABEL) != cluster:
+        return False
+    return (c.spec.username or "").startswith(f"{OCM_CSR_USERNAME_PREFIX}{cluster}:")
 
 
 def list_pending_csrs() -> list[dict[str, Any]]:
@@ -605,8 +612,12 @@ def pending_csr_identities(cluster: str) -> list[dict[str, str]]:
         if labels.get(CSR_CLUSTER_LABEL) != cluster or not _is_ocm_join_csr(c):
             continue
         out.append(
-            {"name": c.metadata.name, "uid": c.metadata.uid or "",
-             "signer": c.spec.signer_name, "username": c.spec.username or ""}
+            {
+                "name": c.metadata.name,
+                "uid": c.metadata.uid or "",
+                "signer": c.spec.signer_name,
+                "username": c.spec.username or "",
+            }
         )
     return out
 
@@ -644,8 +655,7 @@ def list_policies(namespace: str = "") -> list[dict[str, Any]]:
                 "compliant": status.get("compliant"),
                 # ACM CompliancePerClusterStatus keys are all-lowercase on the wire.
                 "per_cluster": {
-                    s.get("clustername"): s.get("compliant")
-                    for s in (status.get("status") or [])
+                    s.get("clustername"): s.get("compliant") for s in (status.get("status") or [])
                 },
             }
         )
@@ -713,7 +723,11 @@ def get_cluster_info(cluster: str) -> dict[str, Any]:
         "openshift_version": dist.get("ocp", {}).get("version"),
         "node_count": len(nodes),
         "nodes": [
-            {"name": n.get("name"), "capacity": n.get("capacity", {}), "labels": n.get("labels", {})}
+            {
+                "name": n.get("name"),
+                "capacity": n.get("capacity", {}),
+                "labels": n.get("labels", {}),
+            }
             for n in nodes[:50]
         ],
         "conditions": _condition_map(obj),
@@ -797,7 +811,9 @@ def list_node_pools(namespace: str = "", cluster: str = "") -> list[dict[str, An
             res = api.list_cluster_custom_object(HYPERSHIFT_GROUP, "v1beta1", "nodepools")
     except ApiException as exc:
         if exc.status == 404:
-            raise FeatureNotInstalled("No NodePool API on this hub (HyperShift not enabled here).") from exc
+            raise FeatureNotInstalled(
+                "No NodePool API on this hub (HyperShift not enabled here)."
+            ) from exc
         raise
     out = []
     for np in res.get("items", []):
@@ -876,8 +892,7 @@ def _resolve_resource(resource: str) -> tuple[str, str, str, bool]:
     if key not in READABLE_RESOURCES:
         allowed = ", ".join(sorted(READABLE_RESOURCES))
         raise ValueError(
-            f"'{resource}' is not a readable OCM resource type. "
-            f"Allowed types: {allowed}."
+            f"'{resource}' is not a readable OCM resource type. Allowed types: {allowed}."
         )
     return READABLE_RESOURCES[key]
 
@@ -901,9 +916,7 @@ def cordon_patch(cluster: str, cordon: bool) -> dict[str, Any]:
     obj = hub_custom().get_cluster_custom_object(
         OCM_CLUSTER_GROUP, "v1", "managedclusters", cluster
     )
-    taints = [
-        t for t in obj.get("spec", {}).get("taints", []) if t.get("key") != CORDON_TAINT_KEY
-    ]
+    taints = [t for t in obj.get("spec", {}).get("taints", []) if t.get("key") != CORDON_TAINT_KEY]
     if cordon:
         taints.append({"key": CORDON_TAINT_KEY, "value": "true", "effect": "NoSelect"})
     return {"spec": {"taints": taints}}
@@ -938,7 +951,9 @@ def validate_cluster_action(cluster: str, action: str, params: dict[str, Any]) -
     if action in PATCH_ACTIONS:
         _merge_patch_cluster(cluster, _action_patch(cluster, action, params), dry_run=True)
     elif action == "enable_addon":
-        body = managed_cluster_addon_body(cluster, params["addon"], params.get("install_namespace", ""))
+        body = managed_cluster_addon_body(
+            cluster, params["addon"], params.get("install_namespace", "")
+        )
         hub_custom().create_namespaced_custom_object(
             OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons", body, dry_run="All"
         )
@@ -964,7 +979,9 @@ def apply_cluster_action(cluster: str, action: str, params: dict[str, Any]) -> d
         if action == "accept":
             result["approved_csrs"] = _approve_pending_csrs(cluster, params.get("csrs", []))
     elif action == "enable_addon":
-        body = managed_cluster_addon_body(cluster, params["addon"], params.get("install_namespace", ""))
+        body = managed_cluster_addon_body(
+            cluster, params["addon"], params.get("install_namespace", "")
+        )
         hub_custom().create_namespaced_custom_object(
             OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons", body
         )
@@ -1005,8 +1022,10 @@ def _approve_pending_csrs(cluster: str, allowed: list[dict[str, str]]) -> list[s
     for c in certs.list_certificate_signing_request().items:
         if (c.metadata.name, c.metadata.uid or "") not in wanted:
             continue
-        if not _is_ocm_join_csr(c):
-            continue  # re-verify signer/subject/not-already-approved at apply time
+        # Re-verify at apply time: still a pending OCM client-auth join CSR (signer, groups,
+        # usages, not approved/denied) AND still bound to this exact cluster.
+        if not _is_ocm_join_csr(c) or not _csr_matches_cluster(c, cluster):
+            continue
         c.status.conditions = (c.status.conditions or []) + [
             client.V1CertificateSigningRequestCondition(
                 type="Approved",

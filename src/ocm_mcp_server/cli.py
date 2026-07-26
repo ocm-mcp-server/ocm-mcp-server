@@ -11,7 +11,8 @@ Run on a trusted terminal, never by the agent:
     ocm-mcp reject <id>             mark a proposal rejected
     ocm-mcp audit [-n 20]           tail the tool-call audit log
     ocm-mcp doctor                  live read-path smoke test against the hub
-    ocm-mcp rotate-secret           mint a new HMAC key (invalidates all tokens)
+    ocm-mcp audit-verify            recompute the audit-log hash chain
+    ocm-mcp rotate-secret           new Ed25519 approval keypair (invalidates all tokens)
 """
 
 from __future__ import annotations
@@ -73,10 +74,20 @@ def cmd_approve(args: argparse.Namespace) -> int:
 
 def cmd_reject(args: argparse.Namespace) -> int:
     prop = approvals.load_proposal(args.id)
-    prop.status = "rejected"
-    prop.save()
+    if prop.status != "pending":
+        print(f"Proposal {prop.id} is '{prop.status}', not pending.", file=sys.stderr)
+        return 1
+    prop.set_status("rejected")
     print(f"Proposal {prop.id} rejected.")
     return 0
+
+
+def cmd_audit_verify(_args: argparse.Namespace) -> int:
+    from .tracing import verify_audit_chain
+
+    ok, msg = verify_audit_chain()
+    print(msg)
+    return 0 if ok else 1
 
 
 def cmd_audit(args: argparse.Namespace) -> int:
@@ -88,9 +99,9 @@ def cmd_audit(args: argparse.Namespace) -> int:
     for line in lines:
         entry = json.loads(line)
         print(
-            f'{entry.get("ts", 0):.0f}  {entry.get("tool", "?"):24s} '
-            f'{entry.get("outcome", "?"):5s} {entry.get("duration_ms", 0):>6}ms  '
-            f'{entry.get("error", "")[:80]}'
+            f"{entry.get('ts', 0):.0f}  {entry.get('tool', '?'):24s} "
+            f"{entry.get('outcome', '?'):5s} {entry.get('duration_ms', 0):>6}ms  "
+            f"{entry.get('error', '')[:80]}"
         )
     return 0
 
@@ -218,6 +229,7 @@ def main() -> None:
     p_audit.set_defaults(func=cmd_audit)
 
     sub.add_parser("doctor").set_defaults(func=cmd_doctor)
+    sub.add_parser("audit-verify").set_defaults(func=cmd_audit_verify)
 
     p_rotate = sub.add_parser("rotate-secret")
     p_rotate.add_argument("-y", "--yes", action="store_true", help="skip confirmation prompt")

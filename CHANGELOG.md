@@ -4,6 +4,57 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-07-26
+
+A hardening release addressing two independent external enterprise-readiness audits. It
+strengthens the actual trust boundaries and narrows the security documentation to describe
+only what is enforced.
+
+### Security
+
+- **Restricted Pod Security guardrails.** Embedded workloads (and their init and ephemeral
+  containers) must now meet a Restricted baseline: `automountServiceAccountToken: false`,
+  required `runAsNonRoot`, explicit `allowPrivilegeEscalation: false`, all capabilities
+  dropped, and a seccomp profile. Added an allow-list of volume types (no PVC, CSI,
+  hostPath, or secret) and Service types (no NodePort/LoadBalancer/ExternalName/externalIPs),
+  optional digest-pinning (`OCM_MCP_REQUIRE_DIGEST`), and schema validation so a malformed
+  manifest is a clean rejection instead of a crash.
+- **One-time, issuer/audience-bound approval tokens.** Tokens now carry a unique id, issuer,
+  audience, and not-before; the id is recorded as spent (locked, fsynced) on first use, so a
+  token cannot be replayed, and a token minted for one deployment cannot be used against
+  another. The signer and verifier key paths are now independent (`OCM_MCP_SIGNER_KEY` /
+  `OCM_MCP_VERIFIER_KEY`) so the private key can live off the server; a planned rotation can
+  keep a previous verifier key valid until outstanding tokens expire.
+- **Requester-bound Kyverno policy.** A new policy matches ManifestWorks by the server's
+  ServiceAccount identity and requires the `managed-by` label, closing the bypass where an
+  unlabeled ManifestWork would skip the label-keyed content policies. Verified by a new
+  offline test with requester `userInfo`.
+- **Stronger CSR validation.** The `accept` action now also rejects denied CSRs and requires
+  an OCM group, `client auth` usage, and a bootstrap username bound to the target cluster,
+  re-checked at apply.
+- **Tamper-evident audit log.** Each entry carries an actor, a sequence number, and a hash
+  chained to the previous entry; `ocm-mcp audit-verify` recomputes the chain. An audit-write
+  failure is surfaced to stderr and never masks a tool result.
+- **Hardened state store.** Proposal ids are validated (no path traversal), writes are locked
+  and fsynced, and status advances only along legal transitions. Proposal/audit files are
+  created 0600 and the proposals directory 0700.
+
+### Added
+
+- Reference `deploy/deployment.yaml` and a Helm chart (`deploy/charts/ocm-mcp-server`) with a
+  Restricted pod shape and read-only verifier-key mount.
+- Optional Prometheus `/metrics` endpoint (`OCM_MCP_METRICS_PORT`).
+- `ocm-mcp audit-verify` command.
+- Hash-pinned `requirements.lock`, Dependabot, and CI gates for `ruff format`, `mypy`, and a
+  coverage floor; release images now ship an SBOM, provenance, and a keyless Cosign signature.
+
+### Fixed
+
+- Documentation narrowed to enforced boundaries: the "compromised server cannot mint" claim
+  is now scoped to off-box signing; RBAC no longer claims per-object ownership (enforced in
+  the app); the generic reader is described as returning full allow-listed objects. Removed
+  the last HMAC/secret wording remnants. Corrected the invalid `.github/FUNDING.yml`.
+
 ## [0.2.0] - 2026-07-25
 
 A security-focused release addressing an external security audit. The headline change

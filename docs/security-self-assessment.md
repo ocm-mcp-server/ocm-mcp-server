@@ -16,7 +16,7 @@ be honest about limits, not to market.
 | Software | https://github.com/sandeepbazar/ocm-mcp-server |
 | Security provider | No. The project is a control point that adds safety to agent-driven fleet operations; it is not a security product in itself. |
 | Languages | Python |
-| SBOM | Dependencies are declared in `pyproject.toml`; a container image is published to GHCR on release. |
+| SBOM | Dependencies are bounded in `pyproject.toml` and hash-pinned in `requirements.lock`; the release container image is published to GHCR with a generated SBOM, build provenance, and a keyless Cosign signature. |
 
 ### Security links
 
@@ -54,7 +54,8 @@ four independent controls between the model and the clusters.
 ### Actions
 
 1. **Read** (ungated): the agent lists/gets OCM resources and, where a spoke context is
-   configured, reads events, logs, and health. Reads are summarized, never raw dumps.
+   configured, reads events, logs, and health. Most reads are summarized; the generic
+   reader returns full allow-listed OCM objects (never Secrets or core kinds).
 2. **Propose** (mutates nothing): the agent proposes a ManifestWork or a lifecycle
    action. It passes static guardrails and a Kyverno dry-run on the hub, then is stored
    pending.
@@ -84,20 +85,26 @@ four independent controls between the model and the clusters.
 
 ### Critical
 
-- **Asymmetric, operation-bound human approval.** Approval is an Ed25519 signature over
-  claims that bind the exact proposal content hash, the operation (`apply` or `rollback`),
-  and an expiry. The signing (private) key is used only by the `ocm-mcp` CLI; the MCP
-  server loads only the public key, so it can verify a token but can never mint one - even
-  if the server, or an agent that reads the server's key material, is compromised. An
-  apply token cannot authorize a rollback, and a change to any byte of the proposal
-  invalidates the signature. The keypair is rotatable with `ocm-mcp rotate-secret`. For
-  full isolation, run the CLI in a separate OS account, device, or chat-ops/ticket
-  service; until then, shell/filesystem isolation between the agent and the CLI is
-  mandatory.
+- **Asymmetric, operation-bound, one-time human approval.** Approval is an Ed25519
+  signature over claims that bind the exact proposal content hash, the operation (`apply`
+  or `rollback`), the issuer and audience, a unique token id, and an expiry. The token is
+  single-use: its id is recorded as spent under a lock on first use, so it cannot be
+  replayed. An apply token cannot authorize a rollback, and a change to any byte of the
+  proposal invalidates the signature. The keypair is rotatable with `ocm-mcp
+  rotate-secret`, and a planned rotation can keep a previous verifier key valid until
+  outstanding tokens expire.
+  **Isolation boundary (be precise):** the MCP server needs only the public verifier key,
+  but "a compromised server cannot mint a token" holds **only when the private signing key
+  is kept off the server** - a separate OS account or device via `OCM_MCP_SIGNER_KEY`, or a
+  chat-ops/ticket signer. When signer and server share one `OCM_MCP_HOME`, a compromised
+  server process could read the private key; there, signer isolation is a filesystem
+  convention, not an enforced boundary. Off-box signing is required for the stronger claim.
 - **Bound CSR approval.** The `accept` lifecycle action captures the pending join CSRs
   (name, UID, signer, subject) at propose time and approves only those exact CSRs at apply
-  time, re-verifying the OCM signer and username - it never sweeps every CSR with a
-  matching label, and never approves a CSR created after the human review.
+  time, re-verifying that each is still a pending, not-denied, OCM client-auth join CSR
+  (signer, an OCM group, `client auth` usage, OCM bootstrap username) bound to the target
+  cluster - it never sweeps every CSR with a matching label, and never approves a CSR
+  created after the human review.
 - **Rollback as a distinct operation.** Undoing an applied change requires a separate
   rollback proposal bound to the ManifestWork's UID and a rollback-scoped token; the
   server verifies the work is still ours (managed-by label) with the approved UID before
@@ -111,22 +118,41 @@ four independent controls between the model and the clusters.
 - **Least-privilege RBAC.** The hub identity ([deploy/rbac.yaml](../deploy/rbac.yaml))
   grants exactly the verbs the tools use: read across the OCM API, plus create/delete
   ManifestWorks and ManagedClusterAddOns, patch ManagedClusters, and approve OCM join
-  CSRs. No Secret reads, no exec, no arbitrary delete.
+  CSRs. No Secret reads, no exec, no arbitrary delete. RBAC cannot restrict writes to
+  "only objects this server created", so per-object ownership is enforced in the
+  application (managed-by label + approved UID), not by RBAC.
+- **Requester-bound policy (no label bypass).** A Kyverno policy matches ManifestWorks by
+  the server's ServiceAccount identity (`request.userInfo`) and requires the
+  `managed-by` label, so the server SA cannot create an unlabeled ManifestWork that would
+  skip the content policies keyed on that label.
 
 ### Security-relevant
 
-- **Static guardrails** reject privileged/host access, protected namespaces, unpinned
-  images, and - by matching the full `apiVersion/kind` against an allow-list - group
-  spoofing, indirect Secret access (`secretKeyRef`, secret/projected volumes), and
-  arbitrary service accounts, before policy admission and again at apply time.
+- **Restricted-Pod-Security guardrails.** Static checks enforce a Restricted baseline on
+  every embedded workload (and its init/ephemeral containers): exact `apiVersion/kind`
+  allow-list (blocks group spoofing), no host namespaces, `automountServiceAccountToken:
+  false`, no arbitrary service account, an allow-list of volume and Service types (no
+  PVC/CSI/hostPath/secret, no NodePort/LoadBalancer/externalIPs), required
+  `runAsNonRoot`, `allowPrivilegeEscalation: false`, all capabilities dropped, a seccomp
+  profile, no indirect Secret access, and pinned images (optionally digest-pinned via
+  `OCM_MCP_REQUIRE_DIGEST`). Inputs are schema-checked first, so a malformed manifest is a
+  clean rejection, not a crash. Checks run before policy admission and again at apply.
 - **Apply-time integrity re-check** recomputes the proposal's content hash and re-runs
   guardrails at apply, closing a time-of-check/time-of-use gap on the state directory.
+- **Hardened state store.** Proposal ids are validated (no path traversal); writes are
+  atomic (temp + fsync + rename) under a file lock; status advances only along legal
+  transitions, so a stale file cannot be re-applied.
+- **Tamper-evident audit.** Each audit line carries an actor, a monotonic sequence number,
+  and a hash chained to the previous entry; `ocm-mcp audit-verify` recomputes the chain
+  and any edit, deletion, or reordering breaks it. An audit-write failure is surfaced to
+  stderr and never masks a tool's result.
 - **Bounded, timed spoke reads** cap result size and set request timeouts so one large
   cluster cannot hang or flood a call.
 - **Read-only mode** (`OCM_MCP_READ_ONLY=1`) disables both write toolsets as a coarse
   backstop under the token gate.
-- **Observability**: an append-only audit line per tool call (approval tokens redacted),
-  plus optional OpenTelemetry spans.
+- **Observability**: the append-only audit log, plus optional OpenTelemetry spans and an
+  optional Prometheus `/metrics` endpoint (`OCM_MCP_METRICS_PORT`). Approval tokens are
+  redacted from all three.
 
 ## Project compliance
 
@@ -137,14 +163,16 @@ documented threat model.
 
 ## Secure development practices
 
-- **Development pipeline**: contributions arrive via pull request. CI runs linting
-  (ruff), the unit test suite (57 tests, no cluster required), and the offline Kyverno
-  policy tests (12 cases). A CodeQL workflow scans the code.
+- **Development pipeline**: contributions arrive via pull request. CI runs linting and
+  format checks (ruff), static typing (mypy), the unit test suite with a coverage gate
+  (94 tests, no cluster required), the offline Kyverno policy tests (14 cases, including a
+  requester-identity bypass test), a dependency review, and a secret scan (gitleaks). A
+  CodeQL workflow scans the code.
 - **Commits** are signed off under the Developer Certificate of Origin.
-- **Dependencies** are pinned by lower bound in `pyproject.toml`; the runtime surface is
-  small (the MCP SDK and the Kubernetes client).
-- **Container image** is built from a minimal base and published to GHCR on tagged
-  release.
+- **Dependencies** are bounded above and below in `pyproject.toml` and pinned with hashes
+  in `requirements.lock`; Dependabot proposes updates for pip and GitHub Actions.
+- **Container image** is built from a minimal base and published to GHCR on a release with
+  a generated SBOM, build provenance, and a keyless Cosign signature.
 
 ## Security issue resolution
 
