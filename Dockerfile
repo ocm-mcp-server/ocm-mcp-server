@@ -3,7 +3,7 @@
 
 # Base image pinned by digest (python:3.12-slim). Dependabot's docker ecosystem proposes
 # digest bumps; update the tag comment alongside the digest.
-FROM python@sha256:55842c72c6b3584d06ec84c731fc516b30b8a53ad262ebd085e47ab568b3bfc1
+FROM python@sha256:5f1cdbcab9a50594a79502dd73e885456d2a2fc31f1a1fa18484815b37ee9152
 
 WORKDIR /app
 
