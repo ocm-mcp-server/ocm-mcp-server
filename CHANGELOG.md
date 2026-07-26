@@ -17,8 +17,8 @@ only what is enforced.
   required `runAsNonRoot`, explicit `allowPrivilegeEscalation: false`, all capabilities
   dropped, and a seccomp profile. Added an allow-list of volume types (no PVC, CSI,
   hostPath, or secret) and Service types (no NodePort/LoadBalancer/ExternalName/externalIPs),
-  optional digest-pinning (`OCM_MCP_REQUIRE_DIGEST`), and schema validation so a malformed
-  manifest is a clean rejection instead of a crash.
+  optional digest-pinning (`OCM_MCP_REQUIRE_DIGEST`), rejection of `runAsUser: 0` (root),
+  and schema validation so a malformed manifest is a clean rejection instead of a crash.
 - **One-time, issuer/audience-bound approval tokens.** Tokens now carry a unique id, issuer,
   audience, and not-before; the id is recorded as spent (locked, fsynced) on first use, so a
   token cannot be replayed, and a token minted for one deployment cannot be used against
@@ -33,8 +33,10 @@ only what is enforced.
   an OCM group, `client auth` usage, and a bootstrap username bound to the target cluster,
   re-checked at apply.
 - **Tamper-evident audit log.** Each entry carries an actor, a sequence number, and a hash
-  chained to the previous entry; `ocm-mcp audit-verify` recomputes the chain. An audit-write
-  failure is surfaced to stderr and never masks a tool result.
+  chained to the previous entry (chain head derived from the log itself, not a sidecar);
+  `ocm-mcp audit-verify` recomputes the chain and reports a broken chain rather than
+  crashing on a corrupt line. Argument values are bounded so a large payload cannot bloat a
+  line, and an audit-write failure is surfaced to stderr and never masks a tool result.
 - **Hardened state store.** Proposal ids are validated (no path traversal), writes are locked
   and fsynced, and status advances only along legal transitions. Proposal/audit files are
   created 0600 and the proposals directory 0700.

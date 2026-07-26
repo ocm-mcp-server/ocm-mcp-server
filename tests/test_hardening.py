@@ -305,3 +305,19 @@ def test_key_and_state_permissions(tmp_home):
     assert mode(SETTINGS.proposals_dir) == 0o700
     assert mode(prop.path()) == 0o600
     assert mode(SETTINGS.audit_log) == 0o600
+
+
+def test_audit_arg_values_are_bounded(tmp_home):
+    # A large argument must be truncated in the audit line so it can't overflow the
+    # hash-chain tail read or bloat the log; the chain must still verify.
+    from ocm_mcp_server import tracing
+
+    big = "x" * 100_000
+    tracing.audit(
+        {"tool": "propose_manifestwork", "args": {"manifests_json": big}, "outcome": "ok"}
+    )
+    # audit() stores what it is given; the truncation happens in traced_tool via _audit_arg.
+    assert tracing._audit_arg("manifests_json", big).endswith("chars)")
+    assert tracing._audit_arg("approval_token", "secret") == "<redacted>"
+    ok, _ = tracing.verify_audit_chain()
+    assert ok

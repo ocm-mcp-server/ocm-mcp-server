@@ -177,6 +177,9 @@ def _check_pod_security(manifest: dict[str, Any]) -> list[str]:
             )
         if not (sc.get("runAsNonRoot") is True or pod_nonroot):
             violations.append(f"{role} '{name}': runAsNonRoot must be true (pod or container).")
+        run_as_user = sc.get("runAsUser", pod_sc.get("runAsUser"))
+        if run_as_user == 0:
+            violations.append(f"{role} '{name}': runAsUser 0 (root) is not allowed.")
         drop = [str(c).upper() for c in _as_dict(sc.get("capabilities")).get("drop", []) or []]
         if "ALL" not in drop:
             violations.append(f"{role} '{name}': capabilities.drop must include ALL.")
