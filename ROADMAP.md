@@ -23,18 +23,32 @@ be auditable.
       holds only the public key; rollback is a distinct, separately approved operation.
 - [x] Hardened static guardrails (exact GVK allow-list, indirect-Secret and
       arbitrary-service-account blocking) and CSR approval bound to the exact join CSRs.
+- [x] One-time, issuer/audience-bound approval tokens; independent signer/verifier key
+      paths; tamper-evident (hash-chained) audit log; hardened proposal state store.
+- [x] Restricted-Pod-Security static guardrails and a requester-identity Kyverno policy
+      that closes the unlabeled-ManifestWork bypass.
+- [x] Reference in-cluster Deployment and Helm chart; optional Prometheus `/metrics`.
+- [x] Supply chain: hash-pinned lock file, Dependabot, SBOM + provenance + Cosign
+      signature on release images, dependency review and secret scanning in CI.
 - [ ] Published evaluation results across multiple models (`eval/results/`).
 - [ ] Recorded end-to-end demo of the remediation flow (MP4).
 
 ## Next
 
-- [ ] **In-cluster deployment**: a Deployment manifest and a Helm chart so the server
-      runs as a workload on the hub with its own ServiceAccount.
+- [ ] **Off-box / external signer**: back the approval signer with a KMS, HSM, or a
+      chat-ops/ticket service so the "compromised server cannot mint" property holds
+      without relying on filesystem isolation.
+- [ ] **Authenticated HTTP transport**: serve MCP over an authenticated transport (SSO /
+      OAuth 2.1, per-tool scopes, actor propagated into approvals and audit) so the server
+      can run standalone rather than attached over stdio.
+- [ ] **Transactional state backend**: move the proposal store to CRDs (resourceVersion
+      compare-and-swap) or a database, with a reconciler that recovers after a crash
+      between cluster-write and state-save.
 - [ ] **cluster-proxy transport**: reach spokes through the OCM cluster-proxy and
       managed-serviceaccount add-ons instead of direct kubeconfig contexts, so no spoke
       credentials live beside the server.
-- [ ] **Structured audit sink**: optional export of the audit log to a SIEM or object
-      store, in addition to the local append-only file.
+- [ ] **Structured audit sink**: export the hash-chained audit log to a SIEM or object
+      store, with retention/legal-hold, in addition to the local file.
 - [ ] **Policy pack**: a small library of reusable Kyverno policies for common fleet
       guardrails, contributable upstream to kyverno/policies.
 - [ ] Additional chaos classes: node pressure, network partitions, noisy neighbors.

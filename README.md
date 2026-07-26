@@ -59,7 +59,7 @@ between the model and your clusters:
 |---|-------|-------------|---------------|
 | 1 | **Static checks** | this server, before anything else | privileged pods, host access, system namespaces, unpinned images, disallowed kinds |
 | 2 | **Policy admission** | [Kyverno](https://kyverno.io/) dry-run on the hub | anything your org's policies reject, evaluated inside the `ManifestWork` envelope |
-| 3 | **Human approval** | Ed25519 token signed by `ocm-mcp approve` on a trusted terminal (the server holds only the public key) | any change reaching a cluster without a person consenting to that exact content and operation |
+| 3 | **Human approval** | Ed25519 token signed by `ocm-mcp approve` on a trusted terminal; the server needs only the public verifier key | any change reaching a cluster without a person consenting to that exact content and operation (one-time token, bound to content + operation + issuer/audience + expiry) |
 | 4 | **Least-privilege RBAC** | Kubernetes | everything else; no Secrets, no exec, no deletes outside its own ManifestWorks |
 
 None of these layers live in the system prompt, so none of them can be talked out of.
@@ -346,8 +346,13 @@ ready-to-paste values at the end).
 | `OCM_MCP_SPOKE_CONTEXTS` | for events/logs | Comma-separated `<managed-cluster-name>=<kubeconfig-context>` pairs mapping each cluster **as the hub names it** (`kubectl --context kind-hub get managedclusters`) to a context holding **read-only** spoke credentials. Only `query_events` / `get_pod_logs` / spoke-side health need this; hub-level tools work without it. |
 | `KUBECONFIG` | no | Kubeconfig file path(s); defaults to `~/.kube/config`. |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Set (e.g. `http://localhost:4318`) to emit a trace span per tool call. Unset = tracing off, audit log still on. |
-| `OCM_MCP_HOME` | no | State directory (approval secret, pending proposals, `audit.jsonl`). Default `~/.ocm-mcp`. |
+| `OCM_MCP_HOME` | no | State directory (approval keypair, pending proposals, `audit.jsonl`, spent-token ids). Default `~/.ocm-mcp`. |
+| `OCM_MCP_SIGNER_KEY` | recommended | Path to the **private** Ed25519 signing key. Point this off the server (a separate account/device) so a compromised server cannot mint tokens. Default `OCM_MCP_HOME/approval_ed25519`. |
+| `OCM_MCP_VERIFIER_KEY` | no | Path to the **public** verifier key the server loads. Mount read-only. Default `OCM_MCP_HOME/approval_ed25519.pub`. |
+| `OCM_MCP_ISSUER` / `OCM_MCP_AUDIENCE` | no | Bind approval tokens to this deployment so a token minted elsewhere is refused. Defaults `ocm-mcp` / `ocm-mcp-server`. |
 | `OCM_MCP_APPROVAL_TTL` | no | Approval-token lifetime in seconds. Default `3600`. |
+| `OCM_MCP_REQUIRE_DIGEST` | no | Set to `1` to require `@sha256` digest-pinned images (stricter than tag-pinning). Default off. |
+| `OCM_MCP_METRICS_PORT` | no | If set, expose Prometheus metrics at `/metrics` on this port (binds `127.0.0.1` unless `OCM_MCP_METRICS_HOST` is set). Default off. |
 | `OCM_MCP_READ_ONLY` | no | Set to `1`/`true` for a strictly-inspection deployment: every propose/apply tool refuses, a coarse backstop under the token gate. Default off. |
 | `OCM_MCP_CLIENT_TTL` | no | Seconds before the cached Kubernetes API client is rebuilt, so rotated/refreshed credentials are picked up. Default `600`. |
 | `OCM_MCP_SPOKE_TIMEOUT` | no | Read timeout (seconds) for spoke health/event/log calls, so one large cluster cannot hang a tool. Default `30`. |

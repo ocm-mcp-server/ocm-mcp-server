@@ -80,7 +80,13 @@ def test_proposal_persistence(tmp_home):
 
 def test_unknown_proposal(tmp_home):
     with pytest.raises(ApprovalError, match="No proposal"):
-        approvals.load_proposal("doesnotexist")
+        approvals.load_proposal("0" * 32)  # valid format, just does not exist
+
+
+def test_invalid_proposal_id_rejected(tmp_home):
+    # A path-traversal-ish or malformed id is refused before any filesystem access.
+    with pytest.raises(ApprovalError, match="Invalid proposal id"):
+        approvals.load_proposal("../../etc/passwd")
 
 
 def test_expiry_uses_wall_clock(tmp_home, monkeypatch):

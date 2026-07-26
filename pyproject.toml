@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ocm-mcp-server"
-version = "0.2.0"
+version = "0.2.1"
 description = "A guardrailed MCP server that lets AI agents operate multi-cluster Kubernetes fleets through an Open Cluster Management hub"
 readme = "README.md"
 license = "Apache-2.0"
@@ -27,6 +27,7 @@ tracing = [
 ]
 dev = [
     "pytest>=8.0",
+    "pytest-cov>=5.0",
     "ruff>=0.5",
     "mypy>=1.10",
 ]
@@ -44,3 +45,22 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["ocm_mcp_server"]
+branch = true
+
+[tool.coverage.report]
+# Floor that ratchets: security-critical modules (approvals, guardrails, config) are
+# already >90%; the target is 70% overall as the live-cluster paths (ocm, server) gain
+# mocked coverage. CI enforces this floor with --cov-fail-under.
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
+
+[tool.mypy]
+python_version = "3.11"
+# The Kubernetes client ships no type stubs, so its imports are untyped. Ignore missing
+# imports for third-party packages rather than failing type-check on unstubbed deps.
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = false
+files = ["src/ocm_mcp_server"]

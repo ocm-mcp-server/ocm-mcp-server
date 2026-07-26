@@ -48,7 +48,9 @@ approves a *conversation*. The token approves a *content hash* and an operation:
 if the agent mutates the proposal after approval, the signature no longer
 verifies, and an `apply` token cannot authorize a `rollback`. Approval is
 asymmetric - the CLI signs with a private key the server never holds, so a
-compromised server cannot mint one. Tokens expire (default 1 h) and are minted
+compromised server cannot mint one - provided the private signing key is kept off the
+server (`OCM_MCP_SIGNER_KEY` on a separate account/device); co-located, that is a
+filesystem convention, not a boundary. Tokens are single-use and expire (default 1 h), minted
 only by the CLI on a trusted terminal.
 
 **Why per-spoke read ServiceAccounts in the quickstart?** Simplicity. The

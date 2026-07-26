@@ -12,7 +12,25 @@ MANIFEST = {
     "apiVersion": "apps/v1",
     "kind": "Deployment",
     "metadata": {"name": "payments", "namespace": "shop"},
-    "spec": {"template": {"spec": {"containers": [{"name": "c", "image": "reg/app:1.2.3"}]}}},
+    "spec": {
+        "template": {
+            "spec": {
+                "automountServiceAccountToken": False,
+                "containers": [
+                    {
+                        "name": "c",
+                        "image": "reg/app:1.2.3",
+                        "securityContext": {
+                            "runAsNonRoot": True,
+                            "allowPrivilegeEscalation": False,
+                            "seccompProfile": {"type": "RuntimeDefault"},
+                            "capabilities": {"drop": ["ALL"]},
+                        },
+                    }
+                ],
+            }
+        }
+    },
 }
 
 
@@ -81,7 +99,7 @@ def test_pod_spec_handles_cronjob():
             }
         },
     }
-    containers = guardrails._containers(cron)
+    containers = [c for _, c in guardrails._containers(cron)]
     assert containers and containers[0]["image"] == "x:1"
 
 
@@ -90,4 +108,200 @@ def test_pod_spec_handles_statefulset_like_deployment():
         "kind": "StatefulSet",
         "spec": {"template": {"spec": {"containers": [{"name": "c", "image": "y:2"}]}}},
     }
-    assert guardrails._containers(sts)[0]["image"] == "y:2"
+    assert next(c for _, c in guardrails._containers(sts))["image"] == "y:2"
+
+
+# --- v0.2.1 approval hardening: replay, issuer/audience, one-time use ---
+
+
+def test_token_replay_refused(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")
+    approvals.verify_token(prop, token, operation="apply", consume=True)  # first use ok
+    with pytest.raises(approvals.ApprovalError, match="already been used"):
+        approvals.verify_token(prop, token, operation="apply", consume=True)
+
+
+def test_verify_without_consume_does_not_burn_token(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")
+    approvals.verify_token(prop, token, operation="apply")  # inspection, no consume
+    approvals.verify_token(prop, token, operation="apply", consume=True)  # still usable
+
+
+def test_wrong_audience_refused(tmp_home, monkeypatch):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")
+    monkeypatch.setattr(SETTINGS, "audience", "some-other-deployment")
+    with pytest.raises(approvals.ApprovalError, match="audience"):
+        approvals.verify_token(prop, token, operation="apply")
+
+
+def test_wrong_issuer_refused(tmp_home, monkeypatch):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")
+    monkeypatch.setattr(SETTINGS, "issuer", "someone-else")
+    with pytest.raises(approvals.ApprovalError, match="issuer"):
+        approvals.verify_token(prop, token, operation="apply")
+
+
+def test_approver_recorded_in_claims(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply", approver="alice")
+    claims = approvals.verify_token(prop, token, operation="apply")
+    assert claims["approver"] == "alice"
+
+
+# --- v0.2.1 state store: guarded status transitions ---
+
+
+def test_illegal_status_transition_refused(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    prop.set_status("applied")
+    with pytest.raises(approvals.ApprovalError, match="Illegal proposal transition"):
+        prop.set_status("pending")  # cannot go back
+
+
+def test_terminal_status_is_final(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    prop.set_status("rejected")
+    with pytest.raises(approvals.ApprovalError, match="Illegal proposal transition"):
+        prop.set_status("applied")
+
+
+# --- v0.2.1 audit: tamper-evident hash chain ---
+
+
+def test_audit_chain_detects_tampering(tmp_home):
+    from ocm_mcp_server import tracing
+
+    tracing.audit({"tool": "a", "outcome": "ok"})
+    tracing.audit({"tool": "b", "outcome": "ok"})
+    ok, _ = tracing.verify_audit_chain()
+    assert ok
+
+    # Tamper with a line in place; the chain must no longer verify.
+    log = SETTINGS.audit_log
+    lines = log.read_text().splitlines()
+    import json as _json
+
+    rec = _json.loads(lines[0])
+    rec["outcome"] = "rejected"  # rewrite history, keep the old hash
+    lines[0] = _json.dumps(rec)
+    log.write_text("\n".join(lines) + "\n")
+    ok, msg = tracing.verify_audit_chain()
+    assert not ok and "broken" in msg
+
+
+def test_manifestwork_body_always_labeled():
+    # The anchor that makes the Kyverno require-managed-by-label policy effective: the
+    # server can never emit a ManifestWork without the managed-by label.
+    from ocm_mcp_server import ocm
+
+    body = ocm.manifestwork_body("x", [MANIFEST])
+    assert body["metadata"]["labels"]["app.kubernetes.io/managed-by"] == "ocm-mcp-server"
+
+
+# --- v0.2.1 approval: nbf, planned rotation overlap, off-box signer, cross-process replay ---
+
+
+def test_token_not_yet_valid_rejected(tmp_home, monkeypatch):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")
+    monkeypatch.setattr(approvals.time, "time", lambda: 0)  # before nbf
+    with pytest.raises(approvals.ApprovalError, match="not yet valid"):
+        approvals.verify_token(prop, token, operation="apply")
+
+
+def test_token_before_planned_rotation_still_verifies(tmp_home):
+    import shutil
+
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")  # generates keypair
+    # Planned rotation: stage the current verifier as previous, then mint a fresh keypair.
+    shutil.copy(SETTINGS.approval_public_key_path, SETTINGS.previous_public_key_path)
+    SETTINGS.approval_private_key_path.unlink()
+    SETTINGS.approval_public_key_path.unlink()
+    approvals.mint_token(prop, operation="apply")  # regenerates a new keypair
+    # The old token still verifies via the retained previous verifier key.
+    approvals.verify_token(prop, token, operation="apply")
+
+
+def test_signer_verifier_path_overrides_honored(tmp_home, tmp_path, monkeypatch):
+    signer = tmp_path / "signer_key"
+    verifier = tmp_path / "verifier_key.pub"
+    monkeypatch.setenv("OCM_MCP_SIGNER_KEY", str(signer))
+    monkeypatch.setenv("OCM_MCP_VERIFIER_KEY", str(verifier))
+    assert SETTINGS.approval_private_key_path == signer
+    assert SETTINGS.approval_public_key_path == verifier
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")
+    assert signer.exists() and verifier.exists()
+    signer.unlink()  # the server side keeps only the public verifier
+    approvals.verify_token(prop, token, operation="apply")
+
+
+def test_consumed_token_recorded_and_refused_from_file(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    token = approvals.mint_token(prop, operation="apply")
+    approvals.verify_token(prop, token, operation="apply", consume=True)
+    assert '"jti"' in SETTINGS.used_tokens_path.read_text()  # persisted for cross-restart refusal
+    with pytest.raises(approvals.ApprovalError, match="already been used"):
+        approvals.verify_token(prop, token, operation="apply")  # refused purely from the file
+
+
+def test_rotate_removes_private_public_and_previous(tmp_home):
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    approvals.mint_token(prop)  # creates private + public
+    SETTINGS.previous_public_key_path.write_text("deadbeef")  # a staged previous key
+    SETTINGS.rotate_approval_key()
+    assert not SETTINGS.approval_private_key_path.exists()
+    assert not SETTINGS.approval_public_key_path.exists()
+    assert not SETTINGS.previous_public_key_path.exists()
+
+
+# --- v0.2.1 audit: reordering, actor, permissions ---
+
+
+def test_audit_chain_detects_reordering(tmp_home):
+    from ocm_mcp_server import tracing
+
+    for t in ("a", "b", "c"):
+        tracing.audit({"tool": t, "outcome": "ok"})
+    log = SETTINGS.audit_log
+    lines = log.read_text().splitlines()
+    lines[0], lines[1] = lines[1], lines[0]
+    log.write_text("\n".join(lines) + "\n")
+    ok, msg = tracing.verify_audit_chain()
+    assert not ok and "broken" in msg
+
+
+def test_audit_records_actor(tmp_home):
+    import json as _json
+
+    from ocm_mcp_server import tracing
+
+    tracing.audit({"tool": "x", "outcome": "ok"})
+    last = _json.loads(SETTINGS.audit_log.read_text().splitlines()[-1])
+    assert ":" in last["actor"]
+
+
+def test_key_and_state_permissions(tmp_home):
+    import sys
+
+    if sys.platform == "win32":
+        pytest.skip("POSIX permissions")
+    from ocm_mcp_server import tracing
+
+    prop = approvals.new_proposal("c2", "fix", "s", [MANIFEST])
+    approvals.mint_token(prop)
+    tracing.audit({"tool": "x", "outcome": "ok"})
+
+    def mode(p):
+        return p.stat().st_mode & 0o777
+
+    assert mode(SETTINGS.approval_private_key_path) == 0o600
+    assert mode(SETTINGS.approval_public_key_path) == 0o644
+    assert mode(SETTINGS.proposals_dir) == 0o700
+    assert mode(prop.path()) == 0o600
+    assert mode(SETTINGS.audit_log) == 0o600

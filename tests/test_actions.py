@@ -38,7 +38,11 @@ def test_action_token_invalid_after_params_change(tmp_home):
     token = approvals.mint_token(prop)
     # An agent that swaps the label value after approval must be rejected.
     prop.content_hash = approvals.content_hash(
-        prop.cluster, prop.name, [], kind="action", action="set_label",
+        prop.cluster,
+        prop.name,
+        [],
+        kind="action",
+        action="set_label",
         params={"key": "tier", "value": "platinum"},
     )
     with pytest.raises(ApprovalError, match="content mismatch"):

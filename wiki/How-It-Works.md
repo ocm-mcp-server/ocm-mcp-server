@@ -87,13 +87,16 @@ one is covered by the others. Details in
 
 A "yes" in chat approves a conversation. The token approves *content*. It is an
 **Ed25519 signature** over claims that bind the proposal's SHA-256 hash, the
-operation (`apply` or `rollback`), and an expiry. If the agent changes even one
-byte of the proposal after approval, the signature no longer verifies. Approval
-is **asymmetric**: the private signing key belongs to the `ocm-mcp` CLI on a
-trusted terminal, and the server holds only the public verification key - so it
-can check a token but can never mint one, even if it is compromised. Tokens
-expire (default one hour) and are minted only by the CLI, never by any tool the
-agent can call.
+operation (`apply` or `rollback`), the issuer and audience, a unique id, and an
+expiry. If the agent changes even one byte of the proposal after approval, the
+signature no longer verifies, and each token is **single-use** (its id is recorded
+as spent, so it cannot be replayed). Approval is **asymmetric**: the private signing
+key belongs to the `ocm-mcp` CLI on a trusted terminal, and the server needs only the
+public verification key. The "a compromised server cannot mint one" property holds
+only when that signing key is kept off the server (a separate account or device via
+`OCM_MCP_SIGNER_KEY`); co-located under one `OCM_MCP_HOME` it is a filesystem
+convention, not a boundary. Tokens expire (default one hour) and are minted only by
+the CLI, never by any tool the agent can call.
 
 ## What the human sees
 

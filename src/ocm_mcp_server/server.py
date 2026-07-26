@@ -27,6 +27,7 @@ refuses every write as a coarse backstop under the token gate.
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from kubernetes.client import ApiException
@@ -83,14 +84,18 @@ def _writable() -> str | None:
 def _content_intact(prop: approvals.Proposal) -> str | None:
     """Confirm the stored proposal still matches its own content hash, at apply time.
 
-    The HMAC token already binds to the hash, but the on-disk manifests could be
+    The approval token already binds to the hash, but the on-disk manifests could be
     edited while leaving the hash field untouched (a TOCTOU on a writable state dir).
     Recomputing the hash from the stored content closes that window; ManifestWork
     proposals also get a fresh static-guardrail pass. Defense in depth.
     """
     expected = approvals.content_hash(
-        prop.cluster, prop.name, prop.manifests, kind=prop.kind,
-        action=prop.action, params=prop.params,
+        prop.cluster,
+        prop.name,
+        prop.manifests,
+        kind=prop.kind,
+        action=prop.action,
+        params=prop.params,
     )
     if expected != prop.content_hash:
         return (
@@ -317,7 +322,7 @@ def propose_manifestwork(cluster: str, name: str, summary: str, manifests_json: 
     On success it is stored pending and the human operator must run
     `ocm-mcp approve <id>` to mint an approval token.
     """
-    if (msg := _writable()):
+    if msg := _writable():
         return msg
     try:
         manifests = json.loads(manifests_json)
@@ -360,19 +365,21 @@ def apply_manifestwork(proposal_id: str, approval_token: str) -> str:
         proposal_id: id returned by propose_manifestwork.
         approval_token: token the operator produced with `ocm-mcp approve <id>`.
     """
-    if (msg := _writable()):
+    if msg := _writable():
         return msg
     try:
         prop = approvals.load_proposal(proposal_id)
         if prop.kind != "manifestwork":
-            return f"REJECTED: proposal {proposal_id} is a '{prop.action}' action, not a ManifestWork."
+            return (
+                f"REJECTED: proposal {proposal_id} is a '{prop.action}' action, not a ManifestWork."
+            )
         if prop.status != "pending":
             return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
-        approvals.verify_token(prop, approval_token, operation="apply")
+        claims = approvals.verify_token(prop, approval_token, operation="apply", consume=True)
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
 
-    if (msg := _content_intact(prop)):
+    if msg := _content_intact(prop):
         return msg
 
     body = ocm.manifestwork_body(prop.name, prop.manifests)
@@ -381,10 +388,10 @@ def apply_manifestwork(proposal_id: str, approval_token: str) -> str:
     except ApiException as exc:
         return f"FAILED to create ManifestWork: {(exc.body or str(exc))[:1500]}"
 
-    prop.status = "applied"
     prop.applied_work = prop.name
     prop.applied_uid = created.get("metadata", {}).get("uid", "")
-    prop.save()
+    prop.approved_by = claims.get("approver", "")
+    prop.set_status("applied")
     return _json(
         {
             "status": "applied",
@@ -408,7 +415,7 @@ def propose_rollback(proposal_id: str) -> str:
     The human approves it separately (`ocm-mcp approve <rollback-id>`), and the token can
     only authorize a rollback - an old apply token can never delete a workload.
     """
-    if (msg := _writable()):
+    if msg := _writable():
         return msg
     try:
         applied = approvals.load_proposal(proposal_id)
@@ -440,7 +447,7 @@ def rollback_manifestwork(rollback_proposal_id: str, approval_token: str) -> str
         rollback_proposal_id: id returned by propose_rollback.
         approval_token: a rollback token from `ocm-mcp approve <rollback-id>`.
     """
-    if (msg := _writable()):
+    if msg := _writable():
         return msg
     try:
         prop = approvals.load_proposal(rollback_proposal_id)
@@ -448,11 +455,11 @@ def rollback_manifestwork(rollback_proposal_id: str, approval_token: str) -> str
             return f"REJECTED: {rollback_proposal_id} is not a rollback proposal (call propose_rollback first)."
         if prop.status != "pending":
             return f"REJECTED: rollback proposal {rollback_proposal_id} is '{prop.status}', not pending."
-        approvals.verify_token(prop, approval_token, operation="rollback")
+        claims = approvals.verify_token(prop, approval_token, operation="rollback", consume=True)
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
 
-    if (msg := _content_intact(prop)):
+    if msg := _content_intact(prop):
         return msg
 
     work, uid = prop.params.get("target_work", ""), prop.params.get("target_uid", "")
@@ -464,21 +471,24 @@ def rollback_manifestwork(rollback_proposal_id: str, approval_token: str) -> str
         return f"FAILED to read ManifestWork '{work}': {(exc.body or str(exc))[:800]}"
     labels = current.get("metadata", {}).get("labels", {})
     if labels.get("app.kubernetes.io/managed-by") != "ocm-mcp-server":
-        return f"REJECTED: ManifestWork '{work}' is not managed by ocm-mcp-server; refusing to delete."
+        return (
+            f"REJECTED: ManifestWork '{work}' is not managed by ocm-mcp-server; refusing to delete."
+        )
     if uid and current.get("metadata", {}).get("uid") != uid:
-        return f"REJECTED: ManifestWork '{work}' UID changed since approval; re-propose the rollback."
+        return (
+            f"REJECTED: ManifestWork '{work}' UID changed since approval; re-propose the rollback."
+        )
 
     try:
         ocm.delete_manifestwork(prop.cluster, work)
     except ApiException as exc:
         return f"FAILED to delete ManifestWork: {(exc.body or str(exc))[:1500]}"
 
-    prop.status = "applied"
-    prop.save()
+    prop.approved_by = claims.get("approver", "")
+    prop.set_status("applied")
     try:
         origin = approvals.load_proposal(prop.params.get("origin", ""))
-        origin.status = "rolled_back"
-        origin.save()
+        origin.set_status("rolled_back")
     except approvals.ApprovalError:
         pass
     return _json({"status": "rolled_back", "cluster": prop.cluster, "manifestwork": work})
@@ -524,9 +534,7 @@ def list_pending_csrs() -> str:
 
 @mcp.tool(annotations=PROPOSE)
 @traced_tool
-def propose_cluster_action(
-    cluster: str, action: str, summary: str, params_json: str = "{}"
-) -> str:
+def propose_cluster_action(cluster: str, action: str, summary: str, params_json: str = "{}") -> str:
     """Propose an OCM cluster lifecycle action. Does NOT apply anything.
 
     Args:
@@ -543,7 +551,7 @@ def propose_cluster_action(
     The action is validated with a server-side dry-run, then stored pending. The
     human operator must run `ocm-mcp approve <id>` to mint the approval token.
     """
-    if (msg := _writable()):
+    if msg := _writable():
         return msg
     action = action.strip().lower()
     if action not in ALLOWED_CLUSTER_ACTIONS:
@@ -556,9 +564,9 @@ def propose_cluster_action(
     except json.JSONDecodeError as exc:
         return f"REJECTED: params_json is not valid JSON: {exc}"
     if action == "set_label" and not params.get("key"):
-        return "REJECTED: set_label requires params_json like {\"key\": \"...\", \"value\": \"...\"}."
+        return 'REJECTED: set_label requires params_json like {"key": "...", "value": "..."}.'
     if action in ("enable_addon", "disable_addon") and not params.get("addon"):
-        return f"REJECTED: {action} requires params_json like {{\"addon\": \"...\"}}."
+        return f'REJECTED: {action} requires params_json like {{"addon": "..."}}.'
 
     try:
         ocm.validate_cluster_action(cluster, action, params)
@@ -594,7 +602,7 @@ def apply_cluster_action(proposal_id: str, approval_token: str) -> str:
         proposal_id: id returned by propose_cluster_action.
         approval_token: token the operator produced with `ocm-mcp approve <id>`.
     """
-    if (msg := _writable()):
+    if msg := _writable():
         return msg
     try:
         prop = approvals.load_proposal(proposal_id)
@@ -602,11 +610,11 @@ def apply_cluster_action(proposal_id: str, approval_token: str) -> str:
             return f"REJECTED: proposal {proposal_id} is a ManifestWork, not a cluster action."
         if prop.status != "pending":
             return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
-        approvals.verify_token(prop, approval_token, operation="apply")
+        claims = approvals.verify_token(prop, approval_token, operation="apply", consume=True)
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
 
-    if (msg := _content_intact(prop)):
+    if msg := _content_intact(prop):
         return msg
 
     try:
@@ -614,8 +622,8 @@ def apply_cluster_action(proposal_id: str, approval_token: str) -> str:
     except ApiException as exc:
         return f"FAILED to apply action: {(exc.body or str(exc))[:1500]}"
 
-    prop.status = "applied"
-    prop.save()
+    prop.approved_by = claims.get("approver", "")
+    prop.set_status("applied")
     return _json(result)
 
 
@@ -941,6 +949,11 @@ def rollout_status(name: str, namespace: str) -> str:
 
 
 def main() -> None:
+    port = os.environ.get("OCM_MCP_METRICS_PORT", "").strip()
+    if port.isdigit():
+        from . import metrics
+
+        metrics.start_metrics_server(int(port))
     mcp.run()
 
 

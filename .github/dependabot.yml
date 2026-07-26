@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+# Keep GitHub Actions and Python dependencies current. Action pins can move under
+# tags, so Dependabot proposes updates (and their new SHAs) on a schedule.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

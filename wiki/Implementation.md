@@ -88,9 +88,14 @@ token  = base64(claims_json) . base64(Ed25519_sign(private_key, claims_json))
 
 - The **private** signing key lives at `OCM_MCP_HOME/approval_ed25519` (0600) and
   is used only by `ocm-mcp approve` on a trusted terminal. The MCP server loads
-  only the **public** key (`approval_ed25519.pub`), so it can verify a token but
-  can never mint one - even if the server, or an agent reading its key material,
-  is compromised.
+  only the **public** key (`approval_ed25519.pub`). The "a compromised server cannot
+  mint one" property holds only when the private key is kept off the server - a
+  separate account or device via `OCM_MCP_SIGNER_KEY`; co-located under one
+  `OCM_MCP_HOME`, signer isolation is a filesystem convention, not a boundary.
+- Each token carries a unique id and is **single-use**: verifying it at apply records
+  the id as spent (under a lock, fsynced), so the same approval cannot be replayed. It
+  also binds an issuer and audience, so a token minted for one deployment cannot be
+  used against another.
 - `content_hash` is SHA-256 over the canonical JSON of the whole proposal
   (`{cluster, name, manifests, kind, action, params}`), so a token binds equally
   to a ManifestWork bundle, a lifecycle action's exact parameters, or a rollback.

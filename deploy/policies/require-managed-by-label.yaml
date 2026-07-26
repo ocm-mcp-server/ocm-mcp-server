@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+# Closes the label-bypass: the other guardrail policies match ManifestWorks that carry
+# the app.kubernetes.io/managed-by: ocm-mcp-server label, so a ManifestWork created
+# WITHOUT that label would skip them. This policy matches on the *requester identity*
+# (the server's ServiceAccount) instead of a label the request controls, and requires the
+# label to be present - so the server SA can never create an unlabeled, unchecked
+# ManifestWork. The content policies then apply to every ManifestWork that SA creates.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-ocm-mcp-managed-by-label
+  annotations:
+    policies.kyverno.io/title: Require managed-by Label on Agent ManifestWorks
+    policies.kyverno.io/category: Multi-Cluster Guardrails
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: ManifestWork
+    policies.kyverno.io/description: >-
+      Every ManifestWork created by the ocm-mcp-server ServiceAccount must carry the
+      app.kubernetes.io/managed-by: ocm-mcp-server label, so it cannot escape the
+      content guardrails by omitting the label the other policies key on.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: require-label-from-server-sa
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+            subjects:
+              - kind: ServiceAccount
+                name: ocm-mcp-server
+                namespace: open-cluster-management
+      validate:
+        message: >-
+          ManifestWorks created by ocm-mcp-server must set
+          metadata.labels[app.kubernetes.io/managed-by]=ocm-mcp-server.
+        pattern:
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: ocm-mcp-server

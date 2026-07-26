@@ -350,10 +350,15 @@ def _negative_scenario(srv, approvals, ocm, cl):
             "metadata": {"name": "payments-v2", "namespace": "shop", "labels": {"app": "payments", "version": "v2"}},
             "spec": {"replicas": 2, "selector": {"matchLabels": {"app": "payments", "version": "v2"}},
                      "template": {"metadata": {"labels": {"app": "payments", "version": "v2"}},
-                                  "spec": {"containers": [{"name": "payments",
+                                  "spec": {"automountServiceAccountToken": False,
+                                           "securityContext": {"runAsNonRoot": True, "runAsUser": 65532,
+                                               "runAsGroup": 65532, "seccompProfile": {"type": "RuntimeDefault"}},
+                                           "containers": [{"name": "payments",
                                            "image": "registry.k8s.io/e2e-test-images/agnhost:2.47",
                                            "args": ["netexec", "--http-port=8080"],
-                                           "ports": [{"containerPort": 8080}]}]}}}}]
+                                           "ports": [{"containerPort": 8080}],
+                                           "securityContext": {"allowPrivilegeEscalation": False,
+                                               "capabilities": {"drop": ["ALL"]}}}]}}}}]
     try:
         pr = tj(srv.propose_manifestwork(cluster=cl, name="fix-payments-v2",
                 summary="Pin payments-v2 to the known-good agnhost:2.47 image.", manifests_json=json.dumps(fix)))

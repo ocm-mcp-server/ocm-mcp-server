@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+# The requester identity used when evaluating subject-matched policies offline: the
+# server's ServiceAccount, exactly as the hub sees it in an admission request.
+apiVersion: cli.kyverno.io/v1alpha1
+kind: UserInfo
+metadata:
+  name: ocm-mcp-server-sa
+userInfo:
+  username: system:serviceaccount:open-cluster-management:ocm-mcp-server
+  groups:
+    - system:serviceaccounts
+    - system:authenticated

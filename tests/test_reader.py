@@ -40,9 +40,7 @@ def test_unknown_type_lists_allowed_set():
 def test_cordon_patch_adds_and_removes_taint(monkeypatch):
     from ocm_mcp_server.config import CORDON_TAINT_KEY
 
-    monkeypatch.setattr(
-        ocm, "hub_custom", lambda: _FakeCustom({"spec": {"taints": []}})
-    )
+    monkeypatch.setattr(ocm, "hub_custom", lambda: _FakeCustom({"spec": {"taints": []}}))
     patch = ocm.cordon_patch("cluster2", cordon=True)
     keys = [t["key"] for t in patch["spec"]["taints"]]
     assert CORDON_TAINT_KEY in keys
