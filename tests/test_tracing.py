@@ -52,3 +52,10 @@ def test_traced_tool_records_exception_outcome(tmp_home):
         boom()
     rec = SETTINGS.audit_log.read_text().strip().splitlines()[-1]
     assert '"outcome": "error"' in rec
+
+
+def test_audit_echo_to_stderr(tmp_home, monkeypatch, capsys):
+    monkeypatch.setattr(SETTINGS, "audit_echo_stderr", True, raising=False)
+    tracing.audit({"tool": "list_clusters", "outcome": "ok"})
+    err = capsys.readouterr().err
+    assert '"tool": "list_clusters"' in err

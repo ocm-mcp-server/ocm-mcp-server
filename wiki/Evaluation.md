@@ -67,7 +67,7 @@ tell you what to still keep a human on, and they feed directly into
 The Kyverno guardrails have their own offline suite, independent of any model:
 
 ```bash
-make policy-test      # 12 CLI cases, no cluster, runs in CI
+make policy-test      # 16 CLI cases, no cluster, runs in CI
 ```
 
 Good proposals pass, every bad shape is denied, and human-created (unlabeled)

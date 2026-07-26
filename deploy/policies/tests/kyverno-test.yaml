@@ -29,6 +29,11 @@ results:
     kind: ManifestWork
     resources: [cluster2/bad-pod-security]
     result: fail
+  - policy: restrict-manifestwork-pod-security
+    rule: require-restricted-pod-security
+    kind: ManifestWork
+    resources: [cluster2/bad-init-container]
+    result: fail
   # ---- require-ocm-mcp-managed-by-label (closes the label-bypass)
   - policy: require-ocm-mcp-managed-by-label
     rule: require-label-from-server-sa

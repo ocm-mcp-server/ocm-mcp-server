@@ -36,8 +36,11 @@ flowchart TD
 
 - **OCM cluster-proxy transport** so the server host never holds spoke
   credentials directly.
-- **A published container image** (ghcr.io) and a **Helm chart** for running the
-  server in-cluster.
+- **An authenticated HTTP transport** (SSO/OIDC) so the in-cluster Deployment can
+  serve clients standalone rather than over attached stdio.
+
+_Shipped: a signed container image (ghcr.io, SBOM + provenance + Cosign) and a Helm
+chart with a Restricted pod, PVC, NetworkPolicy, and PDB._
 
 ## Longer term
 

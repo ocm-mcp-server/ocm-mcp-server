@@ -321,3 +321,17 @@ def test_audit_arg_values_are_bounded(tmp_home):
     assert tracing._audit_arg("approval_token", "secret") == "<redacted>"
     ok, _ = tracing.verify_audit_chain()
     assert ok
+
+
+def test_token_ledger_appends_then_stays_bounded(tmp_home):
+    # Many spent tokens: the ledger records them all and refuses replays, and compaction
+    # keeps it from growing without bound past the threshold.
+    props = [approvals.new_proposal("c", f"p{i}", "s", [MANIFEST]) for i in range(5)]
+    tokens = [approvals.mint_token(p, operation="apply") for p in props]
+    for p, t in zip(props, tokens, strict=True):
+        approvals.verify_token(p, t, operation="apply", consume=True)
+    # every one is now spent
+    for p, t in zip(props, tokens, strict=True):
+        with pytest.raises(approvals.ApprovalError, match="already been used"):
+            approvals.verify_token(p, t, operation="apply", consume=True)
+    assert len(SETTINGS.used_tokens_path.read_text().strip().splitlines()) == 5

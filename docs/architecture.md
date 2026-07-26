@@ -29,12 +29,14 @@ ManifestWork → work agent on each managed cluster
 |---|---|
 | `server.py` | FastMCP server; the only surface the agent sees |
 | `ocm.py` | ManagedCluster / ManifestWork operations, summarized for agents |
-| `guardrails.py` | layer-1 static checks (kinds allowlist, namespaces, pod security, image pinning) |
-| `approvals.py` | proposal store + Ed25519 approval tokens binding the content hash, operation, and TTL (server holds only the public key) |
-| `tracing.py` | OTel span + audit line per tool call |
-| `cli.py` | `ocm-mcp` - the human approval terminal |
+| `guardrails.py` | layer-1 static checks (exact GVK allow-list, namespaces, Restricted Pod Security, volume/service allow-lists, image pinning, per-proposal limits) |
+| `approvals.py` | proposal store + one-time Ed25519 approval tokens binding the content hash, operation, issuer/audience, and TTL (server holds only the public key) |
+| `tracing.py` | OTel span + hash-chained audit line per tool call |
+| `metrics.py` | optional Prometheus `/metrics` endpoint |
+| `filelock.py` | advisory file locks (atomic proposal writes, spent-token ledger, per-proposal apply lock) |
+| `cli.py` | `ocm-mcp` - the human approval terminal (approve/reject/audit-verify/doctor/rotate-secret) |
 | `deploy/policies/` | Kyverno ClusterPolicies validating **inside** the ManifestWork envelope |
-| `deploy/rbac.yaml` | hub ServiceAccount: ManagedClusters read, ManifestWorks manage, nothing else |
+| `deploy/rbac.yaml` | hub ServiceAccount: read across the OCM API (cluster/placement/addon/operator/policy/HyperShift/ManagedClusterInfo), create/delete ManifestWorks and add-ons, patch ManagedClusters, approve OCM join CSRs. No Secret reads, no exec, no arbitrary delete. Ownership of a work is enforced in-app, not by RBAC |
 
 ## Design decisions worth arguing about
 

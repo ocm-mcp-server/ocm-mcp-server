@@ -16,6 +16,13 @@ kubeconfig; every write is policy-checked, human-approved, and traced.
   design decisions worth arguing about
 - [Guardrails](guardrails.md) - the four layers, deliberate absences, what we
   refuse to automate, and the threat model
+- [Deployment guide](deployment.md) - laptop kind, an existing fleet, Docker, and
+  in-cluster via Helm; plus the production hardening checklist
+- [Tools and Prompts reference](tools.md) - every tool by toolset, its class, and
+  the OCM API it touches; the ten prompts
+- [Worked examples](examples.md) and [kubeconfig contexts](kubeconfig-contexts.md)
+- [Security self-assessment](security-self-assessment.md) and
+  [CNCF Sandbox readiness](cncf-sandbox-readiness.md)
 - [Demo script](demo-script.md) - the 3-act live demo, timed, with fallbacks
 - [Upstream notes](upstream-notes.md) - gaps found while building this and
   what we're raising with MCP, OCM, and Kyverno

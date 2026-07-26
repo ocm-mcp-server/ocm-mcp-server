@@ -293,3 +293,46 @@ spec:
           namespace: shop
         data:
           a: b
+---
+# Compliant main container, but a privileged/non-compliant INIT container. Python guardrails
+# catch this; the PSS policy must too (init containers are a real privilege path).
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-init-container
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: sneaky-init
+          namespace: shop
+        spec:
+          selector:
+            matchLabels:
+              app: sneaky-init
+          template:
+            metadata:
+              labels:
+                app: sneaky-init
+            spec:
+              automountServiceAccountToken: false
+              initContainers:
+                - name: init
+                  image: busybox:1.36
+                  securityContext:
+                    privileged: true
+              containers:
+                - name: app
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]

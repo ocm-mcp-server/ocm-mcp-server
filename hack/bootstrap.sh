@@ -51,10 +51,15 @@ say "Using container engine: ${ENGINE}"
 # broken on some podman 5.x releases.
 cluster_exists() { "$ENGINE" ps -a --format '{{.Names}}' | grep -qx "${1}-control-plane"; }
 
-say "Creating kind clusters (1 hub + ${SPOKES} spokes)"
-cluster_exists "$HUB" || kind create cluster --name "$HUB" --wait 120s
+# Pin the kind node image to a Kubernetes version that clusteradm can initialize an OCM
+# hub against. kind's default tracks the newest Kubernetes, which can outrun clusteradm's
+# supported range and make `clusteradm init` fail with "unexpected watch event received".
+# Override with KIND_NODE_IMAGE if your clusteradm supports a newer version.
+NODE_IMAGE="${KIND_NODE_IMAGE:-kindest/node:v1.30.4}"
+say "Creating kind clusters (1 hub + ${SPOKES} spokes) on ${NODE_IMAGE}"
+cluster_exists "$HUB" || kind create cluster --name "$HUB" --image "$NODE_IMAGE" --wait 120s
 for i in $(seq 1 "$SPOKES"); do
-  cluster_exists "cluster${i}" || kind create cluster --name "cluster${i}" --wait 120s
+  cluster_exists "cluster${i}" || kind create cluster --name "cluster${i}" --image "$NODE_IMAGE" --wait 120s
 done
 
 HUB_CTX="kind-${HUB}"

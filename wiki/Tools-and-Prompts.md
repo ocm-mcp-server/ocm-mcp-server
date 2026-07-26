@@ -18,7 +18,7 @@ print a `PASS / EMPTY / SKIP / FAIL` table before wiring up an agent.
 | **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims, ManagedClusterInfo | 6 | - |
 | **observability** | cluster health, events, pod logs | 3 | - |
 | **placement** | Placements, PlacementDecisions, AddOnPlacementScores | 3 | - |
-| **work** | ManifestWork status feedback + the gated deploy flow | 6 | gated |
+| **work** | ManifestWork status feedback + the gated deploy flow | 7 | gated |
 | **addons** | ClusterManagementAddOns, fleet + per-cluster add-on health | 3 | - |
 | **registration** | pending join CSRs + gated cluster lifecycle actions | 3 | gated |
 | **policy** | governance compliance + violations rollup (if installed) | 2 | - |
@@ -64,7 +64,8 @@ The `work` toolset proposes a workload change:
 
 - `propose_manifestwork(cluster, name, summary, manifests_json)` -> validate + store.
 - `apply_manifestwork(proposal_id, approval_token)` -> create the ManifestWork.
-- `rollback_manifestwork(proposal_id, approval_token)` -> delete it (fresh token).
+- `propose_rollback(proposal_id)` -> create a rollback proposal bound to the applied work's UID.
+- `rollback_manifestwork(rollback_proposal_id, approval_token)` -> delete it (rollback-scoped token).
 
 The `registration` toolset proposes an OCM lifecycle action:
 
@@ -94,7 +95,8 @@ placements                   placementdecisions           addonplacementscores
 manifestworks                manifestworkreplicasets       clustermanagementaddons
 managedclusteraddons         addondeploymentconfigs        addontemplates
 clustermanagers              klusterlets                   policies
-policysets                   placementbindings
+policysets                   placementbindings             managedclusterinfos
+hostedclusters               nodepools
 ```
 
 ## Prompts

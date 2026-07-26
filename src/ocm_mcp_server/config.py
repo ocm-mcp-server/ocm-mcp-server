@@ -240,6 +240,14 @@ class Settings:
             os.environ.get("OCM_MCP_READ_ONLY", "").strip().lower() in ("1", "true", "yes", "on")
         )
     )
+    # When truthy (OCM_MCP_AUDIT_ECHO=1), each audit line is also written to STDERR as JSON,
+    # so a container log collector can forward the audit stream to a SIEM/object store.
+    # (stdout is reserved for the MCP protocol, so the echo goes to stderr.)
+    audit_echo_stderr: bool = field(
+        default_factory=lambda: (
+            os.environ.get("OCM_MCP_AUDIT_ECHO", "").strip().lower() in ("1", "true", "yes", "on")
+        )
+    )
 
     def __post_init__(self) -> None:
         raw = os.environ.get("OCM_MCP_SPOKE_CONTEXTS", "")
