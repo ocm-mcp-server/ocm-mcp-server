@@ -23,6 +23,7 @@ from pathlib import Path
 
 PROTECTED_NAMESPACES = frozenset(
     {
+        "default",
         "kube-system",
         "kube-public",
         "kube-node-lease",
@@ -31,8 +32,29 @@ PROTECTED_NAMESPACES = frozenset(
         "open-cluster-management-agent",
         "open-cluster-management-agent-addon",
         "kyverno",
+        # OpenShift platform namespaces - agent workloads never belong here.
+        "openshift",
+        "openshift-config",
+        "openshift-config-managed",
+        "openshift-infra",
+        "openshift-monitoring",
+        "openshift-ingress",
+        "openshift-apiserver",
+        "openshift-authentication",
+        "openshift-kube-apiserver",
+        "openshift-etcd",
     }
 )
+
+# Any namespace starting with one of these prefixes is treated as a protected platform
+# namespace. This catches the long tail of openshift-* / kube-* system namespaces without
+# enumerating every one; agent writes target application namespaces only.
+PROTECTED_NAMESPACE_PREFIXES = ("kube-", "openshift-", "open-cluster-management")
+
+# Ceilings that bound a single proposal, so an agent cannot smuggle a huge payload or a
+# runaway autoscaler through the gate.
+MAX_PROPOSAL_BYTES = int(os.environ.get("OCM_MCP_MAX_PROPOSAL_BYTES", str(256 * 1024)))
+MAX_HPA_REPLICAS = int(os.environ.get("OCM_MCP_MAX_HPA_REPLICAS", "100"))
 
 # Kinds an agent proposal may contain. Everything else is rejected before the
 # proposal is even stored. Deliberately small; grow it consciously.
@@ -247,7 +269,11 @@ class Settings:
     def used_tokens_path(self) -> Path:
         """Spent approval-token IDs (jti). A token whose id is here is refused as a replay."""
         self.home.mkdir(parents=True, exist_ok=True)
-        return self.home / "used_tokens.jsonl"
+        p = self.home / "used_tokens.jsonl"
+        if not p.exists():
+            p.touch()
+        _tighten(p, 0o600)
+        return p
 
     # Approval keys. The signing (private) key is meant for the human side (the ocm-mcp
     # CLI); the MCP server needs only the public verifier. The two paths are independent so

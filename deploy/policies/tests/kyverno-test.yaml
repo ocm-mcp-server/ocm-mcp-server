@@ -13,10 +13,22 @@ policies:
   - ../protect-system-namespaces.yaml
   - ../restrict-manifestwork-kinds.yaml
   - ../require-managed-by-label.yaml
+  - ../restrict-manifestwork-pod-security.yaml
 resources:
   - resources.yaml
 userinfo: userinfo.yaml
 results:
+  # ---- restrict-manifestwork-pod-security (parity with the Python guardrails)
+  - policy: restrict-manifestwork-pod-security
+    rule: require-restricted-pod-security
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: restrict-manifestwork-pod-security
+    rule: require-restricted-pod-security
+    kind: ManifestWork
+    resources: [cluster2/bad-pod-security]
+    result: fail
   # ---- require-ocm-mcp-managed-by-label (closes the label-bypass)
   - policy: require-ocm-mcp-managed-by-label
     rule: require-label-from-server-sa

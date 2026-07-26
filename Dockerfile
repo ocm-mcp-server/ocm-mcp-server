@@ -1,12 +1,19 @@
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 
-FROM python:3.12-slim
+# Base image pinned by digest (python:3.12-slim). Dependabot's docker ecosystem proposes
+# digest bumps; update the tag comment alongside the digest.
+FROM python@sha256:55842c72c6b3584d06ec84c731fc516b30b8a53ad262ebd085e47ab568b3bfc1
 
 WORKDIR /app
+
+# Install dependencies from the hash-pinned lock first (reproducible, tamper-evident),
+# then the package itself with no further dependency resolution.
+COPY requirements.lock ./
+RUN pip install --no-cache-dir --require-hashes -r requirements.lock
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
-RUN pip install --no-cache-dir ".[tracing]"
+RUN pip install --no-cache-dir --no-deps .
 
 # The server needs a kubeconfig mounted read-only and the usual env:
 #   docker run -v ~/.kube/config:/kube/config:ro \

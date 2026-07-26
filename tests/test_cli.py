@@ -104,3 +104,86 @@ def test_rotate_secret_invalidates_tokens(tmp_home, capsys):
     assert cli.cmd_rotate_secret(ns(yes=True)) == 0
     with pytest.raises(approvals.ApprovalError):
         approvals.verify_token(p, token, operation="apply")
+
+
+# --------------------------------------------------------------------- doctor + dispatch
+
+
+def test_doctor_all_ok(tmp_home, monkeypatch, capsys):
+    from ocm_mcp_server import ocm
+
+    monkeypatch.setattr(ocm, "list_managed_clusters", lambda: [{"name": "c1"}])
+    read_fns = [
+        "list_cluster_sets",
+        "list_cluster_set_bindings",
+        "list_cluster_claims",
+        "list_placements",
+        "list_manifestworkreplicasets",
+        "list_cluster_management_addons",
+        "addon_health",
+        "list_pending_csrs",
+        "list_policies",
+        "list_policy_violations",
+        "list_hosted_clusters",
+        "list_node_pools",
+    ]
+    for fn in read_fns:
+        monkeypatch.setattr(ocm, fn, lambda *a, **k: [{"name": "x"}])
+    monkeypatch.setattr(ocm, "get_managed_cluster", lambda c: {"name": c})
+    monkeypatch.setattr(ocm, "cluster_health", lambda c: {"cluster": c})
+    monkeypatch.setattr(ocm, "list_manifestworks", lambda c: [{"name": "w"}])
+    monkeypatch.setattr(ocm, "list_addon_placement_scores", lambda c: [{"name": "s"}])
+    monkeypatch.setattr(ocm, "get_cluster_info", lambda c: {"name": c})
+    monkeypatch.setattr(ocm, "list_addons_for_cluster", lambda c: [{"name": "a"}])
+    assert cli.cmd_doctor(ns()) == 0
+    assert "doctor" in capsys.readouterr().out
+
+
+def test_doctor_reports_fail(tmp_home, monkeypatch, capsys):
+    from ocm_mcp_server import ocm
+
+    def boom():
+        raise RuntimeError("hub unreachable")
+
+    monkeypatch.setattr(ocm, "list_managed_clusters", boom)
+    for fn in (
+        "list_cluster_sets",
+        "list_cluster_set_bindings",
+        "list_cluster_claims",
+        "list_placements",
+        "list_manifestworkreplicasets",
+        "list_cluster_management_addons",
+        "addon_health",
+        "list_pending_csrs",
+        "list_policies",
+        "list_policy_violations",
+        "list_hosted_clusters",
+    ):
+        monkeypatch.setattr(ocm, fn, lambda *a, **k: [])
+    assert cli.cmd_doctor(ns()) == 1  # a FAIL -> non-zero exit
+
+
+def _run_main(monkeypatch, argv):
+    import sys
+
+    monkeypatch.setattr(sys, "argv", ["ocm-mcp", *argv])
+    try:
+        cli.main()
+    except SystemExit as e:
+        return e.code
+    return 0
+
+
+def test_main_pending(tmp_home, monkeypatch, capsys):
+    assert _run_main(monkeypatch, ["pending"]) == 0
+
+
+def test_main_show_and_approve(tmp_home, monkeypatch, capsys):
+    p = make(tmp_home)
+    assert _run_main(monkeypatch, ["show", p.id]) == 0
+    assert _run_main(monkeypatch, ["approve", p.id, "-y"]) == 0
+
+
+def test_main_reject(tmp_home, monkeypatch, capsys):
+    p = make(tmp_home)
+    assert _run_main(monkeypatch, ["reject", p.id]) == 0

@@ -100,11 +100,13 @@ four independent controls between the model and the clusters.
   server process could read the private key; there, signer isolation is a filesystem
   convention, not an enforced boundary. Off-box signing is required for the stronger claim.
 - **Bound CSR approval.** The `accept` lifecycle action captures the pending join CSRs
-  (name, UID, signer, subject) at propose time and approves only those exact CSRs at apply
-  time, re-verifying that each is still a pending, not-denied, OCM client-auth join CSR
-  (signer, an OCM group, `client auth` usage, OCM bootstrap username) bound to the target
-  cluster - it never sweeps every CSR with a matching label, and never approves a CSR
-  created after the human review.
+  (name, UID, signer, requester, and a hash of the PKCS#10 request) at propose time and
+  approves only those exact CSRs at apply time, re-verifying that each is still a pending,
+  not-denied, OCM client-auth join CSR (signer, an OCM group, `client auth` usage, OCM
+  bootstrap username) bound to the target cluster, that the PKCS#10 request bytes are
+  unchanged since the human reviewed, and that the parsed certificate subject Common Name
+  is the OCM agent identity for that cluster. It never sweeps every CSR with a matching
+  label, and never approves a CSR created or altered after the human review.
 - **Rollback as a distinct operation.** Undoing an applied change requires a separate
   rollback proposal bound to the ManifestWork's UID and a rollback-scoped token; the
   server verifies the work is still ours (managed-by label) with the approved UID before
@@ -143,9 +145,11 @@ four independent controls between the model and the clusters.
   atomic (temp + fsync + rename) under a file lock; status advances only along legal
   transitions, so a stale file cannot be re-applied.
 - **Tamper-evident audit.** Each audit line carries an actor, a monotonic sequence number,
-  and a hash chained to the previous entry; `ocm-mcp audit-verify` recomputes the chain
-  and any edit, deletion, or reordering breaks it. An audit-write failure is surfaced to
-  stderr and never masks a tool's result.
+  and a hash chained to the previous entry; `ocm-mcp audit-verify` recomputes the chain and
+  detects any edit, reordering, or mid-log deletion. It does **not** detect truncation of
+  the tail or a full rewrite by an actor who can recompute every hash - those need external
+  anchoring (signing/exporting the chain head to a SIEM or object store), which is on the
+  roadmap. An audit-write failure is surfaced to stderr and never masks a tool's result.
 - **Bounded, timed spoke reads** cap result size and set request timeouts so one large
   cluster cannot hang or flood a call.
 - **Read-only mode** (`OCM_MCP_READ_ONLY=1`) disables both write toolsets as a coarse
@@ -165,7 +169,8 @@ documented threat model.
 
 - **Development pipeline**: contributions arrive via pull request. CI runs linting and
   format checks (ruff), static typing (mypy), the unit test suite with a coverage gate
-  (94 tests, no cluster required), the offline Kyverno policy tests (14 cases, including a
+  (222 tests, 85% branch coverage, no cluster required), the offline Kyverno policy tests
+  (16 cases, including a
   requester-identity bypass test), a dependency review, and a secret scan (gitleaks). A
   CodeQL workflow scans the code.
 - **Commits** are signed off under the Developer Certificate of Origin.

@@ -2,9 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 image:
   repository: ghcr.io/sandeepbazar/ocm-mcp-server
-  # Pin to an immutable digest in production, e.g. sha256:...
-  tag: latest
+  tag: v0.2.1
+  # Set an immutable digest for production (takes precedence over tag), e.g.
+  # digest: sha256:0123...  -> the image is referenced as repository@sha256:...
+  digest: ""
   pullPolicy: IfNotPresent
+
+# State (proposals, spent-token ledger, audit log). emptyDir is lost on restart; enable a
+# PVC for anything beyond evaluation, and ship the audit log to an external sink as well.
+persistence:
+  enabled: false
+  size: 1Gi
+  storageClassName: ""
 
 # Safe default posture for a shared deployment: reads only, no writes.
 readOnly: true

@@ -105,8 +105,12 @@ def audit(entry: dict[str, Any]) -> None:
     """Append one tamper-evident audit line under a lock.
 
     Each entry carries a monotonic `seq`, the previous entry's hash (`prev`), and its own
-    `hash` = sha256(prev + canonical(entry)). Any edit, deletion, or reordering breaks the
-    chain, which `verify_audit_chain` detects. Writes are fsynced under a lock.
+    `hash` = sha256(prev + canonical(entry)). `verify_audit_chain` detects any edit,
+    reordering, or deletion in the middle of the log. It does NOT detect truncation of the
+    tail (deleting the most recent entries) or a wholesale rewrite by an actor who can
+    recompute every hash - those require external anchoring (periodically signing or
+    exporting the chain head to a SIEM/object store; see the roadmap). Writes are fsynced
+    under a lock.
     """
     path = SETTINGS.audit_log
     entry["ts"] = time.time()

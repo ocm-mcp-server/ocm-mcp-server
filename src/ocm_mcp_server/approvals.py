@@ -22,6 +22,7 @@ isolation between the agent and the CLI as mandatory.
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import json
 import os
@@ -213,6 +214,15 @@ def list_proposals(status: str = "") -> list[Proposal]:
     return out
 
 
+def proposal_lock(proposal_id: str):
+    """Serialize the whole apply of one proposal so two concurrent applies (even with two
+    separately minted valid tokens) can't both pass the pending-status check and both
+    write. Uses a distinct `.apply` lock file so it never nests with save()'s own lock."""
+    if not _valid_id(proposal_id):
+        raise ApprovalError(f"Invalid proposal id '{proposal_id}'.")
+    return locked(SETTINGS.proposals_dir / f"{proposal_id}.apply")
+
+
 def new_rollback_proposal(applied: Proposal, summary: str) -> Proposal:
     """A distinct, approvable proposal to roll back an already-applied ManifestWork.
 
@@ -284,30 +294,52 @@ def _unb64(s: str) -> bytes:
     return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
 
 
-def _token_used(jti: str) -> bool:
-    path = SETTINGS.used_tokens_path
+def _load_used(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
-        return False
+        return []
+    out = []
     with path.open() as f:
-        return any(line.strip() and json.loads(line).get("jti") == jti for line in f)
+        for line in f:
+            line = line.strip()
+            if line:
+                with contextlib.suppress(ValueError):
+                    out.append(json.loads(line))
+    return out
+
+
+def _token_used(jti: str) -> bool:
+    return any(e.get("jti") == jti for e in _load_used(SETTINGS.used_tokens_path))
 
 
 def _mark_token_used(claims: dict[str, Any]) -> None:
-    """Atomically record a token id as spent, so it can never be replayed."""
+    """Atomically record a token id as spent, so it can never be replayed.
+
+    A spent id only needs to be remembered until the token would have expired, so this
+    also prunes entries whose expiry has passed - bounding the ledger instead of letting
+    it grow forever. The whole file is rewritten atomically under the lock.
+    """
     path = SETTINGS.used_tokens_path
+    now = int(time.time())
     entry = {
         "jti": claims.get("jti"),
         "id": claims.get("id"),
         "op": claims.get("op"),
-        "used_at": int(time.time()),
+        "exp": int(claims.get("exp", now)),
+        "used_at": now,
     }
     with locked(path):
-        if _token_used(claims.get("jti", "")):
+        kept = [e for e in _load_used(path) if int(e.get("exp", now)) > now]
+        if any(e.get("jti") == claims.get("jti") for e in kept):
             raise ApprovalError("This approval token has already been used (replay refused).")
-        with path.open("a") as f:
-            f.write(json.dumps(entry, separators=(",", ":")) + "\n")
+        kept.append(entry)
+        tmp = path.with_suffix(".jsonl.tmp")
+        with tmp.open("w") as f:
+            for e in kept:
+                f.write(json.dumps(e, separators=(",", ":")) + "\n")
             f.flush()
             os.fsync(f.fileno())
+        tmp.chmod(0o600)
+        tmp.replace(path)
 
 
 def mint_token(

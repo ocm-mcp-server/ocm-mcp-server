@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ocm-mcp-server"
-version = "0.2.1"
+version = "0.2.2"
 description = "A guardrailed MCP server that lets AI agents operate multi-cluster Kubernetes fleets through an Open Cluster Management hub"
 readme = "README.md"
 license = "Apache-2.0"
@@ -64,3 +64,16 @@ ignore_missing_imports = true
 warn_unused_ignores = false
 check_untyped_defs = false
 files = ["src/ocm_mcp_server"]
+
+# The security-critical modules are type-checked strictly (check_untyped_defs), so an
+# untyped helper in the trust boundary cannot hide a type error.
+[[tool.mypy.overrides]]
+module = [
+    "ocm_mcp_server.approvals",
+    "ocm_mcp_server.guardrails",
+    "ocm_mcp_server.config",
+    "ocm_mcp_server.tracing",
+    "ocm_mcp_server.filelock",
+    "ocm_mcp_server.metrics",
+]
+check_untyped_defs = true

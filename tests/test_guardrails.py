@@ -438,3 +438,56 @@ def test_pod_level_run_as_user_root_rejected():
     pod_spec(bad)["securityContext"] = {"runAsUser": 0}
     with pytest.raises(GuardrailViolation, match="runAsUser 0"):
         guardrails.validate_manifests([bad])
+
+
+# --------------------------------------------------------------------- v0.2.2 limits
+
+
+def test_hpa_max_replicas_capped():
+    bad = {
+        "apiVersion": "autoscaling/v2",
+        "kind": "HorizontalPodAutoscaler",
+        "metadata": {"name": "h", "namespace": "shop"},
+        "spec": {"maxReplicas": 100000, "minReplicas": 1},
+    }
+    with pytest.raises(GuardrailViolation, match="maxReplicas"):
+        guardrails.validate_manifests([bad])
+
+
+def test_hpa_reasonable_replicas_pass():
+    good = {
+        "apiVersion": "autoscaling/v2",
+        "kind": "HorizontalPodAutoscaler",
+        "metadata": {"name": "h", "namespace": "shop"},
+        "spec": {"maxReplicas": 10, "minReplicas": 1},
+    }
+    guardrails.validate_manifests([good])
+
+
+def test_oversized_proposal_rejected():
+    bad = deployment()
+    # Stuff a large annotation to blow past the byte ceiling.
+    bad["metadata"]["annotations"] = {"blob": "x" * 300_000}
+    with pytest.raises(GuardrailViolation, match="bytes; the limit"):
+        guardrails.validate_manifests([bad])
+
+
+@pytest.mark.parametrize("ns", ["openshift-config", "openshift-monitoring", "kube-flannel"])
+def test_platform_namespaces_protected(ns):
+    bad = deployment(metadata={"name": "p", "namespace": ns})
+    with pytest.raises(GuardrailViolation, match="protected"):
+        guardrails.validate_manifests([bad])
+
+
+def test_default_namespace_protected():
+    bad = deployment(metadata={"name": "p", "namespace": "default"})
+    with pytest.raises(GuardrailViolation, match="protected"):
+        guardrails.validate_manifests([bad])
+
+
+def test_strict_digest_rejects_short_hash(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "require_image_digest", True)
+    bad = deployment()
+    pod_spec(bad)["containers"][0]["image"] = "reg/app@sha256:abc"  # not 64 hex
+    with pytest.raises(GuardrailViolation, match="sha256"):
+        guardrails.validate_manifests([bad])

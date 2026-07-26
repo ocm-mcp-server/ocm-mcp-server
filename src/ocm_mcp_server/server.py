@@ -368,30 +368,29 @@ def apply_manifestwork(proposal_id: str, approval_token: str) -> str:
     if msg := _writable():
         return msg
     try:
-        prop = approvals.load_proposal(proposal_id)
-        if prop.kind != "manifestwork":
-            return (
-                f"REJECTED: proposal {proposal_id} is a '{prop.action}' action, not a ManifestWork."
-            )
-        if prop.status != "pending":
-            return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
-        claims = approvals.verify_token(prop, approval_token, operation="apply", consume=True)
+        with approvals.proposal_lock(proposal_id):
+            prop = approvals.load_proposal(proposal_id)
+            if prop.kind != "manifestwork":
+                return (
+                    f"REJECTED: proposal {proposal_id} is a '{prop.action}' action, "
+                    "not a ManifestWork."
+                )
+            if prop.status != "pending":
+                return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
+            if msg := _content_intact(prop):
+                return msg
+            claims = approvals.verify_token(prop, approval_token, operation="apply", consume=True)
+            body = ocm.manifestwork_body(prop.name, prop.manifests)
+            try:
+                created = ocm.create_manifestwork(prop.cluster, body)
+            except ApiException as exc:
+                return f"FAILED to create ManifestWork: {(exc.body or str(exc))[:1500]}"
+            prop.applied_work = prop.name
+            prop.applied_uid = created.get("metadata", {}).get("uid", "")
+            prop.approved_by = claims.get("approver", "")
+            prop.set_status("applied")
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
-
-    if msg := _content_intact(prop):
-        return msg
-
-    body = ocm.manifestwork_body(prop.name, prop.manifests)
-    try:
-        created = ocm.create_manifestwork(prop.cluster, body)
-    except ApiException as exc:
-        return f"FAILED to create ManifestWork: {(exc.body or str(exc))[:1500]}"
-
-    prop.applied_work = prop.name
-    prop.applied_uid = created.get("metadata", {}).get("uid", "")
-    prop.approved_by = claims.get("approver", "")
-    prop.set_status("applied")
     return _json(
         {
             "status": "applied",
@@ -450,47 +449,57 @@ def rollback_manifestwork(rollback_proposal_id: str, approval_token: str) -> str
     if msg := _writable():
         return msg
     try:
-        prop = approvals.load_proposal(rollback_proposal_id)
-        if prop.kind != "rollback":
-            return f"REJECTED: {rollback_proposal_id} is not a rollback proposal (call propose_rollback first)."
-        if prop.status != "pending":
-            return f"REJECTED: rollback proposal {rollback_proposal_id} is '{prop.status}', not pending."
-        claims = approvals.verify_token(prop, approval_token, operation="rollback", consume=True)
+        with approvals.proposal_lock(rollback_proposal_id):
+            prop = approvals.load_proposal(rollback_proposal_id)
+            if prop.kind != "rollback":
+                return (
+                    f"REJECTED: {rollback_proposal_id} is not a rollback proposal "
+                    "(call propose_rollback first)."
+                )
+            if prop.status != "pending":
+                return (
+                    f"REJECTED: rollback proposal {rollback_proposal_id} is "
+                    f"'{prop.status}', not pending."
+                )
+            if msg := _content_intact(prop):
+                return msg
+            work, uid = prop.params.get("target_work", ""), prop.params.get("target_uid", "")
+            # Ownership check: only delete a ManifestWork this server created and that still
+            # has the exact UID the human approved, so we never delete an unrelated or
+            # re-created work.
+            try:
+                current = ocm.get_manifestwork_object(prop.cluster, work)
+            except ApiException as exc:
+                return f"FAILED to read ManifestWork '{work}': {(exc.body or str(exc))[:800]}"
+            labels = current.get("metadata", {}).get("labels", {})
+            if labels.get("app.kubernetes.io/managed-by") != "ocm-mcp-server":
+                return (
+                    f"REJECTED: ManifestWork '{work}' is not managed by ocm-mcp-server; "
+                    "refusing to delete."
+                )
+            if uid and current.get("metadata", {}).get("uid") != uid:
+                return (
+                    f"REJECTED: ManifestWork '{work}' UID changed since approval; "
+                    "re-propose the rollback."
+                )
+            # Verify the rollback token only after ownership is confirmed, so a failed
+            # ownership check does not burn the token.
+            claims = approvals.verify_token(
+                prop, approval_token, operation="rollback", consume=True
+            )
+            try:
+                ocm.delete_manifestwork(prop.cluster, work)
+            except ApiException as exc:
+                return f"FAILED to delete ManifestWork: {(exc.body or str(exc))[:1500]}"
+            prop.approved_by = claims.get("approver", "")
+            prop.set_status("applied")
+            try:
+                origin = approvals.load_proposal(prop.params.get("origin", ""))
+                origin.set_status("rolled_back")
+            except approvals.ApprovalError:
+                pass
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
-
-    if msg := _content_intact(prop):
-        return msg
-
-    work, uid = prop.params.get("target_work", ""), prop.params.get("target_uid", "")
-    # Ownership check: only delete a ManifestWork this server created and that still has
-    # the exact UID the human approved, so we never delete an unrelated or re-created work.
-    try:
-        current = ocm.get_manifestwork_object(prop.cluster, work)
-    except ApiException as exc:
-        return f"FAILED to read ManifestWork '{work}': {(exc.body or str(exc))[:800]}"
-    labels = current.get("metadata", {}).get("labels", {})
-    if labels.get("app.kubernetes.io/managed-by") != "ocm-mcp-server":
-        return (
-            f"REJECTED: ManifestWork '{work}' is not managed by ocm-mcp-server; refusing to delete."
-        )
-    if uid and current.get("metadata", {}).get("uid") != uid:
-        return (
-            f"REJECTED: ManifestWork '{work}' UID changed since approval; re-propose the rollback."
-        )
-
-    try:
-        ocm.delete_manifestwork(prop.cluster, work)
-    except ApiException as exc:
-        return f"FAILED to delete ManifestWork: {(exc.body or str(exc))[:1500]}"
-
-    prop.approved_by = claims.get("approver", "")
-    prop.set_status("applied")
-    try:
-        origin = approvals.load_proposal(prop.params.get("origin", ""))
-        origin.set_status("rolled_back")
-    except approvals.ApprovalError:
-        pass
     return _json({"status": "rolled_back", "cluster": prop.cluster, "manifestwork": work})
 
 
@@ -605,25 +614,23 @@ def apply_cluster_action(proposal_id: str, approval_token: str) -> str:
     if msg := _writable():
         return msg
     try:
-        prop = approvals.load_proposal(proposal_id)
-        if prop.kind != "action":
-            return f"REJECTED: proposal {proposal_id} is a ManifestWork, not a cluster action."
-        if prop.status != "pending":
-            return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
-        claims = approvals.verify_token(prop, approval_token, operation="apply", consume=True)
+        with approvals.proposal_lock(proposal_id):
+            prop = approvals.load_proposal(proposal_id)
+            if prop.kind != "action":
+                return f"REJECTED: proposal {proposal_id} is a ManifestWork, not a cluster action."
+            if prop.status != "pending":
+                return f"REJECTED: proposal {proposal_id} is '{prop.status}', not pending."
+            if msg := _content_intact(prop):
+                return msg
+            claims = approvals.verify_token(prop, approval_token, operation="apply", consume=True)
+            try:
+                result = ocm.apply_cluster_action(prop.cluster, prop.action, prop.params)
+            except ApiException as exc:
+                return f"FAILED to apply action: {(exc.body or str(exc))[:1500]}"
+            prop.approved_by = claims.get("approver", "")
+            prop.set_status("applied")
     except approvals.ApprovalError as exc:
         return f"REJECTED: {exc}"
-
-    if msg := _content_intact(prop):
-        return msg
-
-    try:
-        result = ocm.apply_cluster_action(prop.cluster, prop.action, prop.params)
-    except ApiException as exc:
-        return f"FAILED to apply action: {(exc.body or str(exc))[:1500]}"
-
-    prop.approved_by = claims.get("approver", "")
-    prop.set_status("applied")
     return _json(result)
 
 
