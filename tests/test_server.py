@@ -266,3 +266,9 @@ def test_all_read_tools_and_prompts(tmp_home, monkeypatch):
         srv.rollout_status("r", "ns"),
     ]
     assert all(isinstance(p, str) and p for p in prompts)
+
+
+def test_oversized_manifests_json_rejected(mocked_ocm):
+    big = json.dumps([COMPLIANT]) + " " * (300 * 1024)  # pad past the 256 KiB limit
+    out = srv.propose_manifestwork("cluster1", "x", "s", big)
+    assert out.startswith("REJECTED") and "limit" in out

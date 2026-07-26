@@ -1075,9 +1075,11 @@ def _approve_pending_csrs(cluster: str, allowed: list[dict[str, str]]) -> list[s
         # CN is the OCM agent identity for this cluster.
         if not _is_ocm_join_csr(c) or not _csr_matches_cluster(c, cluster):
             continue
-        captured_hash = wanted[key]
-        if captured_hash and _csr_request_hash(c) != captured_hash:
-            continue  # the certificate request changed after review
+        # Fail closed: the live PKCS#10 request must hash-match what the human reviewed.
+        # An empty captured hash (a capture failure at propose time) will not match a real
+        # CSR's request, so it is refused rather than skipped.
+        if _csr_request_hash(c) != wanted[key]:
+            continue
         if not _csr_subject_cn_ok(c, cluster):
             continue
         c.status.conditions = (c.status.conditions or []) + [

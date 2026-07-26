@@ -14,13 +14,19 @@ integrity, and raises test coverage from ~40% to 85%.
 
 - **Kyverno parity with the static guardrails.** A new `restrict-manifestwork-pod-security`
   policy enforces the Restricted Pod Security baseline (automountServiceAccountToken=false,
-  default/empty service account, and per-container runAsNonRoot, allowPrivilegeEscalation=false,
-  drop-ALL, seccomp, and no Secret/hostPath/PVC/CSI/NFS volumes) on embedded workloads, so a
-  compromised server cannot slip a correctly-labelled but unsafe ManifestWork past admission.
-  Verified by an offline adversarial test (16 Kyverno cases total).
-- **CSR request binding.** The `accept` action now captures a hash of the PKCS#10 request at
-  propose time, re-verifies it is unchanged at apply, and validates the parsed certificate
-  subject Common Name is the OCM agent identity for the target cluster.
+  default/empty service account, and - across regular AND init containers - runAsNonRoot,
+  allowPrivilegeEscalation=false, drop-ALL, no added caps, not privileged, seccomp, and no
+  Secret/hostPath/PVC/CSI/NFS volumes), plus a ban on ephemeral containers. So a compromised
+  server cannot slip a labelled-but-unsafe ManifestWork - or a privileged init container -
+  past admission. Verified by offline adversarial tests (17 Kyverno cases total).
+- **CSR request binding (fail-closed).** The `accept` action captures a hash of the PKCS#10
+  request at propose time, re-verifies it is unchanged at apply (an empty captured hash is
+  refused, not skipped), and validates the parsed certificate subject Common Name is the OCM
+  agent identity for the target cluster.
+- **Cheaper, safer limits.** The proposal size limit is checked on the raw input before
+  parsing; the spent-token replay ledger is append-only with occasional compaction (no full
+  rewrite per apply); an optional stderr JSON audit echo (`OCM_MCP_AUDIT_ECHO`) forwards the
+  audit stream to a SIEM.
 - **Concurrency-safe apply.** Each proposal apply now runs under a per-proposal lock, so two
   separately-minted valid tokens can no longer race on the same pending proposal.
 - **More guardrail limits.** Exact 64-hex `@sha256` digest validation, `runAsUser: 0`

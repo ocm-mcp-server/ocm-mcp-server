@@ -27,13 +27,16 @@ flowchart TD
 ## Layer 1: static checks (fast, local)
 
 Runs in the server before anything else, with no cluster round-trip, so the
-agent gets instant, specific feedback. Blocks privileged/host settings,
-protected namespaces, disallowed kinds, and unpinned images. See
-[Implementation](Implementation) for the full list.
+agent gets instant, specific feedback. Enforces a Restricted-Pod-Security
+baseline on every workload (no root/privilege-escalation, drop-ALL, seccomp, no
+host access, no arbitrary service account or Secret access), an exact GVK
+allow-list, protected/platform namespaces, a volume and Service-type allow-list,
+image pinning, and per-proposal limits. See [Implementation](Implementation) for
+the full list.
 
 ## Layer 2: Kyverno policy admission
 
-The three policies in `deploy/policies/` validate the workload *inside* the
+The five policies in `deploy/policies/` validate the workload *inside* the
 `ManifestWork` envelope using Kyverno's `foreach` over
 `spec.workload.manifests`. This matters: normal pod-security policies only see
 resources after they land on a cluster. Here we validate on the hub, at propose
@@ -64,10 +67,13 @@ mint one. Minted only by the `ocm-mcp` CLI on a trusted terminal. See
 
 ## Layer 4: least-privilege RBAC
 
-The server's hub identity can read ManagedClusters and create/delete only its
-own ManifestWorks. It cannot read Secrets, exec, or touch anything else. Even a
-bug in the server cannot exceed this. This is the backstop that holds when the
-other three are somehow bypassed.
+The server's hub identity can read across the OCM API and create/delete
+ManifestWorks and add-ons. RBAC cannot scope this to "only objects it created",
+so ownership of a specific ManifestWork is enforced in the application (the
+`managed-by` label plus the approved UID, checked before rollback), not by RBAC.
+What RBAC does guarantee is the hard boundary: no Secret reads, no exec, no
+arbitrary delete - even a bug in the server cannot exceed that. This is the
+backstop that holds when the other three are somehow bypassed.
 
 ## Deliberate absences
 

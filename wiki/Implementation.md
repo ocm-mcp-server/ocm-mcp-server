@@ -20,13 +20,15 @@ flowchart TD
 | Module | Responsibility |
 |---|---|
 | `server.py` | The MCP server. Defines every tool; the only surface the agent sees. |
-| `guardrails.py` | Layer-1 static checks: kinds allowlist, namespaces, pod security, image pinning. Pure functions, no cluster needed. |
+| `guardrails.py` | Layer-1 static checks: exact GVK allow-list, namespaces, a Restricted-Pod-Security baseline (no root/privilege-escalation, drop-ALL, seccomp, no host/Secret/arbitrary-SA, volume + Service allow-lists), image pinning, and per-proposal limits. Pure functions, no cluster needed. |
 | `ocm.py` | The OCM API layer: inventory, placement, work, add-on, registration and policy reads, the generic allow-listed reader, and the cordon/uncordon/set_label/accept lifecycle writes, summarized into agent-friendly shapes. |
 | `k8s.py` | Kubernetes client construction: hub context, read-only spoke contexts, the CSR client. |
 | `approvals.py` | Proposal store on disk + Ed25519 approval tokens whose claims bind the content hash, the operation (`apply`/`rollback`), and a TTL; ManifestWork, lifecycle-action, and rollback proposals. |
-| `tracing.py` | One OpenTelemetry span and one audit line per tool call. |
-| `cli.py` | `ocm-mcp`: the human side (pending, show, approve, reject, audit). |
-| `config.py` | Settings from env, the protected-namespace set, the allowed-kinds set, the readable-resource allow-list, the allowed lifecycle actions, and the read-only backstop. |
+| `tracing.py` | One OpenTelemetry span and one hash-chained audit line per tool call (optional stderr echo for a SIEM). |
+| `metrics.py` | Optional dependency-free Prometheus `/metrics` endpoint (`OCM_MCP_METRICS_PORT`). |
+| `filelock.py` | Advisory file lock behind the atomic proposal writes, the spent-token ledger, and the per-proposal apply lock. |
+| `cli.py` | `ocm-mcp`: the human side (pending, show, approve, reject, audit, audit-verify, doctor, rotate-secret). |
+| `config.py` | Settings from env, the protected-namespace set, the allowed-kinds set, the readable-resource allow-list, the allowed lifecycle actions, per-proposal limits, and the read-only backstop. |
 
 ## The tools, precisely
 
@@ -109,17 +111,29 @@ token  = base64(claims_json) . base64(Ed25519_sign(private_key, claims_json))
 
 ## Static guardrail checks (layer 1)
 
-Each proposed manifest is checked for, and rejected on, any of:
+Inputs are schema-checked first (a malformed manifest is a clean violation, not a
+crash), then each manifest is rejected on any of:
 
-- a kind not in the allowlist (Deployment, Service, ConfigMap, HPA, PDB,
-  ResourceQuota, NetworkPolicy);
-- a missing namespace, or a protected/system namespace;
-- `privileged`, `allowPrivilegeEscalation`, added capabilities;
-- `hostNetwork` / `hostPID` / `hostIPC`, or `hostPath` volumes;
-- an unpinned image (`:latest` or no tag).
+- an exact `(apiVersion, kind)` not on the allow-list (blocks group spoofing);
+- a missing namespace, or a protected/platform one (`kube-*`, `openshift-*`,
+  `open-cluster-management*`, `default`);
+- **Restricted Pod Security**, on every container incl. init/ephemeral:
+  `automountServiceAccountToken` not `false`, an arbitrary `serviceAccountName`,
+  missing `runAsNonRoot`, `runAsUser: 0`, `allowPrivilegeEscalation` not `false`,
+  not dropping `ALL` capabilities, added capabilities, `privileged`, or a missing
+  seccomp profile;
+- `hostNetwork` / `hostPID` / `hostIPC`;
+- a volume outside the allow-list (only `configMap`/`emptyDir`/`downwardAPI`/
+  projected-without-secrets - so no Secret/hostPath/PVC/CSI/NFS), or an indirect
+  Secret env ref;
+- a Service that is not `ClusterIP`, or that sets `externalIPs`;
+- an unpinned image (`:latest` or no tag; a 64-hex `@sha256` digest when
+  `OCM_MCP_REQUIRE_DIGEST` is set);
+- a HorizontalPodAutoscaler `maxReplicas` over the cap, or a proposal over the byte
+  or 10-manifest limits.
 
 All violations across all manifests are reported at once, so the agent can fix
-everything in one revision.
+everything in one revision. The Kyverno layer enforces the same baseline on the hub.
 
 ## Observability
 
@@ -135,7 +149,7 @@ back via `get_audit_trail` to write an accurate post-incident report.
 
 ## Tests
 
-- `tests/` unit tests (57): the full approval-token lifecycle (roundtrip,
+- `tests/` unit tests (222; 85% branch coverage): the full approval-token lifecycle (roundtrip,
   wrong-proposal, content-change invalidation, expiry, tampering, malformed,
   public-key-only verification, operation binding, keypair rotation) for both
   ManifestWork and lifecycle-action proposals, every static guardrail case

@@ -10,10 +10,12 @@
    `automountServiceAccountToken: false`, no arbitrary service account, an allow-list
    of volume types (no PVC/CSI/hostPath/secret) and Service types (no
    NodePort/LoadBalancer/externalIPs), required `runAsNonRoot`,
-   `allowPrivilegeEscalation: false`, all capabilities dropped, a seccomp profile, no
-   indirect Secret access (`env.secretKeyRef`, secret/projected-token volumes), and
-   pinned images (optionally `@sha256` digests via `OCM_MCP_REQUIRE_DIGEST`). These
-   run first for instant feedback, and again at apply time.
+   `allowPrivilegeEscalation: false`, no `runAsUser: 0`, all capabilities dropped, a
+   seccomp profile, no indirect Secret access (`env.secretKeyRef`, secret/projected-token
+   volumes), pinned images (optionally a 64-hex `@sha256` digest via
+   `OCM_MCP_REQUIRE_DIGEST`), and per-proposal limits (a byte ceiling, a 10-manifest cap,
+   and a HorizontalPodAutoscaler `maxReplicas` cap). These run first for instant feedback,
+   and again at apply time.
 2. **Kyverno dry-run on the hub** (`deploy/policies/`) - organizational policy,
    evaluated inside the ManifestWork envelope via server-side dry-run at
    proposal time. Your existing policy library applies here too.

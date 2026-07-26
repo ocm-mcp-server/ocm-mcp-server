@@ -122,10 +122,14 @@ def audit(entry: dict[str, Any]) -> None:
         entry["hash"] = hashlib.sha256(
             (prev + _canonical({k: entry[k] for k in entry if k != "hash"})).encode()
         ).hexdigest()
+        line = json.dumps(entry, default=str)
         with path.open("a") as f:
-            f.write(json.dumps(entry, default=str) + "\n")
+            f.write(line + "\n")
             f.flush()
             os.fsync(f.fileno())
+    if SETTINGS.audit_echo_stderr:
+        # Echo to stderr (not stdout - that is the MCP transport) for SIEM forwarding.
+        print(line, file=sys.stderr, flush=True)
 
 
 def _safe_audit(entry: dict[str, Any]) -> None:

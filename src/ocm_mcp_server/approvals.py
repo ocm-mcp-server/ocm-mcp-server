@@ -311,12 +311,18 @@ def _token_used(jti: str) -> bool:
     return any(e.get("jti") == jti for e in _load_used(SETTINGS.used_tokens_path))
 
 
-def _mark_token_used(claims: dict[str, Any]) -> None:
-    """Atomically record a token id as spent, so it can never be replayed.
+# Compact the spent-token ledger once it grows past this many lines, dropping expired
+# entries. The common path is an O(1) append; compaction (a full rewrite) is rare.
+_LEDGER_COMPACT_AT = 2000
 
-    A spent id only needs to be remembered until the token would have expired, so this
-    also prunes entries whose expiry has passed - bounding the ledger instead of letting
-    it grow forever. The whole file is rewritten atomically under the lock.
+
+def _mark_token_used(claims: dict[str, Any]) -> None:
+    """Record a token id as spent, so it can never be replayed.
+
+    The common case appends one line (O(1) write). Only when the ledger grows past
+    `_LEDGER_COMPACT_AT` lines is it rewritten, dropping entries whose token has already
+    expired - so it stays bounded without a full rewrite on every apply. A spent id only
+    needs to be remembered until its token's expiry.
     """
     path = SETTINGS.used_tokens_path
     now = int(time.time())
@@ -328,18 +334,25 @@ def _mark_token_used(claims: dict[str, Any]) -> None:
         "used_at": now,
     }
     with locked(path):
-        kept = [e for e in _load_used(path) if int(e.get("exp", now)) > now]
-        if any(e.get("jti") == claims.get("jti") for e in kept):
+        used = _load_used(path)
+        if any(e.get("jti") == claims.get("jti") for e in used):
             raise ApprovalError("This approval token has already been used (replay refused).")
-        kept.append(entry)
-        tmp = path.with_suffix(".jsonl.tmp")
-        with tmp.open("w") as f:
-            for e in kept:
-                f.write(json.dumps(e, separators=(",", ":")) + "\n")
-            f.flush()
-            os.fsync(f.fileno())
-        tmp.chmod(0o600)
-        tmp.replace(path)
+        if len(used) >= _LEDGER_COMPACT_AT:
+            kept = [e for e in used if int(e.get("exp", now)) > now]
+            kept.append(entry)
+            tmp = path.with_suffix(".jsonl.tmp")
+            with tmp.open("w") as f:
+                for e in kept:
+                    f.write(json.dumps(e, separators=(",", ":")) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            tmp.chmod(0o600)
+            tmp.replace(path)
+        else:
+            with path.open("a") as f:
+                f.write(json.dumps(entry, separators=(",", ":")) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
 
 
 def mint_token(

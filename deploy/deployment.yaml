@@ -44,7 +44,7 @@ spec:
       containers:
         - name: server
           # Pin to an immutable digest in production: ghcr.io/...@sha256:<64-hex>.
-          image: ghcr.io/sandeepbazar/ocm-mcp-server:v0.2.1
+          image: ghcr.io/sandeepbazar/ocm-mcp-server:v0.2.2
           imagePullPolicy: IfNotPresent
           env:
             - name: OCM_MCP_READ_ONLY

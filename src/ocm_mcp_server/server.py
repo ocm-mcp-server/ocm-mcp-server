@@ -35,7 +35,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 from . import approvals, guardrails, ocm
-from .config import ALLOWED_CLUSTER_ACTIONS, SETTINGS
+from .config import ALLOWED_CLUSTER_ACTIONS, MAX_PROPOSAL_BYTES, SETTINGS
 from .tracing import traced_tool
 
 mcp = FastMCP(
@@ -324,6 +324,13 @@ def propose_manifestwork(cluster: str, name: str, summary: str, manifests_json: 
     """
     if msg := _writable():
         return msg
+    # Bound the raw input before parsing, so a pathologically large blob is rejected
+    # cheaply rather than being fully parsed and re-serialized to measure it.
+    if len(manifests_json.encode()) > MAX_PROPOSAL_BYTES:
+        return (
+            f"REJECTED: manifests_json is larger than the {MAX_PROPOSAL_BYTES}-byte "
+            "limit; split the change or reduce embedded data."
+        )
     try:
         manifests = json.loads(manifests_json)
     except json.JSONDecodeError as exc:

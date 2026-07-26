@@ -33,9 +33,10 @@
       <rect width="230" height="120" rx="14" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
       <circle cx="26" cy="30" r="15" fill="#3b82f6"/><text x="26" y="35" fill="#fff" text-anchor="middle" class="h" font-size="14">1</text>
       <text x="52" y="35" class="s" font-size="15" fill="#1e3a8a">Static checks</text>
-      <text x="20" y="66" fill="#334155">privileged / host access,</text>
-      <text x="20" y="86" fill="#334155">system namespaces, kinds,</text>
-      <text x="20" y="106" fill="#334155">unpinned images</text>
+      <text x="20" y="62" fill="#334155">Restricted Pod Security:</text>
+      <text x="20" y="80" fill="#334155">no root/priv-esc, drop-ALL,</text>
+      <text x="20" y="98" fill="#334155">seccomp, GVK + image</text>
+      <text x="20" y="116" fill="#334155">pinning, no host/Secret</text>
     </g>
     <line x1="472" y1="210" x2="506" y2="210" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#arw)"/>
     <!-- L2 -->

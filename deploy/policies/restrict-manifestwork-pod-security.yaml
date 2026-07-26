@@ -63,12 +63,22 @@ spec:
                   - key: "{{ to_string(element.spec.template.spec.automountServiceAccountToken) }}"
                     operator: NotEquals
                     value: "false"
-                  # serviceAccountName must be empty or 'default'
+                  # serviceAccountName (and the deprecated serviceAccount alias) must be
+                  # empty or 'default'
                   - key: "{{ element.spec.template.spec.serviceAccountName || '' }}"
                     operator: AnyNotIn
                     value:
                       - ""
                       - default
+                  - key: "{{ element.spec.template.spec.serviceAccount || '' }}"
+                    operator: AnyNotIn
+                    value:
+                      - ""
+                      - default
+                  # ephemeral (debug) containers are never allowed in an agent proposal
+                  - key: "{{ length(element.spec.template.spec.ephemeralContainers || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
                   # every container must set runAsNonRoot: true
                   - key: "{{ length(element.spec.template.spec.containers[?securityContext.runAsNonRoot != `true`]) }}"
                     operator: GreaterThan
@@ -87,6 +97,36 @@ spec:
                     value: 0
                   # every container must set a RuntimeDefault/Localhost seccomp profile
                   - key: "{{ length(element.spec.template.spec.containers[?securityContext.seccompProfile.type != 'RuntimeDefault' && securityContext.seccompProfile.type != 'Localhost']) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # the same checks apply to initContainers (an init container is a real
+                  # privilege path). initContainers may be absent, so default to an empty list.
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.runAsNonRoot != `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.allowPrivilegeEscalation != `false`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?!securityContext.capabilities.drop] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.capabilities.drop && !contains(securityContext.capabilities.drop, 'ALL')] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.seccompProfile.type != 'RuntimeDefault' && securityContext.seccompProfile.type != 'Localhost'] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # no container (regular or init) may add capabilities or run privileged
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.capabilities.add] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.capabilities.add] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.privileged == `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.privileged == `true`] || `[]`) }}"
                     operator: GreaterThan
                     value: 0
                   # no unsafe volume sources

@@ -44,7 +44,7 @@ kubectl --context kind-hub get managedclusters
 # cluster3   true           True
 
 kubectl --context kind-hub get clusterpolicies
-# three policies, all READY
+# five policies, all READY
 ```
 
 Export the environment bootstrap printed (if you are unsure what those context
@@ -142,17 +142,53 @@ Point your MCP client's `command` at `docker` with those args (stdio passes
 through `-i`). Mount a dedicated volume for `OCM_MCP_HOME` if you want the
 audit log and proposals to survive container restarts.
 
+## Path D: in-cluster via Helm (or raw manifests)
+
+A reference [Deployment](../deploy/deployment.yaml) and a Helm chart
+([`deploy/charts/ocm-mcp-server`](../deploy/charts/ocm-mcp-server)) run the server as a
+workload on the hub, with a Restricted pod security context, resource limits, a
+read-only verifier-key mount, a NetworkPolicy, and a PodDisruptionBudget.
+
+```bash
+# 1. Apply the least-privilege RBAC (ServiceAccount + ClusterRole/Binding).
+kubectl apply -f deploy/rbac.yaml
+
+# 2. Provide ONLY the public approval verifier key (the private signer stays off-cluster).
+kubectl -n open-cluster-management create secret generic ocm-mcp-approval-pub \
+  --from-file=approval_ed25519.pub=$HOME/.ocm-mcp/approval_ed25519.pub
+
+# 3. Install. Defaults to OCM_MCP_READ_ONLY=1 - a safe, inspection-only posture.
+helm install ocm-mcp deploy/charts/ocm-mcp-server -n open-cluster-management \
+  --set image.digest=sha256:<pin-me> \
+  --set persistence.enabled=true      # a PVC; otherwise proposals/ledger/audit are lost on restart
+```
+
+Transport note: the server speaks MCP over stdio today, so an in-cluster Deployment is
+normally attached by a client (sidecar or `kubectl exec`); a standalone authenticated HTTP
+transport is on the roadmap. With `persistence.enabled=false` (the default) state lives in an
+`emptyDir` and does **not** survive a restart - enable the PVC and ship the audit log to an
+external sink before any write-enabled use.
+
 ## Production hardening checklist
 
 - [ ] **Spoke transport:** replace direct spoke contexts with the OCM
       cluster-proxy add-on so the server host holds hub credentials only.
 - [ ] **Dedicated identities:** one server instance and one hub ServiceAccount
       per agent, so RBAC and the audit log separate them.
-- [ ] **State directory:** put `OCM_MCP_HOME` on encrypted disk; the approval
-      secret lives there (0600). Rotate it by deleting the file; open
-      proposals then need re-approval, which is the safe failure mode.
-- [ ] **Audit shipping:** tail `audit.jsonl` into your log pipeline; it is
-      append-only JSON lines.
+- [ ] **Off-box signer:** keep the private Ed25519 signing key off the server via
+      `OCM_MCP_SIGNER_KEY` (a separate account/device); the server needs only the
+      public verifier (`OCM_MCP_VERIFIER_KEY`, mounted read-only). Co-located, the
+      "a compromised server cannot mint tokens" property is only a filesystem
+      convention. Rotate with `ocm-mcp rotate-secret`; open proposals then need
+      re-approval, the safe failure mode.
+- [ ] **State directory:** put `OCM_MCP_HOME` on encrypted, persistent disk (a PVC in
+      the chart); it holds proposals, the spent-token replay ledger, and the audit log,
+      all of which are lost on restart with `emptyDir`.
+- [ ] **Audit shipping:** tail `audit.jsonl` (hash-chained; verify with
+      `ocm-mcp audit-verify`) into your log pipeline, or set `OCM_MCP_AUDIT_ECHO=1` to
+      stream it to stderr for a collector. Tail truncation needs external anchoring.
+- [ ] **Metrics:** set `OCM_MCP_METRICS_PORT` for Prometheus `/metrics` (binds
+      localhost unless `OCM_MCP_METRICS_HOST` is set).
 - [ ] **Tracing:** set `OTEL_EXPORTER_OTLP_ENDPOINT` at your collector; spans
       carry tool names and redact approval tokens.
 - [ ] **Token TTL:** drop `OCM_MCP_APPROVAL_TTL` below the default hour if

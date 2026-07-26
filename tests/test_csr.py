@@ -144,7 +144,10 @@ def test_approve_only_captured_csrs(monkeypatch):
     sneaked_in = csr(name="late", uid="u-late", cluster="cluster1")  # created after human review
     fake = _FakeCerts([reviewed, sneaked_in])
     monkeypatch.setattr(ocm, "hub_certificates", lambda: fake)
-    approved = _approve_pending_csrs("cluster1", [{"name": "reviewed", "uid": "u-rev"}])
+    approved = _approve_pending_csrs(
+        "cluster1",
+        [{"name": "reviewed", "uid": "u-rev", "request_hash": _csr_request_hash(reviewed)}],
+    )
     assert approved == ["reviewed"] and "late" not in approved
 
 

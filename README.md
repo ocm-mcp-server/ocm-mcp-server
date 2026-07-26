@@ -115,11 +115,13 @@ control that governs every human `kubectl apply`.
 
 **Where it is used here:**
 
-- [`deploy/policies/`](deploy/policies/) ships three `ClusterPolicy` objects that `foreach`
-  over `spec.workload.manifests` inside a `ManifestWork` (block privileged/host access,
-  protect system namespaces, enforce a kind allow-list), scoped by the
+- [`deploy/policies/`](deploy/policies/) ships five `ClusterPolicy` objects that `foreach`
+  over `spec.workload.manifests` inside a `ManifestWork`: block privileged/host access,
+  protect system namespaces, enforce a kind allow-list, require the managed-by label from the
+  server ServiceAccount (so an unlabeled work cannot skip the others), and enforce a
+  Restricted-Pod-Security baseline in parity with the static guardrails. They are scoped by the
   `app.kubernetes.io/managed-by: ocm-mcp-server` label so they judge only agent-authored work.
-- `make policy-test` runs a **12-case offline suite** with the `kyverno` CLI - good, bad, and
+- `make policy-test` runs a **16-case offline suite** with the `kyverno` CLI - good, bad, and
   human-authored `ManifestWork`s - needing no cluster and no dependencies. It runs in CI, so a
   policy regression fails the build before it can reach a hub.
 - Don't start from scratch: the community library
@@ -352,15 +354,20 @@ ready-to-paste values at the end).
 | `OCM_MCP_ISSUER` / `OCM_MCP_AUDIENCE` | no | Bind approval tokens to this deployment so a token minted elsewhere is refused. Defaults `ocm-mcp` / `ocm-mcp-server`. |
 | `OCM_MCP_APPROVAL_TTL` | no | Approval-token lifetime in seconds. Default `3600`. |
 | `OCM_MCP_REQUIRE_DIGEST` | no | Set to `1` to require `@sha256` digest-pinned images (stricter than tag-pinning). Default off. |
-| `OCM_MCP_METRICS_PORT` | no | If set, expose Prometheus metrics at `/metrics` on this port (binds `127.0.0.1` unless `OCM_MCP_METRICS_HOST` is set). Default off. |
+| `OCM_MCP_METRICS_PORT` | no | If set, expose Prometheus metrics at `/metrics` on this port. Default off. |
+| `OCM_MCP_METRICS_HOST` | no | Interface the metrics endpoint binds. Default `127.0.0.1` (localhost only); set `0.0.0.0` for a remote scraper. |
+| `OCM_MCP_AUDIT_ECHO` | no | Set to `1` to also echo each audit line to **stderr** as JSON, so a container log collector can forward the audit stream to a SIEM. Default off. |
+| `OCM_MCP_MAX_PROPOSAL_BYTES` | no | Reject a proposal larger than this many bytes. Default `262144` (256 KiB). |
+| `OCM_MCP_MAX_HPA_REPLICAS` | no | Reject a HorizontalPodAutoscaler whose `maxReplicas` exceeds this. Default `100`. |
 | `OCM_MCP_READ_ONLY` | no | Set to `1`/`true` for a strictly-inspection deployment: every propose/apply tool refuses, a coarse backstop under the token gate. Default off. |
 | `OCM_MCP_CLIENT_TTL` | no | Seconds before the cached Kubernetes API client is rebuilt, so rotated/refreshed credentials are picked up. Default `600`. |
 | `OCM_MCP_SPOKE_TIMEOUT` | no | Read timeout (seconds) for spoke health/event/log calls, so one large cluster cannot hang a tool. Default `30`. |
 | `OCM_MCP_HEALTH_LIMIT` | no | Max pods/deployments `get_cluster_health` fetches per cluster; the result notes truncation. Default `500`. |
 
 For key management, `ocm-mcp rotate-secret` generates a fresh Ed25519 approval keypair
-(invalidating every outstanding approval token), and `ocm-mcp doctor` runs the live
-read-path smoke test.
+(invalidating every outstanding approval token); `ocm-mcp doctor` runs the live read-path
+smoke test; and `ocm-mcp audit-verify` recomputes the audit log's hash chain to detect any
+edit, reordering, or mid-log deletion.
 
 ```bash
 # the values make bootstrap prints, spelled out:
@@ -487,7 +494,7 @@ python3 eval/run_eval.py --agent-cmd "claude -p"     # or any agent CLI
 Run it against your model of choice and publish your numbers, including the failures.
 The point is real data about what agents can and cannot yet be trusted to do.
 
-The Kyverno policies have their own offline test suite: `make policy-test` runs 12 CLI
+The Kyverno policies have their own offline test suite: `make policy-test` runs 16 CLI
 cases ([`deploy/policies/tests/`](deploy/policies/tests/)) against good, bad, and
 human-created ManifestWorks with no cluster and no dependencies. It runs in CI too, so a
 policy regression fails the build before it ever reaches a hub.
@@ -516,7 +523,7 @@ report is git-ignored. Works on macOS (Homebrew + Podman) and Linux.
 
 | Page | What it covers |
 |---|---|
-| [Tools and Prompts reference](docs/tools.md) | every tool by toolset, its class (read / propose / apply), arguments, and the OCM API it touches; the four MCP prompts |
+| [Tools and Prompts reference](docs/tools.md) | every tool by toolset, its class (read / propose / apply), arguments, and the OCM API it touches; the ten MCP prompts |
 | [Context names guide](docs/kubeconfig-contexts.md) | zero-background: what a kubeconfig context is and the exact commands to find yours (kind, EKS, GKE, AKS, OpenShift) |
 | [Deployment guide](docs/deployment.md) | laptop quickstart in depth, real OCM fleets, Docker, production hardening, troubleshooting |
 | [Worked examples](docs/examples.md) | full incident transcripts, approval sessions, adversarial rejections, audit output |
@@ -562,7 +569,8 @@ examples/             MCP client configs + a production-shaped system prompt
 - [ ] OCM cluster-proxy transport option (replace direct spoke contexts)
 - [ ] Filing the upstream proposals in [`docs/upstream-notes.md`](docs/upstream-notes.md)
       (MCP long-running operations · OCM ManifestWork feedback · Kyverno catalog contribution)
-- [ ] Container image publishing (ghcr.io) and Helm chart for in-cluster deployment
+- [x] Container image publishing (ghcr.io, signed + SBOM + provenance) and a Helm chart for
+      in-cluster deployment
 - [ ] Additional chaos classes: node pressure, network partitions, noisy neighbors
 
 Have a need that's not here? [Open a feature request](.github/ISSUE_TEMPLATE/feature_request.yml).
