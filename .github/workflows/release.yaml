@@ -17,13 +17,18 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Create release from the tag
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
+          # Idempotent, but a real failure still fails the job (not masked).
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release for $TAG already exists"
+            exit 0
+          fi
           gh release create "$TAG" \
             --title "$TAG" \
             --notes "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full list of changes in this release." \
-            --verify-tag || echo "release for $TAG already exists"
+            --verify-tag

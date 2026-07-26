@@ -1,0 +1,95 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+# Restricted-Pod-Security parity for embedded workloads, so admission enforces the same
+# baseline as the server's Python guardrails. This matters because a compromised server
+# could bypass the Python checks and create a correctly-labelled ManifestWork; this policy
+# is the independent, hub-side backstop. It iterates spec.workload.manifests and, for each
+# workload manifest, requires: automountServiceAccountToken=false, a default/empty service
+# account, and - across every container - runAsNonRoot, allowPrivilegeEscalation=false, all
+# capabilities dropped, and a seccomp profile (honored at pod or container level). It also
+# rejects Secret/hostPath/PVC/CSI/NFS volumes. Scoped to ocm-mcp-server-labelled works.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-manifestwork-pod-security
+  annotations:
+    policies.kyverno.io/title: Restricted Pod Security for Agent ManifestWorks
+    policies.kyverno.io/category: Multi-Cluster Guardrails
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: ManifestWork
+    policies.kyverno.io/description: >-
+      Embedded workloads in agent-proposed ManifestWorks must meet a Restricted Pod
+      Security baseline, matching the server's static guardrails as defense in depth.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: require-restricted-pod-security
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: ocm-mcp-server
+      validate:
+        message: >-
+          Embedded workload violates the Restricted Pod Security baseline
+          (automountServiceAccountToken must be false; serviceAccountName must be
+          default/empty; every container must set runAsNonRoot, allowPrivilegeEscalation=false,
+          drop ALL capabilities, and a seccomp profile; no Secret/hostPath/PVC/CSI/NFS volumes).
+        foreach:
+          - list: request.object.spec.workload.manifests
+            preconditions:
+              all:
+                - key: "{{ element.kind }}"
+                  operator: AnyIn
+                  value:
+                    - Deployment
+                    - StatefulSet
+                    - DaemonSet
+                    - ReplicaSet
+                    - Job
+                    - Pod
+            deny:
+              # Flat conditions only (Kyverno does not accept a nested all/any here), so
+              # runAsNonRoot and seccomp are required at the container level - the canonical
+              # compliant manifests set them there, satisfying both this policy and the
+              # (more lenient, pod-level-aware) Python guardrails.
+              conditions:
+                any:
+                  # automountServiceAccountToken must be explicitly false
+                  - key: "{{ to_string(element.spec.template.spec.automountServiceAccountToken) }}"
+                    operator: NotEquals
+                    value: "false"
+                  # serviceAccountName must be empty or 'default'
+                  - key: "{{ element.spec.template.spec.serviceAccountName || '' }}"
+                    operator: AnyNotIn
+                    value:
+                      - ""
+                      - default
+                  # every container must set runAsNonRoot: true
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.runAsNonRoot != `true`]) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # every container must set allowPrivilegeEscalation: false
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.allowPrivilegeEscalation != `false`]) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # a container has no capabilities.drop at all
+                  - key: "{{ length(element.spec.template.spec.containers[?!securityContext.capabilities.drop]) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # a container has a drop list that does not include ALL
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.capabilities.drop && !contains(securityContext.capabilities.drop, 'ALL')]) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # every container must set a RuntimeDefault/Localhost seccomp profile
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.seccompProfile.type != 'RuntimeDefault' && securityContext.seccompProfile.type != 'Localhost']) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # no unsafe volume sources
+                  - key: "{{ length(element.spec.template.spec.volumes[?secret || hostPath || persistentVolumeClaim || csi || nfs] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0

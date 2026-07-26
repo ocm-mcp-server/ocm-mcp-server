@@ -144,7 +144,7 @@ back via `get_audit_trail` to write an accurate post-incident report.
   named), the HCP / ManagedClusterInfo / add-on shaping logic, and the hardening
   fixes (apply-time content re-check, robust PodSpec extraction). No cluster
   required.
-- `deploy/policies/tests/` Kyverno CLI suite (12 cases): good, bad, and
+- `deploy/policies/tests/` Kyverno CLI suite (16 cases): good, bad, and
   human-created ManifestWorks. Offline, runs in CI.
 
 Next: [Guardrails Deep Dive](Guardrails-Deep-Dive).
