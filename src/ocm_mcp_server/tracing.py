@@ -37,6 +37,20 @@ def _canonical(entry: dict[str, Any]) -> str:
     return json.dumps(entry, sort_keys=True, separators=(",", ":"), default=str)
 
 
+_MAX_ARG_LEN = 2000
+
+
+def _audit_arg(key: str, value: Any) -> Any:
+    """Redact the approval token and bound large argument values, so one big argument
+    (e.g. a manifests_json blob) can't bloat the audit line or overflow the hash-chain
+    tail read."""
+    if key == "approval_token":
+        return "<redacted>"
+    if isinstance(value, str) and len(value) > _MAX_ARG_LEN:
+        return value[:_MAX_ARG_LEN] + f"...(+{len(value) - _MAX_ARG_LEN} chars)"
+    return value
+
+
 def _get_tracer():
     global _tracer
     if _tracer is not None:
@@ -193,9 +207,7 @@ def traced_tool(fn: Callable) -> Callable:
             _safe_audit(
                 {
                     "tool": fn.__name__,
-                    "args": {
-                        k: (v if k != "approval_token" else "<redacted>") for k, v in kwargs.items()
-                    },
+                    "args": {k: _audit_arg(k, v) for k, v in kwargs.items()},
                     "outcome": outcome,
                     "error": error[:500],
                     "duration_ms": duration_ms,

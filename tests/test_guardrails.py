@@ -424,3 +424,17 @@ def test_service_account_alias_blocked():
     pod_spec(bad)["serviceAccount"] = "admin"  # the older alias field
     with pytest.raises(GuardrailViolation, match="not allowed"):
         guardrails.validate_manifests([bad])
+
+
+def test_run_as_user_root_rejected():
+    bad = deployment()
+    pod_spec(bad)["containers"][0]["securityContext"]["runAsUser"] = 0
+    with pytest.raises(GuardrailViolation, match="runAsUser 0"):
+        guardrails.validate_manifests([bad])
+
+
+def test_pod_level_run_as_user_root_rejected():
+    bad = deployment()
+    pod_spec(bad)["securityContext"] = {"runAsUser": 0}
+    with pytest.raises(GuardrailViolation, match="runAsUser 0"):
+        guardrails.validate_manifests([bad])
