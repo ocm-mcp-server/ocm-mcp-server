@@ -1,3 +1,4 @@
+<!-- mcp-name: io.github.sandeepbazar/ocm-mcp-server -->
 <div align="center">
 
 <img src="docs/assets/banner.svg" alt="ocm-mcp-server - AgentOps for Kubernetes fleets, done safely" width="100%">
@@ -18,6 +19,9 @@ and audit between the model and your clusters.**
 [![OCM](https://img.shields.io/badge/multicluster-Open%20Cluster%20Management-326CE5?logo=kubernetes&logoColor=white)](https://open-cluster-management.io/)
 [![Kyverno](https://img.shields.io/badge/policy-Kyverno-ff6f00)](https://kyverno.io/)
 [![CI](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/ci.yaml/badge.svg)](https://github.com/sandeepbazar/ocm-mcp-server/actions)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwiki%2Fsandeepbazar%2Focm-mcp-server%2Fcoverage-badge.json)](https://github.com/sandeepbazar/ocm-mcp-server/wiki/Unit-Test-Results)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/sandeepbazar/ocm-mcp-server/badge)](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)
+[![PyPI](https://img.shields.io/pypi/v/ocm-mcp-server?label=PyPI)](https://pypi.org/project/ocm-mcp-server/)
 [![Release](https://img.shields.io/github/v/tag/sandeepbazar/ocm-mcp-server?label=release)](https://github.com/sandeepbazar/ocm-mcp-server/releases)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)

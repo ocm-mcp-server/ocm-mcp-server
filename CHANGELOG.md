@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **PyPI publishing** via OIDC trusted publishing on release tags: install with
+  `pip install ocm-mcp-server`, or run directly with `uvx ocm-mcp-server`.
+- **Official MCP Registry listing** as `io.github.sandeepbazar/ocm-mcp-server`:
+  `server.json` metadata, ownership markers in the README (PyPI) and image
+  annotations (OCI), and automated registry publish on every release tag.
+- **OpenSSF Scorecard** workflow (weekly + on push to main) with published results,
+  code-scanning upload, and a README badge.
+- **`make test-report`**: refreshes a unit-tests-and-coverage wiki page, a Shields
+  coverage badge served from the wiki, and a browsable per-line HTML coverage
+  report; CI uploads all of it as an artifact on every run.
+- CI test matrix extended to Python 3.13 and 3.14.
+
+### Fixed
+
+- `hack/bootstrap.sh` now retries transient `clusteradm init` failures
+  ("unexpected watch event received") a bounded number of times, cleaning the
+  half-initialized hub between attempts, so the end-to-end fleet test does not
+  fail on an upstream watch flake.
+
 ## [0.2.2] - 2026-07-26
 
 A second hardening release addressing two follow-up enterprise-readiness audits. It brings

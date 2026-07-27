@@ -32,3 +32,65 @@ jobs:
             --title "$TAG" \
             --notes "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full list of changes in this release." \
             --verify-tag
+
+  pypi:
+    # Publish sdist + wheel to PyPI via OIDC trusted publishing: no stored token,
+    # same keyless philosophy as the Cosign image signature.
+    # One-time setup on pypi.org: add this repo/workflow as a trusted publisher
+    # for the 'ocm-mcp-server' project (environment: pypi).
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ocm-mcp-server
+    permissions:
+      contents: read
+      id-token: write # OIDC token for PyPI trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@2834a314042ef964da07689278dd1e9d773e8afd # v1.14.1
+
+  mcp-registry:
+    # Publish server metadata to the official MCP Registry
+    # (registry.modelcontextprotocol.io) after the PyPI package exists, since
+    # the registry validates the mcp-name ownership marker in the PyPI README.
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # GitHub OIDC login to the MCP registry
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m).tar.gz" \
+            | tar xz mcp-publisher
+      - name: Stamp server.json version from the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          v="${TAG#v}"
+          jq --arg v "$v" '.version = $v | (.packages[] | .version) = $v' server.json > server.json.tmp
+          mv server.json.tmp server.json
+      - name: Publish to the MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          # The freshly published PyPI release can take a moment to be visible
+          # to the registry's validator; retry a few times before failing.
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            echo "publish attempt ${attempt} failed; retrying in 30s"
+            sleep 30
+          done
+          exit 1
