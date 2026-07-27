@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,6 +37,20 @@ jobs:
         run: pytest -q --cov=ocm_mcp_server --cov-report=term-missing --cov-fail-under=95
       - name: Shell syntax
         run: bash -n hack/*.sh chaos/inject.sh chaos/scenarios/*.sh
+      - name: Unit-test report + browsable coverage HTML (one matrix leg only)
+        if: matrix.python-version == '3.12'
+        run: make test-report
+      - name: Upload unit-test + coverage report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unit-test-report
+          path: |
+            .unit-report/htmlcov
+            .unit-report/junit.xml
+            wiki/Unit-Test-Results.md
+            wiki/coverage-badge.json
+          retention-days: 30
 
   policy-test:
     runs-on: ubuntu-latest
