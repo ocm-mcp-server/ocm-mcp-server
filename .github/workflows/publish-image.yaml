@@ -54,6 +54,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           sbom: true
           provenance: mode=max
+          # Ownership-verification marker for the official MCP Registry
+          # (registry.modelcontextprotocol.io): proves this image backs the
+          # server named io.github.sandeepbazar/ocm-mcp-server.
+          annotations: |
+            index,manifest:io.modelcontextprotocol.server.name=io.github.sandeepbazar/ocm-mcp-server
 
       - name: Scan the published image for vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
