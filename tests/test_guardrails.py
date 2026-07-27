@@ -491,3 +491,35 @@ def test_strict_digest_rejects_short_hash(monkeypatch):
     pod_spec(bad)["containers"][0]["image"] = "reg/app@sha256:abc"  # not 64 hex
     with pytest.raises(GuardrailViolation, match="sha256"):
         guardrails.validate_manifests([bad])
+
+
+# --------------------------------------------------------------------- branch gaps
+
+
+def test_bare_pod_spec_is_walked_directly():
+    # kind: Pod embeds the PodSpec directly (no spec.template); its containers must
+    # still be checked, even though Pod is not an allowed GVK.
+    pod = {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {"name": "p", "namespace": "shop"},
+        "spec": {
+            "automountServiceAccountToken": False,
+            "containers": [
+                {"name": "c", "image": "busybox:1.36", "securityContext": {"privileged": True}}
+            ],
+        },
+    }
+    with pytest.raises(GuardrailViolation) as excinfo:
+        guardrails.validate_manifests([pod])
+    message = str(excinfo.value)
+    assert "not an allowed apiVersion/kind" in message
+    assert "privileged" in message  # proves the directly-embedded PodSpec was inspected
+
+
+def test_plain_env_and_configmap_envfrom_pass():
+    good = deployment()
+    ctr = pod_spec(good)["containers"][0]
+    ctr["env"] = [{"name": "MODE", "value": "prod"}, "not-a-dict"]
+    ctr["envFrom"] = [{"configMapRef": {"name": "cfg"}}]
+    guardrails.validate_manifests([good])  # no secret refs -> no violation

@@ -43,3 +43,21 @@ def test_metrics_http_endpoint():
     except urllib.error.HTTPError as e:
         code = e.code
     assert code == 404
+
+
+def _forbid_server(*_args, **_kwargs):
+    raise AssertionError("HTTPServer must not be constructed")
+
+
+def test_start_metrics_server_noop_when_port_disabled(monkeypatch):
+    monkeypatch.setattr(metrics, "_started", False)
+    monkeypatch.setattr(metrics, "HTTPServer", _forbid_server)
+    metrics.start_metrics_server(0)
+    metrics.start_metrics_server(-5)
+    assert metrics._started is False  # a disabled port must not claim the started slot
+
+
+def test_start_metrics_server_only_starts_once(monkeypatch):
+    monkeypatch.setattr(metrics, "_started", True)
+    monkeypatch.setattr(metrics, "HTTPServer", _forbid_server)
+    metrics.start_metrics_server(65000)  # already started: must be a no-op, no bind

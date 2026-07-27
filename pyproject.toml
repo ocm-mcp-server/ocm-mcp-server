@@ -51,9 +51,9 @@ source = ["ocm_mcp_server"]
 branch = true
 
 [tool.coverage.report]
-# Floor that ratchets: security-critical modules (approvals, guardrails, config) are
-# already >90%; the target is 70% overall as the live-cluster paths (ocm, server) gain
-# mocked coverage. CI enforces this floor with --cov-fail-under.
+# Floor that ratchets: the suite covers 100% of statements and branches (all cluster
+# paths mocked); CI enforces a 95% floor with --cov-fail-under so small additions
+# don't hard-fail, with pragma: no cover reserved for genuinely unreachable lines.
 exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
 
 [tool.mypy]

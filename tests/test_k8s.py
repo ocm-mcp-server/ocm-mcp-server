@@ -44,3 +44,10 @@ def test_hub_and_spoke_clients_built(monkeypatch):
     assert k8s.hub_custom()[0] == "custom"
     assert k8s.hub_certificates()[0] == "certs"
     assert k8s.spoke_core("cluster1")[0] == "core"
+
+
+def test_spoke_apps_client_built(monkeypatch):
+    monkeypatch.setattr(k8s, "api_client", lambda ctx="": ("client", ctx))
+    monkeypatch.setattr(k8s.client, "AppsV1Api", lambda c: ("apps", c))
+    monkeypatch.setattr(SETTINGS, "spoke_contexts", {"cluster1": "kind-cluster1"}, raising=False)
+    assert k8s.spoke_apps("cluster1") == ("apps", ("client", "kind-cluster1"))
