@@ -57,7 +57,10 @@ jobs:
           python -m pip install --upgrade build
           python -m build
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@2834a314042ef964da07689278dd1e9d773e8afd # v1.14.1
+        # Tag pin, not SHA: this is a Docker-based action that resolves its
+        # container image from the git ref name, so hash-pinning breaks it
+        # (documented upstream). The tag is the strongest supported pin.
+        uses: pypa/gh-action-pypi-publish@v1.14.1
 
   mcp-registry:
     # Publish server metadata to the official MCP Registry
