@@ -25,6 +25,8 @@ fi
 
 echo "Syncing wiki/ pages..."
 cp "$HERE"/wiki/*.md "$TMP"/
+# Non-page assets served raw from the wiki repo (e.g. the Shields coverage badge).
+cp "$HERE"/wiki/*.json "$TMP"/ 2>/dev/null || true
 
 cd "$TMP"
 git add -A

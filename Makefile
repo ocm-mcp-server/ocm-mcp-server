@@ -7,6 +7,8 @@
 #   make teardown           delete the fleet
 #   make install            install the package (editable) + dev deps
 #   make test               unit tests
+#   make test-report        unit tests + refresh wiki/Unit-Test-Results.md, coverage badge,
+#                           and the browsable HTML coverage report (.unit-report/htmlcov)
 #   make lint               ruff
 #   make inject SCENARIO=failing-rollout CLUSTER=cluster2
 #   make reset CLUSTER=cluster2
@@ -17,7 +19,7 @@
 SCENARIO ?= failing-rollout
 CLUSTER  ?= cluster2
 
-.PHONY: e2e bootstrap teardown install test lint policy-test inject reset eval audit
+.PHONY: e2e bootstrap teardown install test test-report lint policy-test inject reset eval audit
 
 e2e:
 	./hack/e2e-local.sh
@@ -33,6 +35,14 @@ install:
 
 test:
 	python3 -m pytest -q
+
+test-report:
+	python3 -m pytest -q --junitxml=.unit-report/junit.xml \
+	  --cov=ocm_mcp_server --cov-report=json:.unit-report/coverage.json \
+	  --cov-report=html:.unit-report/htmlcov --cov-report=term
+	python3 hack/unit_report.py --junit .unit-report/junit.xml \
+	  --coverage .unit-report/coverage.json \
+	  --out-md wiki/Unit-Test-Results.md --out-badge wiki/coverage-badge.json
 
 lint:
 	python3 -m ruff check src tests eval
