@@ -27,7 +27,7 @@ and audit between the model and your clusters.**
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
-**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
+**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
 <img src="demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
@@ -325,12 +325,13 @@ workflow so any client can start from a good runbook instead of a blank box.
   (or run directly with `uvx ocm-mcp-server`). Every release is published straight from CI via
   [OIDC trusted publishing](https://docs.pypi.org/trusted-publishers/) - no long-lived tokens anywhere.
 - 🗂️ **[Official MCP Registry](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)** - listed as
-  `io.github.sandeepbazar/ocm-mcp-server`, so any MCP client that browses the registry can discover and
-  install it; the registry cryptographically validates the listing against this repo and the PyPI package.
+  `io.github.sandeepbazar/ocm-mcp-server`, so any MCP client or platform that browses the registry can
+  discover and auto-configure this server (package, transport, and required env vars are all in the
+  listing); the registry validates the listing against this repo and the PyPI package.
 - 🐳 **[Container image on GHCR](https://github.com/sandeepbazar/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
-  `ghcr.io/sandeepbazar/ocm-mcp-server`, built in CI with an SBOM and SLSA provenance attached,
-  vulnerability-gated with Trivy, and signed keyless with Cosign (verify command in the
-  [deployment guide](docs/deployment.md)).
+  `docker run ghcr.io/sandeepbazar/ocm-mcp-server` (kubeconfig mount shown in the
+  [deployment guide](docs/deployment.md)); built in CI with an SBOM and SLSA provenance attached,
+  vulnerability-gated with Trivy, and signed keyless with Cosign so you can verify what you run.
 - 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)** -
   the repo's supply-chain security posture (pinned dependencies, branch protection, signed releases, ...)
   is scored automatically every week and published for anyone to inspect.
@@ -555,20 +556,6 @@ report is git-ignored. Works on macOS (Homebrew + Podman) and Linux.
 | [Upstream notes](docs/upstream-notes.md) | gaps found while building this; proposals for MCP, OCM, and Kyverno |
 | [Eval harness](eval/README.md) | scenario classes, scoring, how to run against your model |
 | [Changelog](CHANGELOG.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) | project meta |
-
-## Related projects, and a note on the name
-
-- [`yanmxa/multicluster-mcp-server`](https://github.com/yanmxa/multicluster-mcp-server)
-  also bridges agents to Open Cluster Management, with kubectl-level tools: it can generate
-  a kubeconfig bound to a ClusterRole (cluster-admin by default) and execute kubectl
-  commands. That design maximizes capability. This project sits at the other end of the
-  trade-off: no kubectl, no kubeconfig exposure, a fixed tool surface, and mandatory policy
-  plus human approval on every write. Pick by how much you need to trust the agent.
-- Red Hat publishes an [`ocm-mcp`](https://quay.io/redhat-ai-tools/ocm-mcp) container that
-  manages OpenShift clusters through the OpenShift Cluster Manager API. Same acronym,
-  different system. **OCM in this repository always means
-  [Open Cluster Management](https://open-cluster-management.io/), the CNCF multi-cluster
-  project.**
 
 ## Repository map
 
