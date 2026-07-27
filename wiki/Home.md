@@ -9,6 +9,11 @@ idea and the design, to running it, improving it, and helping build it. If you
 just want to install and go, the [README](https://github.com/sandeepbazar/ocm-mcp-server)
 is faster. If you want to understand *why it is built this way*, start here.
 
+> **Get it:** [`pip install ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/) (PyPI)
+> · [Official MCP Registry listing](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)
+> · [signed container image](https://github.com/sandeepbazar/ocm-mcp-server/pkgs/container/ocm-mcp-server)
+> · current test state: [unit tests & coverage](Unit-Test-Results), [end-to-end fleet run](Test-Results)
+
 ```mermaid
 flowchart LR
     A[Why this exists] --> B[The idea]
