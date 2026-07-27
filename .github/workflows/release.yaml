@@ -25,7 +25,14 @@ jobs:
         run: |
           # Idempotent, but a real failure still fails the job (not masked).
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "release for $TAG already exists"
+            # Deleting a tag demotes its release to a draft; if this tag was
+            # re-cut, publish the orphaned draft instead of silently skipping.
+            if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = "true" ]; then
+              echo "release for $TAG exists as a draft (tag was re-cut) - publishing it"
+              gh release edit "$TAG" --tag "$TAG" --draft=false
+            else
+              echo "release for $TAG already exists"
+            fi
             exit 0
           fi
           gh release create "$TAG" \
