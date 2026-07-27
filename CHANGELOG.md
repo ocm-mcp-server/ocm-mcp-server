@@ -4,7 +4,12 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.2] - 2026-07-27
+
+A hardening and productization release addressing two follow-up enterprise-readiness
+audits. It brings hub-side admission to parity with the server's guardrails, deepens CSR
+and supply-chain integrity, reaches 100% statement and branch test coverage, and adds
+release automation: PyPI trusted publishing and an official MCP Registry listing.
 
 ### Added
 
@@ -26,12 +31,6 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   ("unexpected watch event received") a bounded number of times, cleaning the
   half-initialized hub between attempts, so the end-to-end fleet test does not
   fail on an upstream watch flake.
-
-## [0.2.2] - 2026-07-26
-
-A second hardening release addressing two follow-up enterprise-readiness audits. It brings
-hub-side admission to parity with the server's guardrails, deepens CSR and supply-chain
-integrity, and raises test coverage from ~40% to 85%.
 
 ### Security
 
