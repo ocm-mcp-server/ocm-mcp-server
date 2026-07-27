@@ -14,12 +14,17 @@
 #   make reset CLUSTER=cluster2
 #   make policy-test        offline Kyverno policy tests (needs kyverno CLI)
 #   make eval               run the evaluation harness (see eval/README.md)
+#   make release VERSION=0.2.3   bump versions everywhere, gate, tag, push; the tag
+#                           pipeline publishes GitHub Release, PyPI, MCP Registry, image
 #   make audit              tail the tool-call audit log
 
 SCENARIO ?= failing-rollout
 CLUSTER  ?= cluster2
 
-.PHONY: e2e bootstrap teardown install test test-report lint policy-test inject reset eval audit
+.PHONY: e2e bootstrap teardown install test test-report lint policy-test inject reset eval audit release
+
+release:
+	./hack/release.sh $(VERSION)
 
 e2e:
 	./hack/e2e-local.sh
