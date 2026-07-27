@@ -65,7 +65,20 @@ done
 HUB_CTX="kind-${HUB}"
 
 say "Initializing OCM hub (clusteradm init)"
-clusteradm init --wait --context "$HUB_CTX" >/dev/null
+# clusteradm's init wait can die on a dropped API-server watch ("unexpected watch
+# event received") even on a supported node image; the failure is transient, so
+# retry a bounded number of times, cleaning the half-initialized hub in between.
+init_ok=0
+for attempt in 1 2 3; do
+  if clusteradm init --wait --context "$HUB_CTX" >/dev/null; then
+    init_ok=1
+    break
+  fi
+  say "clusteradm init failed (attempt ${attempt}/3) - cleaning and retrying"
+  clusteradm clean --context "$HUB_CTX" >/dev/null 2>&1 || true
+  sleep 10
+done
+[[ "$init_ok" == 1 ]] || die "clusteradm init failed after 3 attempts"
 # Recent clusteradm prints a "--cluster-name <cluster_name>" placeholder. The literal
 # angle brackets would be read by the shell as a file redirect, so strip it here; we
 # append our own --cluster-name per spoke below.
