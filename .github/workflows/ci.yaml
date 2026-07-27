@@ -34,7 +34,7 @@ jobs:
       - name: Type check
         run: mypy
       - name: Unit tests + coverage gate
-        run: pytest -q --cov=ocm_mcp_server --cov-report=term-missing --cov-fail-under=80
+        run: pytest -q --cov=ocm_mcp_server --cov-report=term-missing --cov-fail-under=95
       - name: Shell syntax
         run: bash -n hack/*.sh chaos/inject.sh chaos/scenarios/*.sh
 

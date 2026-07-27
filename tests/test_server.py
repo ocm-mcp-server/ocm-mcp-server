@@ -7,8 +7,9 @@ the gate (guardrails -> dry-run -> token -> apply) is exercised without a cluste
 import json
 
 import pytest
+from kubernetes.client import ApiException
 
-from ocm_mcp_server import approvals, ocm
+from ocm_mcp_server import approvals, guardrails, ocm
 from ocm_mcp_server import server as srv
 from ocm_mcp_server.config import SETTINGS
 
@@ -272,3 +273,334 @@ def test_oversized_manifests_json_rejected(mocked_ocm):
     big = json.dumps([COMPLIANT]) + " " * (300 * 1024)  # pad past the 256 KiB limit
     out = srv.propose_manifestwork("cluster1", "x", "s", big)
     assert out.startswith("REJECTED") and "limit" in out
+
+
+# --------------------------------------------------------------------- error branches
+
+
+def _api_exc(body: str = "") -> ApiException:
+    exc = ApiException(status=403, reason="Forbidden")
+    exc.body = body
+    return exc
+
+
+def test_read_tool_api_error_message(tmp_home, monkeypatch):
+    def boom(*_a, **_k):
+        raise _api_exc('{"reason": "Forbidden", "message": "clusters is forbidden"}')
+
+    monkeypatch.setattr(ocm, "list_managed_clusters", boom)
+    out = srv.list_clusters()
+    assert out.startswith("ERROR:") and "forbidden" in out
+
+
+def test_pod_logs_unavailable_message(tmp_home, monkeypatch):
+    def boom(*_a, **_k):
+        raise LookupError("no spoke context configured for cluster1")
+
+    monkeypatch.setattr(ocm, "pod_logs", boom)
+    out = srv.get_pod_logs("cluster1", "ns", "p")
+    assert out.startswith("UNAVAILABLE") and "no spoke context" in out
+
+
+def test_pod_logs_api_error_message(tmp_home, monkeypatch):
+    def boom(*_a, **_k):
+        raise _api_exc("pods/log is forbidden")
+
+    monkeypatch.setattr(ocm, "pod_logs", boom)
+    out = srv.get_pod_logs("cluster1", "ns", "p")
+    assert out.startswith("ERROR:") and "pods/log is forbidden" in out
+
+
+def test_read_only_blocks_every_write_tool(tmp_home, monkeypatch):
+    monkeypatch.setattr(SETTINGS, "read_only", True)
+    outputs = [
+        srv.apply_manifestwork("0" * 32, "token"),
+        srv.propose_rollback("0" * 32),
+        srv.rollback_manifestwork("0" * 32, "token"),
+        srv.propose_cluster_action("cluster1", "cordon", "s"),
+        srv.apply_cluster_action("0" * 32, "token"),
+    ]
+    for out in outputs:
+        assert out.startswith("REJECTED") and "read-only" in out
+
+
+# --------------------------------------------------------------------- propose branches
+
+
+def test_propose_single_dict_manifest_is_wrapped(mocked_ocm):
+    # A bare object (not an array) is accepted and normalized to a one-element list.
+    out = json.loads(srv.propose_manifestwork("cluster1", "one", "s", json.dumps(COMPLIANT)))
+    prop = approvals.load_proposal(out["proposal_id"])
+    assert prop.manifests == [COMPLIANT]
+
+
+def test_propose_rejected_by_hub_admission(mocked_ocm):
+    def deny(cluster, body):
+        raise _api_exc("kyverno: image must be pinned by digest")
+
+    mocked_ocm.setattr(ocm, "dry_run_manifestwork", deny)
+    out = srv.propose_manifestwork("cluster1", "x", "s", json.dumps([COMPLIANT]))
+    assert out.startswith("REJECTED by hub admission") and "kyverno" in out
+    assert approvals.list_proposals(status="pending") == []  # nothing was stored
+
+
+# --------------------------------------------------------------------- apply branches
+
+
+def test_apply_manifestwork_refuses_action_proposal(mocked_ocm):
+    mocked_ocm.setattr(ocm, "validate_cluster_action", lambda c, a, p: None)
+    pid = json.loads(srv.propose_cluster_action("cluster1", "cordon", "s"))["proposal_id"]
+    token = approvals.mint_token(approvals.load_proposal(pid), operation="apply")
+    out = srv.apply_manifestwork(pid, token)
+    assert out.startswith("REJECTED") and "not a ManifestWork" in out
+
+
+def test_apply_rejects_guardrail_violation_at_apply_time(mocked_ocm):
+    pid, token = _propose_and_token()
+
+    def boom(manifests):
+        raise guardrails.GuardrailViolation("image is no longer pinned")
+
+    mocked_ocm.setattr(guardrails, "validate_manifests", boom)
+    out = srv.apply_manifestwork(pid, token)
+    assert out.startswith("REJECTED by static guardrails at apply time")
+    assert "image is no longer pinned" in out
+    assert approvals.load_proposal(pid).status == "pending"
+
+
+def test_apply_create_failure_reported_and_proposal_stays_pending(mocked_ocm):
+    pid, token = _propose_and_token()
+
+    def boom(cluster, body):
+        raise _api_exc("admission webhook denied the request")
+
+    mocked_ocm.setattr(ocm, "create_manifestwork", boom)
+    out = srv.apply_manifestwork(pid, token)
+    assert out.startswith("FAILED to create ManifestWork")
+    assert "admission webhook denied" in out
+    assert approvals.load_proposal(pid).status == "pending"
+
+
+# --------------------------------------------------------------------- rollback branches
+
+
+def _applied_and_rollback():
+    """Propose + apply a ManifestWork, then propose its rollback. -> (origin_id, rollback_id)"""
+    pid, token = _propose_and_token()
+    srv.apply_manifestwork(pid, token)
+    rid = json.loads(srv.propose_rollback(pid))["rollback_proposal_id"]
+    return pid, rid
+
+
+def _rollback_token(rid):
+    return approvals.mint_token(approvals.load_proposal(rid), operation="rollback")
+
+
+def test_propose_rollback_unknown_id(mocked_ocm):
+    out = srv.propose_rollback("0" * 32)
+    assert out.startswith("REJECTED") and "No proposal" in out
+
+
+def test_propose_rollback_requires_applied_manifestwork(mocked_ocm):
+    pid, _ = _propose_and_token()  # pending, never applied
+    out = srv.propose_rollback(pid)
+    assert out.startswith("REJECTED") and "not an applied ManifestWork" in out
+
+
+def test_rollback_refuses_non_rollback_proposal(mocked_ocm):
+    pid, token = _propose_and_token()
+    out = srv.rollback_manifestwork(pid, token)
+    assert out.startswith("REJECTED") and "not a rollback proposal" in out
+
+
+def test_rollback_refuses_non_pending_rollback(mocked_ocm):
+    _, rid = _applied_and_rollback()
+    assert json.loads(srv.rollback_manifestwork(rid, _rollback_token(rid)))["status"] == (
+        "rolled_back"
+    )
+    out = srv.rollback_manifestwork(rid, _rollback_token(rid))
+    assert out.startswith("REJECTED") and "not pending" in out
+
+
+def test_rollback_tampered_content_rejected(mocked_ocm):
+    _, rid = _applied_and_rollback()
+    prop = approvals.load_proposal(rid)
+    prop.params["target_work"] = "some-other-work"  # tamper, keep the stored hash field
+    prop.save()
+    out = srv.rollback_manifestwork(rid, _rollback_token(rid))
+    assert out.startswith("REJECTED") and "content hash" in out
+
+
+def test_rollback_read_failure_reported(mocked_ocm):
+    _, rid = _applied_and_rollback()
+
+    def boom(cluster, name):
+        raise _api_exc("manifestworks is forbidden")
+
+    mocked_ocm.setattr(ocm, "get_manifestwork_object", boom)
+    out = srv.rollback_manifestwork(rid, _rollback_token(rid))
+    assert out.startswith("FAILED to read ManifestWork")
+
+
+def test_rollback_refuses_unmanaged_manifestwork(mocked_ocm):
+    _, rid = _applied_and_rollback()
+    mocked_ocm.setattr(
+        ocm,
+        "get_manifestwork_object",
+        lambda cluster, name: {"metadata": {"uid": "uid-123", "labels": {}}},
+    )
+    out = srv.rollback_manifestwork(rid, _rollback_token(rid))
+    assert out.startswith("REJECTED") and "not managed by ocm-mcp-server" in out
+
+
+def test_rollback_refuses_uid_change(mocked_ocm):
+    _, rid = _applied_and_rollback()
+    mocked_ocm.setattr(
+        ocm,
+        "get_manifestwork_object",
+        lambda cluster, name: {
+            "metadata": {
+                "uid": "uid-999",  # recreated since approval
+                "labels": {"app.kubernetes.io/managed-by": "ocm-mcp-server"},
+            }
+        },
+    )
+    out = srv.rollback_manifestwork(rid, _rollback_token(rid))
+    assert out.startswith("REJECTED") and "UID changed" in out
+
+
+def test_rollback_delete_failure_reported(mocked_ocm):
+    _, rid = _applied_and_rollback()
+
+    def boom(cluster, name):
+        raise _api_exc("delete denied")
+
+    mocked_ocm.setattr(ocm, "delete_manifestwork", boom)
+    out = srv.rollback_manifestwork(rid, _rollback_token(rid))
+    assert out.startswith("FAILED to delete ManifestWork")
+    assert approvals.load_proposal(rid).status == "pending"
+
+
+def test_rollback_succeeds_when_origin_proposal_missing(mocked_ocm):
+    pid, rid = _applied_and_rollback()
+    (SETTINGS.proposals_dir / f"{pid}.json").unlink()  # origin vanished; rollback still works
+    out = json.loads(srv.rollback_manifestwork(rid, _rollback_token(rid)))
+    assert out["status"] == "rolled_back"
+    assert approvals.load_proposal(rid).status == "applied"
+
+
+# --------------------------------------------------------------------- action branches
+
+
+def _action_and_token(mocked_ocm, action="cordon", params_json="{}"):
+    mocked_ocm.setattr(ocm, "validate_cluster_action", lambda c, a, p: None)
+    pid = json.loads(srv.propose_cluster_action("cluster1", action, "s", params_json))[
+        "proposal_id"
+    ]
+    return pid, approvals.mint_token(approvals.load_proposal(pid), operation="apply")
+
+
+def test_propose_action_invalid_params_json(mocked_ocm):
+    out = srv.propose_cluster_action("cluster1", "cordon", "s", "{nope")
+    assert out.startswith("REJECTED") and "params_json is not valid JSON" in out
+
+
+def test_addon_actions_require_addon_param(mocked_ocm):
+    for action in ("enable_addon", "disable_addon"):
+        out = srv.propose_cluster_action("cluster1", action, "s", "{}")
+        assert out.startswith("REJECTED") and '{"addon"' in out
+
+
+def test_accept_captures_pending_csrs_at_propose_time(mocked_ocm):
+    csrs = [{"name": "csr-1", "request_sha256": "abc123"}]
+    mocked_ocm.setattr(ocm, "validate_cluster_action", lambda c, a, p: None)
+    mocked_ocm.setattr(ocm, "pending_csr_identities", lambda c: csrs)
+    out = json.loads(srv.propose_cluster_action("cluster1", "accept", "join cluster1"))
+    prop = approvals.load_proposal(out["proposal_id"])
+    assert prop.params["csrs"] == csrs  # apply will approve exactly these, not "whatever pends"
+
+
+def test_propose_action_hub_admission_reject(mocked_ocm):
+    def deny(cluster, action, params):
+        raise _api_exc("denied by validating webhook")
+
+    mocked_ocm.setattr(ocm, "validate_cluster_action", deny)
+    out = srv.propose_cluster_action("cluster1", "cordon", "s")
+    assert out.startswith("REJECTED by hub admission") and "webhook" in out
+
+
+def test_propose_action_validation_error(mocked_ocm):
+    def boom(cluster, action, params):
+        raise ValueError("cluster does not exist")
+
+    mocked_ocm.setattr(ocm, "validate_cluster_action", boom)
+    out = srv.propose_cluster_action("cluster1", "cordon", "s")
+    assert out == "REJECTED: cluster does not exist"
+
+
+def test_apply_action_refuses_non_pending(mocked_ocm):
+    pid, token = _action_and_token(mocked_ocm)
+    mocked_ocm.setattr(ocm, "apply_cluster_action", lambda c, a, p: {"status": "applied"})
+    srv.apply_cluster_action(pid, token)
+    again = approvals.mint_token(approvals.load_proposal(pid), operation="apply")
+    out = srv.apply_cluster_action(pid, again)
+    assert out.startswith("REJECTED") and "not pending" in out
+
+
+def test_apply_action_tampered_params_rejected(mocked_ocm):
+    pid, token = _action_and_token(mocked_ocm)
+    prop = approvals.load_proposal(pid)
+    prop.params["extra"] = "smuggled"  # tamper, keep the stored hash field
+    prop.save()
+    out = srv.apply_cluster_action(pid, token)
+    assert out.startswith("REJECTED") and "content hash" in out
+
+
+def test_apply_action_failure_reported_and_stays_pending(mocked_ocm):
+    pid, token = _action_and_token(mocked_ocm)
+
+    def boom(cluster, action, params):
+        raise _api_exc("patch denied")
+
+    mocked_ocm.setattr(ocm, "apply_cluster_action", boom)
+    out = srv.apply_cluster_action(pid, token)
+    assert out.startswith("FAILED to apply action") and "patch denied" in out
+    assert approvals.load_proposal(pid).status == "pending"
+
+
+def test_apply_action_malformed_token_rejected(mocked_ocm):
+    pid, _ = _action_and_token(mocked_ocm)
+    out = srv.apply_cluster_action(pid, "garbage.token")
+    assert out.startswith("REJECTED") and "token" in out
+    assert approvals.load_proposal(pid).status == "pending"
+
+
+# --------------------------------------------------------------------- audit + main
+
+
+def test_audit_trail_empty_when_log_missing(tmp_home, monkeypatch):
+    missing = tmp_home / "no-audit.jsonl"
+    # Bypass the Settings.audit_log property (which touches the file into existence).
+    monkeypatch.setattr(type(SETTINGS), "audit_log", property(lambda self: missing))
+    assert srv.get_audit_trail() == "[]"
+
+
+def test_main_starts_metrics_when_port_set(tmp_home, monkeypatch):
+    from ocm_mcp_server import metrics
+
+    calls = {}
+    monkeypatch.setenv("OCM_MCP_METRICS_PORT", "9109")
+    monkeypatch.setattr(srv.mcp, "run", lambda: calls.setdefault("run", True))
+    monkeypatch.setattr(
+        metrics, "start_metrics_server", lambda port: calls.setdefault("port", port)
+    )
+    srv.main()
+    assert calls == {"port": 9109, "run": True}
+
+
+def test_main_skips_metrics_without_port(tmp_home, monkeypatch):
+    calls = {}
+    monkeypatch.delenv("OCM_MCP_METRICS_PORT", raising=False)
+    monkeypatch.setattr(srv.mcp, "run", lambda: calls.setdefault("run", True))
+    srv.main()
+    assert calls == {"run": True}

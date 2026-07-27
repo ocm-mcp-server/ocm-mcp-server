@@ -96,3 +96,68 @@ def test_expiry_uses_wall_clock(tmp_home, monkeypatch):
     monkeypatch.setattr(time, "time", lambda: future)
     with pytest.raises(ApprovalError, match="expired"):
         approvals.verify_token(prop, token)
+
+
+# ------------------------------------------------------------ small-gap coverage
+
+
+def test_proposal_with_invalid_id_cannot_be_saved(tmp_home):
+    prop = approvals.Proposal(
+        id="../../escape",
+        cluster="c",
+        name="n",
+        summary="s",
+        manifests=[],
+        created_at=time.time(),
+    )
+    with pytest.raises(ApprovalError, match="Invalid proposal id"):
+        prop.save()
+
+
+def test_proposal_lock_rejects_invalid_id(tmp_home):
+    with pytest.raises(ApprovalError, match="Invalid proposal id"):
+        approvals.proposal_lock("../../etc/passwd")
+
+
+def test_list_proposals_status_filter_excludes_nonmatching(tmp_home):
+    make_proposal()
+    assert approvals.list_proposals(status="applied") == []
+    assert len(approvals.list_proposals(status="pending")) == 1
+
+
+def test_load_used_missing_file_and_blank_lines(tmp_home):
+    assert approvals._load_used(tmp_home / "does-not-exist.jsonl") == []
+    ledger = tmp_home / "used_tokens.jsonl"
+    ledger.write_text('\n{"jti": "abc"}\n\nnot-json\n')
+    assert approvals._load_used(ledger) == [{"jti": "abc"}]
+
+
+def test_mark_token_used_refuses_replay(tmp_home):
+    claims = {"jti": "j1", "id": "a" * 32, "op": "apply", "exp": int(time.time()) + 60}
+    approvals._mark_token_used(claims)
+    with pytest.raises(ApprovalError, match="already been used"):
+        approvals._mark_token_used(claims)
+
+
+def test_ledger_compaction_drops_expired_entries(tmp_home, monkeypatch):
+    monkeypatch.setattr(approvals, "_LEDGER_COMPACT_AT", 3)
+    now = int(time.time())
+    path = approvals.SETTINGS.used_tokens_path
+    import json as _json
+
+    with path.open("w") as f:
+        for jti, exp in (("old1", now - 100), ("old2", now - 50), ("live", now + 3600)):
+            f.write(_json.dumps({"jti": jti, "exp": exp}) + "\n")
+    approvals._mark_token_used({"jti": "new", "id": "b" * 32, "op": "apply", "exp": now + 3600})
+    jtis = {e["jti"] for e in approvals._load_used(path)}
+    assert jtis == {"live", "new"}  # expired ids dropped, live + new kept
+
+
+def test_signed_non_json_payload_rejected(tmp_home):
+    # A payload with a VALID signature but non-JSON content must still be refused.
+    prop = make_proposal()
+    key = approvals._private_key()
+    payload = b"this is not json"
+    token = approvals._b64(payload) + "." + approvals._b64(key.sign(payload))
+    with pytest.raises(ApprovalError, match="Malformed approval token"):
+        approvals.verify_token(prop, token)
