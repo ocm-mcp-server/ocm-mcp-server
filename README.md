@@ -319,6 +319,22 @@ workflow so any client can start from a good runbook instead of a blank box.
 | **`capacity_report`** | find clusters with headroom and clusters under pressure | - |
 | **`rollout_status`** | track a ManifestWorkReplicaSet rollout across selected clusters | `name`, `namespace` |
 
+## Where to get it, and how it's vetted
+
+- 📦 **[PyPI - `ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/)** - `pip install ocm-mcp-server`
+  (or run directly with `uvx ocm-mcp-server`). Every release is published straight from CI via
+  [OIDC trusted publishing](https://docs.pypi.org/trusted-publishers/) - no long-lived tokens anywhere.
+- 🗂️ **[Official MCP Registry](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)** - listed as
+  `io.github.sandeepbazar/ocm-mcp-server`, so any MCP client that browses the registry can discover and
+  install it; the registry cryptographically validates the listing against this repo and the PyPI package.
+- 🐳 **[Container image on GHCR](https://github.com/sandeepbazar/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
+  `ghcr.io/sandeepbazar/ocm-mcp-server`, built in CI with an SBOM and SLSA provenance attached,
+  vulnerability-gated with Trivy, and signed keyless with Cosign (verify command in the
+  [deployment guide](docs/deployment.md)).
+- 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)** -
+  the repo's supply-chain security posture (pinned dependencies, branch protection, signed releases, ...)
+  is scored automatically every week and published for anyone to inspect.
+
 ## Quickstart (laptop, ~15 minutes)
 
 <div align="center">
