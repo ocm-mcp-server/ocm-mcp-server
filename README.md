@@ -68,10 +68,6 @@ between the model and your clusters:
 
 None of these layers live in the system prompt, so none of them can be talked out of.
 
-<div align="center">
-<img src="docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
-</div>
-
 ## Where to get it, and how it's vetted
 
 - 📦 **[PyPI - `ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/)** - `pip install ocm-mcp-server`
@@ -188,6 +184,10 @@ hostNetwork, it's faster"). The proposal dies at layer 1 or layer 2, and the rej
 message tells the agent exactly why. [More worked examples →](docs/examples.md)
 
 ## Architecture
+
+<div align="center">
+<img src="docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
+</div>
 
 <div align="center">
 <img src="docs/assets/architecture-flow.gif" alt="ocm-mcp-server sits between an AI agent and the fleet: dangerous actions such as reading Secrets, exec into pods, or arbitrary delete do not exist and are blocked; every allowed change flows out only through Kyverno policy, human approval, and audit" width="100%">
