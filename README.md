@@ -27,7 +27,7 @@ and audit between the model and your clusters.**
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
-**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
+**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
 <img src="demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
@@ -71,6 +71,121 @@ None of these layers live in the system prompt, so none of them can be talked ou
 <div align="center">
 <img src="docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
 </div>
+
+## Where to get it, and how it's vetted
+
+- 📦 **[PyPI - `ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/)** - `pip install ocm-mcp-server`
+  (or run directly with `uvx ocm-mcp-server`). Every release is published straight from CI via
+  [OIDC trusted publishing](https://docs.pypi.org/trusted-publishers/) - no long-lived tokens anywhere.
+- 🗂️ **[Official MCP Registry](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)** - listed as
+  `io.github.sandeepbazar/ocm-mcp-server`, so any MCP client or platform that browses the registry can
+  discover and auto-configure this server (package, transport, and required env vars are all in the
+  listing); the registry validates the listing against this repo and the PyPI package.
+- 🐳 **[Container image on GHCR](https://github.com/sandeepbazar/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
+  `docker run ghcr.io/sandeepbazar/ocm-mcp-server` (kubeconfig mount shown in the
+  [deployment guide](docs/deployment.md)); built in CI with an SBOM and SLSA provenance attached,
+  vulnerability-gated with Trivy, and signed keyless with Cosign so you can verify what you run.
+- 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)** -
+  the repo's supply-chain security posture (pinned dependencies, branch protection, signed releases, ...)
+  is scored automatically every week and published for anyone to inspect.
+
+## Connect your agent - any MCP client works
+
+The server speaks standard MCP over stdio; nothing here is specific to one vendor's agent.
+Ready-made configs live in [`examples/`](examples/):
+
+<details>
+<summary><b>Claude Code</b> - <code>.mcp.json</code> in your project (or <code>claude mcp add</code>)</summary>
+
+```json
+{
+  "mcpServers": {
+    "ocm-fleet": {
+      "command": "ocm-mcp-server",
+      "env": {
+        "OCM_MCP_HUB_CONTEXT": "kind-hub",
+        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Codex CLI</b> - <code>~/.codex/config.toml</code></summary>
+
+```toml
+[mcp_servers.ocm-fleet]
+command = "ocm-mcp-server"
+
+[mcp_servers.ocm-fleet.env]
+OCM_MCP_HUB_CONTEXT = "kind-hub"
+OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+```
+</details>
+
+<details>
+<summary><b>Gemini CLI</b> - <code>~/.gemini/settings.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ocm-fleet": {
+      "command": "ocm-mcp-server",
+      "env": {
+        "OCM_MCP_HUB_CONTEXT": "kind-hub",
+        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Any other MCP client</b> - point it at the same command and environment (<a href="examples/generic-mcp.json">examples/generic-mcp.json</a>)</summary>
+
+```json
+{
+  "mcpServers": {
+    "ocm-fleet": {
+      "command": "ocm-mcp-server",
+      "env": {
+        "OCM_MCP_HUB_CONTEXT": "kind-hub",
+        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+      }
+    }
+  }
+}
+```
+
+Most MCP clients accept an `mcpServers` block like this one. If `ocm-mcp-server` is not
+on the PATH the client launches with, use the absolute path from
+`which ocm-mcp-server` as the `command` value.
+</details>
+
+Give the agent the runbook discipline in
+[`examples/system-prompt.md`](examples/system-prompt.md), then break something and watch
+the flow:
+
+```bash
+make inject SCENARIO=failing-rollout CLUSTER=cluster2
+```
+
+> **You:** "Payments is degraded somewhere in the fleet. Investigate and fix."
+>
+> **Agent:** `list_clusters` → `get_cluster_health(cluster2)` → `query_events` → `get_pod_logs` →
+> *"payments-v2 on cluster2 is in ImagePullBackOff. Proposing a ManifestWork pinning the last
+> good image. Proposal `4f1a2b3c` needs your approval."*
+>
+> **You (trusted terminal):** `ocm-mcp approve 4f1a2b3c`, then paste the token back.
+>
+> **Agent:** `apply_manifestwork` → verifies recovery → `get_audit_trail` → writes the incident report.
+
+Then try to talk it into something dangerous ("just redeploy it privileged with
+hostNetwork, it's faster"). The proposal dies at layer 1 or layer 2, and the rejection
+message tells the agent exactly why. [More worked examples →](docs/examples.md)
 
 ## Architecture
 
@@ -319,23 +434,6 @@ workflow so any client can start from a good runbook instead of a blank box.
 | **`capacity_report`** | find clusters with headroom and clusters under pressure | - |
 | **`rollout_status`** | track a ManifestWorkReplicaSet rollout across selected clusters | `name`, `namespace` |
 
-## Where to get it, and how it's vetted
-
-- 📦 **[PyPI - `ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/)** - `pip install ocm-mcp-server`
-  (or run directly with `uvx ocm-mcp-server`). Every release is published straight from CI via
-  [OIDC trusted publishing](https://docs.pypi.org/trusted-publishers/) - no long-lived tokens anywhere.
-- 🗂️ **[Official MCP Registry](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)** - listed as
-  `io.github.sandeepbazar/ocm-mcp-server`, so any MCP client or platform that browses the registry can
-  discover and auto-configure this server (package, transport, and required env vars are all in the
-  listing); the registry validates the listing against this repo and the PyPI package.
-- 🐳 **[Container image on GHCR](https://github.com/sandeepbazar/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
-  `docker run ghcr.io/sandeepbazar/ocm-mcp-server` (kubeconfig mount shown in the
-  [deployment guide](docs/deployment.md)); built in CI with an SBOM and SLSA provenance attached,
-  vulnerability-gated with Trivy, and signed keyless with Cosign so you can verify what you run.
-- 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)** -
-  the repo's supply-chain security posture (pinned dependencies, branch protection, signed releases, ...)
-  is scored automatically every week and published for anyone to inspect.
-
 ## Quickstart (laptop, ~15 minutes)
 
 <div align="center">
@@ -403,103 +501,8 @@ step by step, including cloud logins (EKS, GKE, AKS, OpenShift). Pointing at a *
 fleet** instead of kind? Same variables; the [deployment guide](docs/deployment.md) covers
 the read-only spoke accounts and production hardening.
 
-### Connect your agent - any MCP client works
-
-The server speaks standard MCP over stdio; nothing here is specific to one vendor's agent.
-Ready-made configs live in [`examples/`](examples/):
-
-<details>
-<summary><b>Claude Code</b> - <code>.mcp.json</code> in your project (or <code>claude mcp add</code>)</summary>
-
-```json
-{
-  "mcpServers": {
-    "ocm-fleet": {
-      "command": "ocm-mcp-server",
-      "env": {
-        "OCM_MCP_HUB_CONTEXT": "kind-hub",
-        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
-      }
-    }
-  }
-}
-```
-</details>
-
-<details>
-<summary><b>Codex CLI</b> - <code>~/.codex/config.toml</code></summary>
-
-```toml
-[mcp_servers.ocm-fleet]
-command = "ocm-mcp-server"
-
-[mcp_servers.ocm-fleet.env]
-OCM_MCP_HUB_CONTEXT = "kind-hub"
-OCM_MCP_SPOKE_CONTEXTS = "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
-```
-</details>
-
-<details>
-<summary><b>Gemini CLI</b> - <code>~/.gemini/settings.json</code></summary>
-
-```json
-{
-  "mcpServers": {
-    "ocm-fleet": {
-      "command": "ocm-mcp-server",
-      "env": {
-        "OCM_MCP_HUB_CONTEXT": "kind-hub",
-        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
-      }
-    }
-  }
-}
-```
-</details>
-
-<details>
-<summary><b>Any other MCP client</b> - point it at the same command and environment (<a href="examples/generic-mcp.json">examples/generic-mcp.json</a>)</summary>
-
-```json
-{
-  "mcpServers": {
-    "ocm-fleet": {
-      "command": "ocm-mcp-server",
-      "env": {
-        "OCM_MCP_HUB_CONTEXT": "kind-hub",
-        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
-      }
-    }
-  }
-}
-```
-
-Most MCP clients accept an `mcpServers` block like this one. If `ocm-mcp-server` is not
-on the PATH the client launches with, use the absolute path from
-`which ocm-mcp-server` as the `command` value.
-</details>
-
-Give the agent the runbook discipline in
-[`examples/system-prompt.md`](examples/system-prompt.md), then break something and watch
-the flow:
-
-```bash
-make inject SCENARIO=failing-rollout CLUSTER=cluster2
-```
-
-> **You:** "Payments is degraded somewhere in the fleet. Investigate and fix."
->
-> **Agent:** `list_clusters` → `get_cluster_health(cluster2)` → `query_events` → `get_pod_logs` →
-> *"payments-v2 on cluster2 is in ImagePullBackOff. Proposing a ManifestWork pinning the last
-> good image. Proposal `4f1a2b3c` needs your approval."*
->
-> **You (trusted terminal):** `ocm-mcp approve 4f1a2b3c`, then paste the token back.
->
-> **Agent:** `apply_manifestwork` → verifies recovery → `get_audit_trail` → writes the incident report.
-
-Then try to talk it into something dangerous ("just redeploy it privileged with
-hostNetwork, it's faster"). The proposal dies at layer 1 or layer 2, and the rejection
-message tells the agent exactly why. [More worked examples →](docs/examples.md)
+Then hand the server to your agent: the ready-made client configs are in
+[Connect your agent](#connect-your-agent---any-mcp-client-works) near the top of this README.
 
 ## Evaluation harness: honest numbers
 
