@@ -3,7 +3,10 @@
 
 # Base image pinned by digest (python:3.12-slim). Dependabot's docker ecosystem proposes
 # digest bumps; update the tag comment alongside the digest.
-FROM python@sha256:55842c72c6b3584d06ec84c731fc516b30b8a53ad262ebd085e47ab568b3bfc1
+# NOTE: pin the multi-arch INDEX digest (docker buildx imagetools inspect python:3.12-slim),
+# never a platform manifest digest - an arm64-only pin makes amd64 CI builds fail with
+# "exec format error".
+FROM python@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 
 WORKDIR /app
 
