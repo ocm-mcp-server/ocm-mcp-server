@@ -116,6 +116,8 @@ kubectl config set-context <cluster>-reader \
 ### 3. Run the server
 
 ```bash
+pip install ocm-mcp-server   # released on PyPI; or: uvx ocm-mcp-server
+
 export OCM_MCP_HUB_CONTEXT=<hub-context>
 export OCM_MCP_SPOKE_CONTEXTS=prod-tokyo=prod-tokyo-reader,prod-osaka=prod-osaka-reader
 ocm-mcp-server
@@ -128,19 +130,34 @@ left-vs-right distinction is unfamiliar, read the
 
 ## Path C: Docker
 
+Use the signed image published on every release (or build your own with
+`docker build -t ocm-mcp-server .`):
+
 ```bash
-docker build -t ocm-mcp-server .
 docker run -i --rm \
   -v ~/.kube/config:/kube/config:ro \
   -e KUBECONFIG=/kube/config \
   -e OCM_MCP_HUB_CONTEXT=<hub-context> \
   -e OCM_MCP_SPOKE_CONTEXTS=... \
-  ocm-mcp-server
+  ghcr.io/sandeepbazar/ocm-mcp-server
 ```
 
 Point your MCP client's `command` at `docker` with those args (stdio passes
 through `-i`). Mount a dedicated volume for `OCM_MCP_HOME` if you want the
 audit log and proposals to survive container restarts.
+
+### Verify what you run
+
+Every published image is signed keyless with [Cosign](https://docs.sigstore.dev/) from
+this repository's CI, with an SBOM and SLSA provenance attached. Before trusting an
+image, verify the signature was produced by this repo's release workflow:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp '^https://github.com/sandeepbazar/ocm-mcp-server/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  ghcr.io/sandeepbazar/ocm-mcp-server:latest
+```
 
 ## Path D: in-cluster via Helm (or raw manifests)
 

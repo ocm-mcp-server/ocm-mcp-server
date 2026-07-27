@@ -40,6 +40,38 @@
           "isSecret": false
         }
       ]
+    },
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/sandeepbazar/ocm-mcp-server",
+      "version": "0.2.2",
+      "runtimeHint": "docker",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "KUBECONFIG",
+          "description": "Path (inside the container) to the mounted kubeconfig with the OCM hub context.",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "OCM_MCP_HUB_CONTEXT",
+          "description": "Kubeconfig context name of the OCM hub cluster (defaults to the current context).",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "OCM_MCP_READ_ONLY",
+          "description": "Set to 'true' to disable the gated write path entirely (read-only fleet access).",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        }
+      ]
     }
   ]
 }

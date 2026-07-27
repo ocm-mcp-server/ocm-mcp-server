@@ -1,7 +1,7 @@
 <!-- mcp-name: io.github.sandeepbazar/ocm-mcp-server -->
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="ocm-mcp-server - AgentOps for Kubernetes fleets, done safely" width="100%">
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/banner.svg" alt="ocm-mcp-server - AgentOps for Kubernetes fleets, done safely" width="100%">
 
 # 🛡️ ocm-mcp-server
 
@@ -29,7 +29,7 @@ and audit between the model and your clusters.**
 
 **[✨ Why](#why-this-exists) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
-<img src="demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
 <sub>The whole safe-remediation loop: investigate with free reads, propose a change, get rejected by the guardrails and correct it, wait for a human-signed token, apply, verify, and report from the audit log.</sub>
 
@@ -69,7 +69,7 @@ between the model and your clusters:
 None of these layers live in the system prompt, so none of them can be talked out of.
 
 <div align="center">
-<img src="docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
 </div>
 
 ## Where to get it, and how it's vetted
@@ -190,7 +190,7 @@ message tells the agent exactly why. [More worked examples →](docs/examples.md
 ## Architecture
 
 <div align="center">
-<img src="docs/assets/architecture-flow.gif" alt="ocm-mcp-server sits between an AI agent and the fleet: dangerous actions such as reading Secrets, exec into pods, or arbitrary delete do not exist and are blocked; every allowed change flows out only through Kyverno policy, human approval, and audit" width="100%">
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/architecture-flow.gif" alt="ocm-mcp-server sits between an AI agent and the fleet: dangerous actions such as reading Secrets, exec into pods, or arbitrary delete do not exist and are blocked; every allowed change flows out only through Kyverno policy, human approval, and audit" width="100%">
 <br><sub>Dangerous capabilities do not exist. Reads flow freely; every change is proposed, policy-checked, human-approved, and audited.</sub>
 </div>
 
@@ -278,7 +278,7 @@ the two writing toolsets entirely, for a strictly-inspection deployment.
 > nothing), so you can confirm exactly what the server sees before wiring up an agent.
 
 <div align="center">
-<img src="docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
 </div>
 
 There is deliberately no tool that reads Secrets, execs into pods, or deletes
@@ -437,7 +437,7 @@ workflow so any client can start from a good runbook instead of a blank box.
 ## Quickstart (laptop, ~15 minutes)
 
 <div align="center">
-<img src="docs/assets/deploy-paths.svg" alt="Three deployment paths: laptop, real fleet, production" width="100%">
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/deploy-paths.svg" alt="Three deployment paths: laptop, real fleet, production" width="100%">
 </div>
 
 Requirements: docker, [kind](https://kind.sigs.k8s.io/), kubectl,

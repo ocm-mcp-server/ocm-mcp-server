@@ -32,6 +32,13 @@ dev = [
     "mypy>=1.10",
 ]
 
+[project.urls]
+Homepage = "https://github.com/sandeepbazar/ocm-mcp-server"
+Documentation = "https://github.com/sandeepbazar/ocm-mcp-server/wiki"
+Changelog = "https://github.com/sandeepbazar/ocm-mcp-server/blob/main/CHANGELOG.md"
+Issues = "https://github.com/sandeepbazar/ocm-mcp-server/issues"
+"MCP Registry" = "https://registry.modelcontextprotocol.io/?q=ocm-mcp-server"
+
 [project.scripts]
 ocm-mcp-server = "ocm_mcp_server.server:main"
 ocm-mcp = "ocm_mcp_server.cli:main"
