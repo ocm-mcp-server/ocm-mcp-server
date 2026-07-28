@@ -32,8 +32,8 @@ spec:
       validate:
         message: >-
           Embedded manifests must set metadata.namespace, and system namespaces
-          (kube-system, kube-public, kube-node-lease, open-cluster-management*,
-          kyverno) are off-limits to agent proposals.
+          (kube-*, openshift, openshift-*, open-cluster-management*, kyverno)
+          are off-limits to agent proposals.
         foreach:
           - list: request.object.spec.workload.manifests
             deny:
@@ -45,11 +45,12 @@ spec:
                   - key: "{{ element.metadata.namespace || '' }}"
                     operator: AnyIn
                     value:
-                      - kube-system
-                      - kube-public
-                      - kube-node-lease
-                      - open-cluster-management
-                      - open-cluster-management-hub
-                      - open-cluster-management-agent
-                      - open-cluster-management-agent-addon
+                      # Prefix wildcards mirror the Python guardrails'
+                      # PROTECTED_NAMESPACE_PREFIXES, catching the long tail of
+                      # kube-* / openshift-* / open-cluster-management* system
+                      # namespaces without enumerating every one.
+                      - kube-*
+                      - openshift
+                      - openshift-*
+                      - open-cluster-management*
                       - kyverno

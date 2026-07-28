@@ -14,6 +14,10 @@ policies:
   - ../restrict-manifestwork-kinds.yaml
   - ../require-managed-by-label.yaml
   - ../restrict-manifestwork-pod-security.yaml
+  - ../restrict-manifestwork-gvk.yaml
+  - ../restrict-manifestwork-service-hpa.yaml
+  - ../disallow-manifestwork-secret-access.yaml
+  - ../limit-manifestwork-manifests.yaml
 resources:
   - resources.yaml
 userinfo: userinfo.yaml
@@ -88,6 +92,96 @@ results:
     kind: ManifestWork
     resources: [cluster2/bad-latest-tag]
     result: fail
+  # ---- restrict-manifestwork-pod-security: runAsUser 0 (parity with guardrails)
+  - policy: restrict-manifestwork-pod-security
+    rule: require-restricted-pod-security
+    kind: ManifestWork
+    resources: [cluster2/bad-run-as-root]
+    result: fail
+  # ---- protect-system-namespaces: prefix wildcards catch the long tail
+  - policy: protect-system-namespaces-manifestwork
+    rule: require-safe-namespace
+    kind: ManifestWork
+    resources: [cluster2/bad-prefix-namespace]
+    result: fail
+  # ---- restrict-manifestwork-gvk (exact apiVersion/kind, closes group spoofing)
+  - policy: restrict-manifestwork-gvk
+    rule: allowlist-gvk
+    kind: ManifestWork
+    resources: [cluster2/good-proposal, cluster2/good-service]
+    result: pass
+  - policy: restrict-manifestwork-gvk
+    rule: allowlist-gvk
+    kind: ManifestWork
+    resources: [cluster2/bad-gvk-spoof]
+    result: fail
+  # the kind-only allowlist is blind to the spoofed group - the exact-GVK policy
+  # is what closes it (this pass documents WHY the second policy exists)
+  - policy: restrict-manifestwork-kinds
+    rule: allowlist-kinds
+    kind: ManifestWork
+    resources: [cluster2/bad-gvk-spoof]
+    result: pass
+  # ---- restrict-manifestwork-service-hpa
+  - policy: restrict-manifestwork-service-hpa
+    rule: allowlist-service-type
+    kind: ManifestWork
+    resources: [cluster2/good-service, cluster2/good-proposal]
+    result: pass
+  - policy: restrict-manifestwork-service-hpa
+    rule: allowlist-service-type
+    kind: ManifestWork
+    resources: [cluster2/bad-nodeport-service, cluster2/bad-external-ips]
+    result: fail
+  - policy: restrict-manifestwork-service-hpa
+    rule: cap-hpa-max-replicas
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: restrict-manifestwork-service-hpa
+    rule: cap-hpa-max-replicas
+    kind: ManifestWork
+    resources: [cluster2/bad-hpa-ceiling]
+    result: fail
+  # ---- disallow-manifestwork-secret-access
+  - policy: disallow-manifestwork-secret-access
+    rule: deny-secret-env-refs
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: disallow-manifestwork-secret-access
+    rule: deny-secret-env-refs
+    kind: ManifestWork
+    resources: [cluster2/bad-secret-env, cluster2/bad-projected-token]
+    result: fail
+  - policy: disallow-manifestwork-secret-access
+    rule: allowlist-volume-types
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  # awsElasticBlockStore is NOT caught by the PSS volume deny-list - only the
+  # allow-list rule rejects it (the gap this rule closes)
+  - policy: disallow-manifestwork-secret-access
+    rule: allowlist-volume-types
+    kind: ManifestWork
+    resources: [cluster2/bad-volume-type]
+    result: fail
+  - policy: restrict-manifestwork-pod-security
+    rule: require-restricted-pod-security
+    kind: ManifestWork
+    resources: [cluster2/bad-volume-type]
+    result: pass
+  # ---- limit-manifestwork-manifests
+  - policy: limit-manifestwork-manifests
+    rule: cap-manifest-count
+    kind: ManifestWork
+    resources: [cluster2/good-proposal]
+    result: pass
+  - policy: limit-manifestwork-manifests
+    rule: cap-manifest-count
+    kind: ManifestWork
+    resources: [cluster2/bad-too-many-manifests]
+    result: fail
   # ---- label scoping: human-created (unlabeled) work is not matched → skip
   - policy: disallow-privileged-manifestwork
     rule: deny-privileged-embedded-specs
@@ -96,6 +190,16 @@ results:
     result: skip
   - policy: protect-system-namespaces-manifestwork
     rule: require-safe-namespace
+    kind: ManifestWork
+    resources: [cluster2/human-created]
+    result: skip
+  - policy: restrict-manifestwork-gvk
+    rule: allowlist-gvk
+    kind: ManifestWork
+    resources: [cluster2/human-created]
+    result: skip
+  - policy: disallow-manifestwork-secret-access
+    rule: deny-secret-env-refs
     kind: ManifestWork
     resources: [cluster2/human-created]
     result: skip

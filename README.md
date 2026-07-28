@@ -234,13 +234,13 @@ control that governs every human `kubectl apply`.
 
 **Where it is used here:**
 
-- [`deploy/policies/`](deploy/policies/) ships five `ClusterPolicy` objects that `foreach`
+- [`deploy/policies/`](deploy/policies/) ships nine `ClusterPolicy` objects that `foreach`
   over `spec.workload.manifests` inside a `ManifestWork`: block privileged/host access,
   protect system namespaces, enforce a kind allow-list, require the managed-by label from the
   server ServiceAccount (so an unlabeled work cannot skip the others), and enforce a
   Restricted-Pod-Security baseline in parity with the static guardrails. They are scoped by the
   `app.kubernetes.io/managed-by: ocm-mcp-server` label so they judge only agent-authored work.
-- `make policy-test` runs a **16-case offline suite** with the `kyverno` CLI - good, bad, and
+- `make policy-test` runs a **39-case offline suite** with the `kyverno` CLI - good, bad, and
   human-authored `ManifestWork`s - needing no cluster and no dependencies. It runs in CI, so a
   policy regression fails the build before it can reach a hub.
 - Don't start from scratch: the community library
@@ -518,7 +518,7 @@ python3 eval/run_eval.py --agent-cmd "claude -p"     # or any agent CLI
 Run it against your model of choice and publish your numbers, including the failures.
 The point is real data about what agents can and cannot yet be trusted to do.
 
-The Kyverno policies have their own offline test suite: `make policy-test` runs 16 CLI
+The Kyverno policies have their own offline test suite: `make policy-test` runs 39 CLI
 cases ([`deploy/policies/tests/`](deploy/policies/tests/)) against good, bad, and
 human-created ManifestWorks with no cluster and no dependencies. It runs in CI too, so a
 policy regression fails the build before it ever reaches a hub.

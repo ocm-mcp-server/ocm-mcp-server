@@ -36,7 +36,7 @@ the full list.
 
 ## Layer 2: Kyverno policy admission
 
-The five policies in `deploy/policies/` validate the workload *inside* the
+The nine policies in `deploy/policies/` validate the workload *inside* the
 `ManifestWork` envelope using Kyverno's `foreach` over
 `spec.workload.manifests`. This matters: normal pod-security policies only see
 resources after they land on a cluster. Here we validate on the hub, at propose
@@ -46,7 +46,7 @@ delivered, and the agent gets the policy message to self-correct.
 The policies are scoped by the label
 `app.kubernetes.io/managed-by: ocm-mcp-server`, so human platform engineers are
 not affected. They ship with an offline CLI test suite
-(`make policy-test`, 16 cases) that runs in CI.
+(`make policy-test`, 39 cases) that runs in CI.
 
 Because it is just [Kyverno](https://kyverno.io/docs/introduction/) - a CNCF policy
 engine whose policies are ordinary Kubernetes resources in YAML and CEL, enforced by
