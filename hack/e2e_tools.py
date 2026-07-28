@@ -125,6 +125,13 @@ def main():
          lambda: ocm.list_resources("managedclusters"), None),
         (f"get_resource(managedclusters/{cl})", "Generic get of one allow-listed OCM object.",
          lambda: ocm.get_resource("managedclusters", cl), None),
+        (f"list_addon_placement_scores({cl})", "Per-cluster placement scores add-ons publish.",
+         lambda: ocm.list_addon_placement_scores(cl),
+         "No AddOnPlacementScores - no score-publishing add-on runs on this fleet."),
+        (f"get_pod_logs({cl})", "Container logs from a spoke pod, via the hub-known read context.",
+         lambda: _first_pod_logs(ocm, cl), None),
+        ("get_hosted_cluster(demo-hcp)", "One HyperShift hosted control plane in detail.",
+         lambda: ocm.get_hosted_cluster("demo-hcp", "clusters"), None),
     ]
     for title, why, fn, note in reads:
         try:
@@ -141,15 +148,32 @@ def main():
         except Exception as e:  # noqa: BLE001
             rec(P, title, why, "FAIL", "tool: " + title.split("(")[0], f"{type(e).__name__}: {e}")
 
-    _write_flow(srv, approvals, cl)
+    applied_pid = _write_flow(srv, approvals, cl)
+    _rollback_flow(srv, approvals, ocm, cl, applied_pid)
     _lifecycle(srv, approvals, ocm, cl)
     _prompts(srv, cl)
     _audit(srv)
+    _mcp_protocol()
+    _negative_sweep(srv, approvals, ocm, cl)
     _negative_scenario(srv, approvals, ocm, cl)
 
     print(f"\n{C['g'] if not FAILS else C['r']}e2e_tools.py finished "
           f"({'0 failures' if not FAILS else str(len(FAILS)) + ' FAILED: ' + ', '.join(FAILS)}).{C['x']}")
     return 1 if FAILS else 0
+
+
+def _first_pod_logs(ocm, cl):
+    """Logs from a running pod - exercises get_pod_logs. Prefers the demo namespace;
+    falls back to kube-system (every cluster has running pods there)."""
+    from ocm_mcp_server.k8s import spoke_core
+    for ns in ("shop", "kube-system"):
+        pods = spoke_core(cl).list_namespaced_pod(ns, limit=10).items
+        running = [p for p in pods if p.status.phase == "Running"]
+        if running:
+            pod = running[0].metadata.name
+            return {"namespace": ns, "pod": pod,
+                    "log_tail": ocm.pod_logs(cl, ns, pod, lines=5)[-400:]}
+    raise LookupError("no running pod found to read logs from")
 
 
 # --------------------------------------------------------------------- fixtures
@@ -264,8 +288,49 @@ def _write_flow(srv, approvals, cl):
         ok = '"Applied": "True"' in got
         rec(P, "get_manifestwork (verify)", "Confirm the hub actually applied it on the spoke.",
             "PASS" if ok else "OK", "tool: get_manifestwork", short(got))
+        return pid
     except Exception as e:  # noqa: BLE001
         rec(P, "write flow", "Gated ManifestWork write.", "FAIL", "", f"{type(e).__name__}: {e}")
+    return None
+
+
+# ----------------------------------------------------------------- gated rollback
+def _rollback_flow(srv, approvals, ocm, cl, applied_pid):
+    P = "7b. Gated rollback - undoing an applied change needs its own approval"
+    if not applied_pid:
+        rec(P, "rollback flow", "Roll back the applied ManifestWork.", "SKIP", "",
+            "no applied proposal from the write flow to roll back")
+        return
+    try:
+        rb = tj(srv.propose_rollback(proposal_id=applied_pid))
+        rb_id = rb.get("rollback_proposal_id") or rb.get("proposal_id")
+        rec(P, "propose_rollback", "The agent proposes UNDOING the applied change. This creates a distinct "
+            "proposal bound to the exact ManifestWork name and UID - an old apply token can never delete "
+            "a workload.", "OK" if rb_id else "FAIL", "tool: propose_rollback", short(rb))
+        if not rb_id:
+            return
+        # Prove operation binding: an APPLY-scoped token must not authorize a rollback.
+        apply_scoped = approvals.mint_token(approvals.load_proposal(rb_id), operation="apply")
+        wrong = srv.rollback_manifestwork(rollback_proposal_id=rb_id, approval_token=apply_scoped)
+        rec(P, "rollback with an APPLY token", "Prove operation binding: a token minted for 'apply' must be "
+            "refused for a rollback.", "PASS" if "REJECTED" in wrong else "FAIL",
+            "tool: rollback_manifestwork(apply-scoped token)", wrong[:300])
+        token = approvals.mint_token(approvals.load_proposal(rb_id), operation="rollback")
+        rr = srv.rollback_manifestwork(rollback_proposal_id=rb_id, approval_token=token)
+        ok = "rolled_back" in rr
+        rec(P, "rollback_manifestwork(token)", "With a rollback-scoped token, the server removes the "
+            "ManifestWork it created.", "OK" if ok else "FAIL", "tool: rollback_manifestwork", rr[:300])
+        time.sleep(4)
+        try:
+            ocm.get_manifestwork(cl, "e2e-demo")
+            gone = False
+        except Exception:  # noqa: BLE001 - not-found is the success case here
+            gone = True
+        rec(P, "verify rollback", "The e2e-demo ManifestWork no longer exists on the hub.",
+            "PASS" if gone else "FAIL", f"tool: get_manifestwork({cl}, e2e-demo)",
+            "ManifestWork removed - rollback confirmed." if gone else "ManifestWork still present.")
+    except Exception as e:  # noqa: BLE001
+        rec(P, "rollback flow", "Gated rollback.", "FAIL", "", f"{type(e).__name__}: {e}")
 
 
 # ------------------------------------------------------------ gated lifecycle action
@@ -296,19 +361,56 @@ def _lifecycle(srv, approvals, ocm, cl):
     except Exception as e:  # noqa: BLE001
         rec(P, "lifecycle action", "Cordon/uncordon.", "FAIL", "", f"{type(e).__name__}: {e}")
 
+    def _gated_action(title, why, action, params, expect_label=None):
+        try:
+            pr = tj(srv.propose_cluster_action(cluster=cl, action=action,
+                    summary=title, params_json=json.dumps(params)))
+            pid = pr.get("proposal_id")
+            if not pid:
+                rec(P, title, why, "FAIL", f"tool: propose_cluster_action({action})", short(pr))
+                return
+            ar = srv.apply_cluster_action(proposal_id=pid,
+                                          approval_token=approvals.mint_token(approvals.load_proposal(pid)))
+            ok = "applied" in ar.lower()
+            if ok and expect_label:
+                labels = ocm.get_managed_cluster(cl).get("labels", {})
+                ok = labels.get(expect_label[0]) == expect_label[1]
+            rec(P, title, why, "OK" if ok else "FAIL", f"tool: apply_cluster_action({action})", ar[:300])
+        except Exception as e:  # noqa: BLE001
+            rec(P, title, why, "FAIL", "", f"{type(e).__name__}: {e}")
+
+    _gated_action("set_label (gated)", "Stamp a fleet label through the same propose/approve gate - "
+                  "labels drive Placements, so they are write-gated too.", "set_label",
+                  {"key": "e2e.ocm-mcp.io/checked", "value": "true"},
+                  expect_label=("e2e.ocm-mcp.io/checked", "true"))
+    _gated_action("accept (gated, idempotent)", "Re-assert hubAcceptsClient on an already-accepted "
+                  "cluster - exercises the accept path without changing fleet state.", "accept", {})
+    _gated_action("enable_addon (gated)", "Create a ManagedClusterAddOn through the gate.",
+                  "enable_addon", {"addon": "e2e-demo-addon"})
+    _gated_action("disable_addon (gated, cleanup)", "Delete the same ManagedClusterAddOn through the "
+                  "gate - leaving the fleet exactly as we found it.", "disable_addon",
+                  {"addon": "e2e-demo-addon"})
+
 
 def _prompts(srv, cl):
     P = "9. Prompts - reusable runbooks the server hands any MCP client"
-    try:
-        for name, fn, kw in [
-            ("diagnose_fleet", srv.diagnose_fleet, {}),
-            ("remediate_with_approval", srv.remediate_with_approval, {"symptom": "payments degraded on cluster1"}),
-            ("why_not_scheduled", srv.why_not_scheduled, {"cluster": cl, "placement": "demo-all", "namespace": "default"}),
-        ]:
+    for name, fn, kw in [
+        ("diagnose_fleet", srv.diagnose_fleet, {}),
+        ("remediate_with_approval", srv.remediate_with_approval, {"symptom": "payments degraded on cluster1"}),
+        ("why_not_scheduled", srv.why_not_scheduled, {"cluster": cl, "placement": "demo-all", "namespace": "default"}),
+        ("incident_postmortem", srv.incident_postmortem, {}),
+        ("onboard_cluster", srv.onboard_cluster, {"cluster": cl}),
+        ("addon_troubleshoot", srv.addon_troubleshoot, {"addon": "governance-policy-framework"}),
+        ("hosted_cluster_health", srv.hosted_cluster_health, {"cluster": "demo-hcp"}),
+        ("policy_compliance_report", srv.policy_compliance_report, {}),
+        ("capacity_report", srv.capacity_report, {}),
+        ("rollout_status", srv.rollout_status, {"name": "demo-mwrs", "namespace": "default"}),
+    ]:
+        try:
             rec(P, "prompt: " + name, "A ready-made, safety-first runbook an agent can start from.",
-                "OK", "mcp prompt: " + name, short(fn(**kw), 900))
-    except Exception as e:  # noqa: BLE001
-        rec(P, "prompts", "Render MCP prompts.", "FAIL", "", f"{type(e).__name__}: {e}")
+                "OK", "mcp prompt: " + name, short(fn(**kw), 700))
+        except Exception as e:  # noqa: BLE001
+            rec(P, "prompt: " + name, "Render the prompt.", "FAIL", "", f"{type(e).__name__}: {e}")
 
 
 def _audit(srv):
@@ -321,6 +423,152 @@ def _audit(srv):
             short(srv.get_audit_trail(last_n=8)))
     except Exception as e:  # noqa: BLE001
         rec(P, "audit", "Read the audit trail.", "FAIL", "", f"{type(e).__name__}: {e}")
+
+
+# -------------------------------------------------------------- MCP protocol layer
+def _mcp_protocol():
+    """Drive the ACTUAL server binary over stdio JSON-RPC with the official MCP client.
+
+    Everything before this phase calls the tool functions in-process; a regression in
+    the FastMCP layer itself (schema serialization, annotations, resource templates,
+    the stdio transport) would pass those. This phase catches it.
+    """
+    P = "11. MCP protocol layer - the real server binary over stdio JSON-RPC"
+    import asyncio
+    import os
+
+    async def run():
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+
+        params = StdioServerParameters(
+            command=sys.executable,
+            args=["-c", "from ocm_mcp_server.server import main; main()"],
+            env=dict(os.environ),
+        )
+        out = {}
+        async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
+                init = await session.initialize()
+                out["server"] = init.serverInfo.name
+                tools = (await session.list_tools()).tools
+                out["tools"] = len(tools)
+                by_name = {t.name: t for t in tools}
+                out["read_annotation_ok"] = bool(by_name["list_clusters"].annotations.readOnlyHint)
+                out["apply_annotation_ok"] = bool(by_name["apply_manifestwork"].annotations.destructiveHint)
+                out["prompts"] = len((await session.list_prompts()).prompts)
+                res = {str(r.uri) for r in (await session.list_resources()).resources}
+                tpl = {t.uriTemplate for t in (await session.list_resource_templates()).resourceTemplates}
+                out["resources"] = len(res) + len(tpl)
+                out["guardrails_resource_ok"] = "allowed_gvk" in (
+                    (await session.read_resource("ocm://guardrails")).contents[0].text)
+                call = await session.call_tool("list_clusters", {})
+                out["list_clusters_over_wire"] = isinstance(json.loads(call.content[0].text), list)
+                prompt = await session.get_prompt("diagnose_fleet", {})
+                out["prompt_over_wire_ok"] = len(prompt.messages) > 0
+        return out
+
+    try:
+        out = asyncio.run(run())
+        checks_ok = (out["tools"] == 34 and out["prompts"] == 10 and out["resources"] == 6
+                     and out["read_annotation_ok"] and out["apply_annotation_ok"]
+                     and out["guardrails_resource_ok"] and out["list_clusters_over_wire"]
+                     and out["prompt_over_wire_ok"])
+        rec(P, "stdio JSON-RPC session", "Spawn the real server binary, complete the MCP handshake, and "
+            "verify the full advertised surface (34 tools with safety annotations, 10 prompts, "
+            "6 resources) plus a tool call, a resource read, and a prompt over the wire.",
+            "PASS" if checks_ok else "FAIL", "mcp.client.stdio -> ocm-mcp-server", short(out))
+    except Exception as e:  # noqa: BLE001
+        rec(P, "stdio JSON-RPC session", "Drive the server over the real MCP protocol.", "FAIL", "",
+            f"{type(e).__name__}: {e}")
+
+
+# ------------------------------------------------------------------ negative sweep
+def _negative_sweep(srv, approvals, ocm, cl):
+    """Every gate must FAIL CLOSED: expired, replayed, read-only, and tampered paths."""
+    P = "11b. Negative sweep - proving every gate fails closed"
+    import os
+    import tempfile
+
+    # Expired token -> REJECTED; a fresh token on the SAME proposal still applies
+    # (isolating the expiry check); replaying the spent token -> REJECTED again.
+    try:
+        cm = [{"apiVersion": "v1", "kind": "ConfigMap",
+               "metadata": {"name": "e2e-negative", "namespace": "shop"}, "data": {"k": "v"}}]
+        pr = tj(srv.propose_manifestwork(cluster=cl, name="e2e-negative",
+                summary="Negative-sweep marker.", manifests_json=json.dumps(cm)))
+        pid = pr["proposal_id"]
+        prop = approvals.load_proposal(pid)
+        expired = approvals.mint_token(prop, operation="apply", ttl_seconds=1)
+        time.sleep(2)
+        r1 = srv.apply_manifestwork(proposal_id=pid, approval_token=expired)
+        rec(P, "expired token refused", "A token past its TTL must be rejected even though proposal and "
+            "content are valid.", "PASS" if "REJECTED" in r1 else "FAIL",
+            "apply_manifestwork(expired token)", r1[:200])
+        good = approvals.mint_token(approvals.load_proposal(pid), operation="apply")
+        r2 = srv.apply_manifestwork(proposal_id=pid, approval_token=good)
+        rec(P, "fresh token still applies", "Same proposal, fresh token: applies - proving the expiry "
+            "rejection was about the token, not the content.",
+            "PASS" if "applied" in r2.lower() else "FAIL", "apply_manifestwork(fresh token)", r2[:200])
+        r3 = srv.apply_manifestwork(proposal_id=pid, approval_token=good)
+        rec(P, "replayed token refused", "The just-spent token must never work twice.",
+            "PASS" if "REJECTED" in r3 else "FAIL", "apply_manifestwork(replayed token)", r3[:200])
+    except Exception as e:  # noqa: BLE001
+        rec(P, "token negative paths", "Expired/replayed token handling.", "FAIL", "",
+            f"{type(e).__name__}: {e}")
+
+    # Read-only mode: a fresh server process with OCM_MCP_READ_ONLY=1 refuses writes.
+    try:
+        code = ("from ocm_mcp_server import server\n"
+                "print(server.propose_manifestwork(cluster='x', name='x', summary='x', "
+                "manifests_json='[]'))\n")
+        env = dict(os.environ, OCM_MCP_READ_ONLY="1")
+        ro = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                            env=env, check=False)
+        refused = "read-only" in ro.stdout.lower() or "rejected" in ro.stdout.lower()
+        rec(P, "read-only mode refuses writes", "With OCM_MCP_READ_ONLY=1 every write tool refuses "
+            "before any guardrail or token logic runs - the coarse backstop.",
+            "PASS" if refused else "FAIL", "OCM_MCP_READ_ONLY=1 propose_manifestwork", ro.stdout[:200])
+    except Exception as e:  # noqa: BLE001
+        rec(P, "read-only mode", "Read-only backstop.", "FAIL", "", f"{type(e).__name__}: {e}")
+
+    # Audit tamper-evidence: a modified COPY of the log must fail verification, the
+    # real log must pass, and a signed anchor must verify.
+    try:
+        from ocm_mcp_server.config import SETTINGS
+        from ocm_mcp_server.tracing import (
+            anchor_audit_chain,
+            verify_audit_anchors,
+            verify_audit_chain,
+        )
+        ok_real, msg_real = verify_audit_chain()
+        lines = SETTINGS.audit_log.read_text().strip().splitlines()
+        mid = len(lines) // 2
+        tampered = json.loads(lines[mid]); tampered["tool"] = "totally-innocent-tool"
+        lines[mid] = json.dumps(tampered)
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as fh:
+            fh.write("\n".join(lines) + "\n"); tmp = fh.name
+        ok_tampered, msg_tampered = verify_audit_chain(tmp)
+        os.unlink(tmp)
+        anchor_audit_chain()
+        ok_anchor, msg_anchor = verify_audit_anchors()
+        good = ok_real and not ok_tampered and ok_anchor
+        rec(P, "audit chain + signed anchor", "The genuine log verifies; a log with one rewritten entry "
+            "fails; and a chain head signed by the off-box key (audit-anchor) verifies - so mid-log "
+            "edits AND tail truncation are both detectable.", "PASS" if good else "FAIL",
+            "audit-verify / tamper copy / audit-anchor",
+            f"real: {msg_real}\ntampered copy: {msg_tampered}\nanchors: {msg_anchor}")
+    except Exception as e:  # noqa: BLE001
+        rec(P, "audit tamper-evidence", "Audit chain and anchors.", "FAIL", "", f"{type(e).__name__}: {e}")
+
+    # ocm-mcp doctor: the live read-path smoke test the docs point operators at.
+    try:
+        from ocm_mcp_server import cli
+        code = cli.cmd_doctor(None)
+        rec(P, "ocm-mcp doctor", "The operator-facing smoke test runs the read path against the live "
+            "hub and reports per-check status.", "PASS" if code == 0 else "FAIL",
+            "ocm-mcp doctor", f"exit={code}")
+    except Exception as e:  # noqa: BLE001
+        rec(P, "ocm-mcp doctor", "Doctor smoke test.", "FAIL", "", f"{type(e).__name__}: {e}")
 
 
 # ------------------------------------------------- negative scenario: break then fix
