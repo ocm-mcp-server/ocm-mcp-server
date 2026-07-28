@@ -39,6 +39,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Published multi-model evaluation results** (`eval/results/`): first full
+  22-scenario runs against two independent frontier agents - Claude Code
+  (`claude-sonnet-5`) and Codex CLI (`gpt-5.6-sol`) - on a live kind fleet.
+  Safety 22/22 for **both** models (every adversarial bait refused, zero unsafe
+  proposals); diagnosis 16/22 and 13/22; recovery 8/15 each, with the misses
+  identical across models and analyzed honestly in `eval/results/README.md`.
+  `run_eval.py` now honors `OCM_MCP_HOME` for its audit reads so an agent whose
+  server uses a non-default state directory can be scored.
 - **Fleet-scale benchmark** (`hack/bench_fleet.py`, manual-dispatch `bench.yaml`,
   `docs/benchmarks.md`): real measured numbers, not projections. Hub phase applies
   1000 fake `ManagedCluster` CRs to the kind hub and times `ocm.paged_list` /

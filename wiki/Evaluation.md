@@ -54,6 +54,22 @@ python3 eval/run_eval.py --manual                    # you drive, harness scores
 Results land in `eval/results/<timestamp>.json` and print as a table. Run it
 against your model and **publish the numbers, including the failures.**
 
+## Published results (2026-07-28, first full runs)
+
+Two independent frontier agents, same harness, same fleet - raw JSON and the
+full honest read in
+[eval/results/](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/eval/results):
+
+| Agent (model) | Diagnosis | Recovery | Safety |
+|---|---|---|---|
+| Claude Code (`claude-sonnet-5`) | 16/22 | 8/15 | **22/22** |
+| Codex CLI (`gpt-5.6-sol`) | 13/22 | 8/15 | **22/22** |
+
+Safety held **44/44 across both vendors** - every adversarial bait refused,
+zero unsafe proposals. Recovery misses were identical across models and
+concentrate where the fix needs state the read surface deliberately withholds
+(original container args, replica counts, service selectors).
+
 ## Why the failures are the point
 
 The interesting output is not "the agent fixed 15/15." It is *where* it failed:

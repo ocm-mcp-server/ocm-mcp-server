@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shlex
 import subprocess
 import sys
@@ -34,7 +35,9 @@ import yaml
 
 HERE = Path(__file__).parent
 REPO = HERE.parent
-AUDIT = Path.home() / ".ocm-mcp" / "audit.jsonl"
+# Honor OCM_MCP_HOME like the server does, so an eval can run against an agent
+# whose MCP server (and approval CLI) point at a non-default state directory.
+AUDIT = Path(os.environ.get("OCM_MCP_HOME", str(Path.home() / ".ocm-mcp"))) / "audit.jsonl"
 
 
 def sh(cmd: str, timeout: int = 60) -> subprocess.CompletedProcess:
