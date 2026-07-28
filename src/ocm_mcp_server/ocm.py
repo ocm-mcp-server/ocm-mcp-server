@@ -45,6 +45,42 @@ HEALTH_LIMIT = int(os.environ.get("OCM_MCP_HEALTH_LIMIT", "500"))
 PLACEMENT_LABEL = "cluster.open-cluster-management.io/placement"
 CLUSTERSET_LABEL = "cluster.open-cluster-management.io/clusterset"
 
+# Hub reads are paged so a large fleet does not arrive as one unbounded response.
+# LIST_MAX_ITEMS is a safety ceiling; hitting it marks the result as truncated.
+LIST_PAGE_SIZE = int(os.environ.get("OCM_MCP_LIST_PAGE_SIZE", "500"))
+LIST_MAX_ITEMS = int(os.environ.get("OCM_MCP_LIST_MAX_ITEMS", "5000"))
+
+
+def paged_list(list_fn: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Call a Kubernetes list function with server-side pagination.
+
+    Follows metadata.continue tokens so the apiserver streams pages of
+    LIST_PAGE_SIZE instead of materializing the whole collection at once, and
+    stops at LIST_MAX_ITEMS with an explicit "truncated" note - silent
+    truncation would read as "that's everything" when it isn't.
+    """
+    items: list[Any] = []
+    cont = ""
+    truncated = False
+    while True:
+        if cont:
+            kwargs["_continue"] = cont
+        res = list_fn(*args, limit=LIST_PAGE_SIZE, **kwargs)
+        items.extend(res.get("items", []) or [])
+        cont = (res.get("metadata") or {}).get("continue") or ""
+        if not cont:
+            break
+        if len(items) >= LIST_MAX_ITEMS:
+            truncated = True
+            break
+    out: dict[str, Any] = {"items": items}
+    if truncated:
+        out["truncated"] = (
+            f"result truncated at {LIST_MAX_ITEMS} items; narrow the query or raise "
+            "OCM_MCP_LIST_MAX_ITEMS"
+        )
+    return out
+
 
 class FeatureNotInstalled(LookupError):
     """A requested OCM API type is not served by this hub (add-on not installed)."""
@@ -73,7 +109,9 @@ def _summarize(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def list_managed_clusters() -> list[dict[str, Any]]:
-    res = hub_custom().list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1", "managedclusters")
+    res = paged_list(
+        hub_custom().list_cluster_custom_object, OCM_CLUSTER_GROUP, "v1", "managedclusters"
+    )
     out = []
     for item in res.get("items", []):
         conds = _condition_map(item)
@@ -209,7 +247,9 @@ def pod_logs(cluster: str, namespace: str, pod: str, container: str = "", lines:
 
 
 def list_manifestworks(cluster: str) -> list[dict[str, Any]]:
-    res = hub_custom().list_namespaced_custom_object(OCM_WORK_GROUP, "v1", cluster, "manifestworks")
+    res = paged_list(
+        hub_custom().list_namespaced_custom_object, OCM_WORK_GROUP, "v1", cluster, "manifestworks"
+    )
     out = []
     for item in res.get("items", []):
         conds = _condition_map(item)
@@ -290,14 +330,12 @@ def get_managed_cluster(name: str) -> dict[str, Any]:
 
 def list_cluster_sets() -> list[dict[str, Any]]:
     """ManagedClusterSets with their selector and the clusters that belong to each."""
-    sets = hub_custom().list_cluster_custom_object(
-        OCM_CLUSTER_GROUP, "v1beta2", "managedclustersets"
+    sets = paged_list(
+        hub_custom().list_cluster_custom_object, OCM_CLUSTER_GROUP, "v1beta2", "managedclustersets"
     )
-    clusters = (
-        hub_custom()
-        .list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1", "managedclusters")
-        .get("items", [])
-    )
+    clusters = paged_list(
+        hub_custom().list_cluster_custom_object, OCM_CLUSTER_GROUP, "v1", "managedclusters"
+    ).get("items", [])
     out = []
     for cs in sets.get("items", []):
         name = cs["metadata"]["name"]
@@ -322,12 +360,19 @@ def list_cluster_set_bindings(namespace: str = "") -> list[dict[str, Any]]:
     """ManagedClusterSetBindings (which ClusterSets a namespace's Placements may target)."""
     api = hub_custom()
     if namespace:
-        res = api.list_namespaced_custom_object(
-            OCM_CLUSTER_GROUP, "v1beta2", namespace, "managedclustersetbindings"
+        res = paged_list(
+            api.list_namespaced_custom_object,
+            OCM_CLUSTER_GROUP,
+            "v1beta2",
+            namespace,
+            "managedclustersetbindings",
         )
     else:
-        res = api.list_cluster_custom_object(
-            OCM_CLUSTER_GROUP, "v1beta2", "managedclustersetbindings"
+        res = paged_list(
+            api.list_cluster_custom_object,
+            OCM_CLUSTER_GROUP,
+            "v1beta2",
+            "managedclustersetbindings",
         )
     return [
         {
@@ -342,7 +387,9 @@ def list_cluster_set_bindings(namespace: str = "") -> list[dict[str, Any]]:
 
 def list_cluster_claims() -> list[dict[str, Any]]:
     """Every cluster's ClusterClaims (id, platform, region, version...) rolled up from status."""
-    clusters = hub_custom().list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1", "managedclusters")
+    clusters = paged_list(
+        hub_custom().list_cluster_custom_object, OCM_CLUSTER_GROUP, "v1", "managedclusters"
+    )
     return [
         {
             "cluster": c["metadata"]["name"],
@@ -362,11 +409,11 @@ def list_placements(namespace: str = "") -> list[dict[str, Any]]:
     """Placements and how many clusters each currently selects."""
     api = hub_custom()
     if namespace:
-        res = api.list_namespaced_custom_object(
-            OCM_CLUSTER_GROUP, "v1beta1", namespace, "placements"
+        res = paged_list(
+            api.list_namespaced_custom_object, OCM_CLUSTER_GROUP, "v1beta1", namespace, "placements"
         )
     else:
-        res = api.list_cluster_custom_object(OCM_CLUSTER_GROUP, "v1beta1", "placements")
+        res = paged_list(api.list_cluster_custom_object, OCM_CLUSTER_GROUP, "v1beta1", "placements")
     out = []
     for p in res.get("items", []):
         spec = p.get("spec", {})
@@ -385,7 +432,8 @@ def list_placements(namespace: str = "") -> list[dict[str, Any]]:
 
 def get_placement_decision(placement: str, namespace: str) -> dict[str, Any]:
     """Which clusters a Placement actually selected (reads its PlacementDecisions)."""
-    res = hub_custom().list_namespaced_custom_object(
+    res = paged_list(
+        hub_custom().list_namespaced_custom_object,
         OCM_CLUSTER_GROUP,
         "v1beta1",
         namespace,
@@ -405,8 +453,12 @@ def get_placement_decision(placement: str, namespace: str) -> dict[str, Any]:
 
 def list_addon_placement_scores(cluster: str) -> list[dict[str, Any]]:
     """AddOnPlacementScores in a cluster's namespace (custom scores prioritizers consume)."""
-    res = hub_custom().list_namespaced_custom_object(
-        OCM_CLUSTER_GROUP, "v1alpha1", cluster, "addonplacementscores"
+    res = paged_list(
+        hub_custom().list_namespaced_custom_object,
+        OCM_CLUSTER_GROUP,
+        "v1alpha1",
+        cluster,
+        "addonplacementscores",
     )
     return [
         {
@@ -473,12 +525,19 @@ def list_manifestworkreplicasets(namespace: str = "") -> list[dict[str, Any]]:
     api = hub_custom()
     try:
         if namespace:
-            res = api.list_namespaced_custom_object(
-                OCM_WORK_GROUP, "v1alpha1", namespace, "manifestworkreplicasets"
+            res = paged_list(
+                api.list_namespaced_custom_object,
+                OCM_WORK_GROUP,
+                "v1alpha1",
+                namespace,
+                "manifestworkreplicasets",
             )
         else:
-            res = api.list_cluster_custom_object(
-                OCM_WORK_GROUP, "v1alpha1", "manifestworkreplicasets"
+            res = paged_list(
+                api.list_cluster_custom_object,
+                OCM_WORK_GROUP,
+                "v1alpha1",
+                "manifestworkreplicasets",
             )
     except ApiException as exc:
         if exc.status == 404:
@@ -504,8 +563,11 @@ def list_manifestworkreplicasets(namespace: str = "") -> list[dict[str, Any]]:
 def list_cluster_management_addons() -> list[dict[str, Any]]:
     """Fleet-level add-on definitions (ClusterManagementAddOn) and their install strategy."""
     try:
-        res = hub_custom().list_cluster_custom_object(
-            OCM_ADDON_GROUP, "v1alpha1", "clustermanagementaddons"
+        res = paged_list(
+            hub_custom().list_cluster_custom_object,
+            OCM_ADDON_GROUP,
+            "v1alpha1",
+            "clustermanagementaddons",
         )
     except ApiException as exc:
         if exc.status == 404:
@@ -526,8 +588,11 @@ def list_cluster_management_addons() -> list[dict[str, Any]]:
 def addon_health() -> list[dict[str, Any]]:
     """ManagedClusterAddOn health across every cluster namespace (Available / Degraded)."""
     try:
-        res = hub_custom().list_cluster_custom_object(
-            OCM_ADDON_GROUP, "v1alpha1", "managedclusteraddons"
+        res = paged_list(
+            hub_custom().list_cluster_custom_object,
+            OCM_ADDON_GROUP,
+            "v1alpha1",
+            "managedclusteraddons",
         )
     except ApiException as exc:
         if exc.status == 404:
@@ -675,12 +740,19 @@ def list_policies(namespace: str = "") -> list[dict[str, Any]]:
     api = hub_custom()
     try:
         if namespace:
-            res = api.list_namespaced_custom_object(
-                "policy.open-cluster-management.io", "v1", namespace, "policies"
+            res = paged_list(
+                api.list_namespaced_custom_object,
+                "policy.open-cluster-management.io",
+                "v1",
+                namespace,
+                "policies",
             )
         else:
-            res = api.list_cluster_custom_object(
-                "policy.open-cluster-management.io", "v1", "policies"
+            res = paged_list(
+                api.list_cluster_custom_object,
+                "policy.open-cluster-management.io",
+                "v1",
+                "policies",
             )
     except ApiException as exc:
         if exc.status == 404:
@@ -711,7 +783,7 @@ def list_policy_violations() -> list[dict[str, Any]]:
     """Only the Policy/cluster pairs that are NonCompliant or Pending - the fleet's open risks."""
     api = hub_custom()
     try:
-        res = api.list_cluster_custom_object(OCM_POLICY_GROUP, "v1", "policies")
+        res = paged_list(api.list_cluster_custom_object, OCM_POLICY_GROUP, "v1", "policies")
     except ApiException as exc:
         if exc.status == 404:
             raise FeatureNotInstalled(
@@ -782,8 +854,12 @@ def get_cluster_info(cluster: str) -> dict[str, Any]:
 def list_addons_for_cluster(cluster: str) -> list[dict[str, Any]]:
     """Every ManagedClusterAddOn in one cluster's namespace, with health conditions."""
     try:
-        res = hub_custom().list_namespaced_custom_object(
-            OCM_ADDON_GROUP, "v1alpha1", cluster, "managedclusteraddons"
+        res = paged_list(
+            hub_custom().list_namespaced_custom_object,
+            OCM_ADDON_GROUP,
+            "v1alpha1",
+            cluster,
+            "managedclusteraddons",
         )
     except ApiException as exc:
         if exc.status == 404:
@@ -818,11 +894,17 @@ def list_hosted_clusters(namespace: str = "") -> list[dict[str, Any]]:
     api = hub_custom()
     try:
         if namespace:
-            res = api.list_namespaced_custom_object(
-                HYPERSHIFT_GROUP, "v1beta1", namespace, "hostedclusters"
+            res = paged_list(
+                api.list_namespaced_custom_object,
+                HYPERSHIFT_GROUP,
+                "v1beta1",
+                namespace,
+                "hostedclusters",
             )
         else:
-            res = api.list_cluster_custom_object(HYPERSHIFT_GROUP, "v1beta1", "hostedclusters")
+            res = paged_list(
+                api.list_cluster_custom_object, HYPERSHIFT_GROUP, "v1beta1", "hostedclusters"
+            )
     except ApiException as exc:
         if exc.status == 404:
             raise FeatureNotInstalled(
@@ -849,11 +931,17 @@ def list_node_pools(namespace: str = "", cluster: str = "") -> list[dict[str, An
     api = hub_custom()
     try:
         if namespace:
-            res = api.list_namespaced_custom_object(
-                HYPERSHIFT_GROUP, "v1beta1", namespace, "nodepools"
+            res = paged_list(
+                api.list_namespaced_custom_object,
+                HYPERSHIFT_GROUP,
+                "v1beta1",
+                namespace,
+                "nodepools",
             )
         else:
-            res = api.list_cluster_custom_object(HYPERSHIFT_GROUP, "v1beta1", "nodepools")
+            res = paged_list(
+                api.list_cluster_custom_object, HYPERSHIFT_GROUP, "v1beta1", "nodepools"
+            )
     except ApiException as exc:
         if exc.status == 404:
             raise FeatureNotInstalled(
@@ -899,9 +987,9 @@ def list_resources(resource: str, namespace: str = "") -> list[dict[str, Any]]:
     api = hub_custom()
     try:
         if namespaced and namespace:
-            res = api.list_namespaced_custom_object(group, version, namespace, plural)
+            res = paged_list(api.list_namespaced_custom_object, group, version, namespace, plural)
         else:
-            res = api.list_cluster_custom_object(group, version, plural)
+            res = paged_list(api.list_cluster_custom_object, group, version, plural)
     except ApiException as exc:
         if exc.status == 404:
             raise FeatureNotInstalled(
