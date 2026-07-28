@@ -13,6 +13,7 @@
 #   make inject SCENARIO=failing-rollout CLUSTER=cluster2
 #   make reset CLUSTER=cluster2
 #   make policy-test        offline Kyverno policy tests (needs kyverno CLI)
+#   make parity-test        guardrail <-> Kyverno parity contract (same corpus, same verdicts)
 #   make eval               run the evaluation harness (see eval/README.md)
 #   make release VERSION=0.2.3   bump versions everywhere, gate, tag, push; the tag
 #                           pipeline publishes GitHub Release, PyPI, MCP Registry, image
@@ -21,7 +22,7 @@
 SCENARIO ?= failing-rollout
 CLUSTER  ?= cluster2
 
-.PHONY: e2e bootstrap teardown install test test-report lint policy-test inject reset eval audit release
+.PHONY: e2e bootstrap teardown install test test-report lint policy-test parity-test inject reset eval audit release
 
 release:
 	./hack/release.sh $(VERSION)
@@ -54,6 +55,9 @@ lint:
 
 policy-test:
 	kyverno test deploy/policies/tests
+
+parity-test:
+	python3 hack/parity_contract.py
 
 inject:
 	./chaos/inject.sh $(SCENARIO) $(CLUSTER)
