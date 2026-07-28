@@ -134,28 +134,14 @@ def list_managed_clusters() -> list[dict[str, Any]]:
     return out
 
 
-def cluster_health(cluster: str) -> dict[str, Any]:
-    """Hub view (conditions) + spoke view (unhealthy pods, deployment status)."""
-    obj = hub_custom().get_cluster_custom_object(
-        OCM_CLUSTER_GROUP, "v1", "managedclusters", cluster
-    )
-    health: dict[str, Any] = {
-        "cluster": cluster,
-        "hub_conditions": _condition_map(obj),
-        "unhealthy_pods": [],
-        "degraded_deployments": [],
-        "spoke_view": "unavailable (no read context configured)",
-    }
-    try:
-        core = spoke_core(cluster)
-        apps = spoke_apps(cluster)
-    except LookupError:
-        return health
-
-    health["spoke_view"] = "ok"
+def _spoke_health(cluster: str) -> dict[str, Any]:
+    """Pod/deployment scan of one spoke. Raises LookupError without a spoke context."""
+    core = spoke_core(cluster)
+    apps = spoke_apps(cluster)
+    out: dict[str, Any] = {"unhealthy_pods": [], "degraded_deployments": []}
     pods = core.list_pod_for_all_namespaces(limit=HEALTH_LIMIT, _request_timeout=SPOKE_TIMEOUT)
     if pods.metadata._continue:
-        health["note"] = (
+        out["note"] = (
             f"cluster has more than {HEALTH_LIMIT} pods; showing the first {HEALTH_LIMIT}. "
             "Raise OCM_MCP_HEALTH_LIMIT or scope by namespace for full coverage."
         )
@@ -168,7 +154,7 @@ def cluster_health(cluster: str) -> dict[str, Any]:
         ]
         restarts = sum(cs.restart_count for cs in (pod.status.container_statuses or []))
         if phase not in ("Running", "Succeeded") or waiting_reasons or restarts > 3:
-            health["unhealthy_pods"].append(
+            out["unhealthy_pods"].append(
                 {
                     "namespace": pod.metadata.namespace,
                     "name": pod.metadata.name,
@@ -184,13 +170,34 @@ def cluster_health(cluster: str) -> dict[str, Any]:
         desired = dep.spec.replicas or 0
         ready = dep.status.ready_replicas or 0
         if ready < desired:
-            health["degraded_deployments"].append(
+            out["degraded_deployments"].append(
                 {
                     "namespace": dep.metadata.namespace,
                     "name": dep.metadata.name,
                     "ready": f"{ready}/{desired}",
                 }
             )
+    return out
+
+
+def cluster_health(cluster: str) -> dict[str, Any]:
+    """Hub view (conditions) + spoke view (unhealthy pods, deployment status)."""
+    obj = hub_custom().get_cluster_custom_object(
+        OCM_CLUSTER_GROUP, "v1", "managedclusters", cluster
+    )
+    health: dict[str, Any] = {
+        "cluster": cluster,
+        "hub_conditions": _condition_map(obj),
+        "unhealthy_pods": [],
+        "degraded_deployments": [],
+        "spoke_view": "unavailable (no read context configured)",
+    }
+    try:
+        spoke = _spoke_health(cluster)
+    except LookupError:
+        return health
+    health["spoke_view"] = "ok"
+    health.update(spoke)
     return health
 
 
