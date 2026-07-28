@@ -34,5 +34,5 @@ without spoke access.
 
 Validating workloads embedded inside another CR (here: ManifestWork
 `spec.workload.manifests`) works well with `foreach`, but no policy in the
-catalog demonstrates it. Contribute the nine policies in `deploy/policies/`
+catalog demonstrates it. Contribute the 9 policies in `deploy/policies/`
 as a "Multi-Cluster Guardrails" category example set.

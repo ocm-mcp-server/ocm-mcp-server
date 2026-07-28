@@ -234,7 +234,7 @@ control that governs every human `kubectl apply`.
 
 **Where it is used here:**
 
-- [`deploy/policies/`](deploy/policies/) ships nine `ClusterPolicy` objects that `foreach`
+- [`deploy/policies/`](deploy/policies/) ships 9 `ClusterPolicy` objects that `foreach`
   over `spec.workload.manifests` inside a `ManifestWork`: block privileged/host access,
   protect system namespaces, enforce a kind allow-list, require the managed-by label from the
   server ServiceAccount (so an unlabeled work cannot skip the others), and enforce a

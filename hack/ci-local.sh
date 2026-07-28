@@ -32,4 +32,7 @@ pytest -q --cov=ocm_mcp_server --cov-report=term-missing --cov-fail-under=95
 step "Shell syntax"
 bash -n hack/*.sh chaos/inject.sh chaos/scenarios/*.sh
 
+step "Docs stats drift check (quoted counts match reality)"
+python3 hack/docs_stats.py --check
+
 printf '\n\033[1;32mAll CI checks passed — safe to push.\033[0m\n'
