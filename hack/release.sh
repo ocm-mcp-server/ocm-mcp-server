@@ -30,16 +30,37 @@ git rev-parse -q --verify "refs/tags/v$v" >/dev/null && die "tag v$v already exi
 grep -q "^## \[$v\]" CHANGELOG.md \
   || die "CHANGELOG.md has no '## [$v]' section - write the changelog first"
 
-say "Bumping version to $v (pyproject.toml + server.json)"
+say "Bumping version to $v (pyproject.toml + server.json + __init__ + Helm chart)"
 python3 - "$v" <<'PY'
 import json, re, sys
 
 v = sys.argv[1]
 
-p = open("pyproject.toml").read()
-p, n = re.subn(r'(?m)^version = "[^"]+"$', f'version = "{v}"', p, count=1)
-assert n == 1, "did not find exactly one version line in pyproject.toml"
-open("pyproject.toml", "w").write(p)
+
+def sub_file(path, pattern, repl, count=1):
+    text = open(path).read()
+    text, n = re.subn(pattern, repl, text, count=count)
+    assert n == count, f"expected {count} match(es) for {pattern!r} in {path}, got {n}"
+    open(path, "w").write(text)
+
+
+sub_file("pyproject.toml", r'(?m)^version = "[^"]+"$', f'version = "{v}"')
+sub_file(
+    "src/ocm_mcp_server/__init__.py",
+    r'(?m)^__version__ = "[^"]+"$',
+    f'__version__ = "{v}"',
+)
+sub_file("deploy/charts/ocm-mcp-server/Chart.yaml", r'(?m)^version: [^\s]+$', f"version: {v}")
+sub_file(
+    "deploy/charts/ocm-mcp-server/Chart.yaml",
+    r'(?m)^appVersion: "[^"]+"$',
+    f'appVersion: "{v}"',
+)
+sub_file(
+    "deploy/charts/ocm-mcp-server/values.yaml",
+    r'(?m)^(\s*)tag: v[^\s]+$',
+    rf"\g<1>tag: v{v}",
+)
 
 s = json.load(open("server.json"))
 s["version"] = v
@@ -52,7 +73,8 @@ say "Running the CI-identical gate"
 ./hack/ci-local.sh
 
 say "Committing, tagging v$v, pushing"
-git add pyproject.toml server.json
+git add pyproject.toml server.json src/ocm_mcp_server/__init__.py \
+  deploy/charts/ocm-mcp-server/Chart.yaml deploy/charts/ocm-mcp-server/values.yaml
 git commit -m "release: v$v"
 git tag -a "v$v" -m "v$v"
 git push origin main "v$v"
