@@ -260,7 +260,7 @@ hosted cluster, or a cloud cluster - because on the hub they are all `ManagedClu
 | Toolset | What it covers | Tools | Writes |
 |---|---|---|---|
 | **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims, ManagedClusterInfo | 6 | - |
-| **observability** | cluster health, events, pod logs | 3 | - |
+| **observability** | cluster health, one-call fleet sweep, events, pod logs | 4 | - |
 | **placement** | Placements, PlacementDecisions, AddOnPlacementScores | 3 | - |
 | **work** | ManifestWork status feedback + the gated deploy and rollback flow | 7 | gated |
 | **addons** | ClusterManagementAddOns, fleet + per-cluster add-on health | 3 | - |
@@ -313,6 +313,8 @@ approved change; needs a human token).
 
 - **`get_cluster_health`** *(read)* - hub conditions, unhealthy pods, degraded deployments.
   - `cluster` (string) - managed cluster name.
+- **`get_fleet_health`** *(read)* - health of the whole fleet in one call: hub conditions for every cluster plus concurrent spoke scans; broken spokes show as an `error` entry instead of failing the sweep.
+  - `clusters` (string, optional) - comma-separated cluster names to scope the sweep; empty means every cluster.
 - **`query_events`** *(read)* - recent Kubernetes events, newest first.
   - `cluster` (string) - managed cluster name.
   - `namespace` (string, optional) - namespace filter; empty means all.
@@ -539,6 +541,7 @@ ready-to-paste values at the end).
 | `OCM_MCP_MAX_HPA_REPLICAS` | no | Reject a HorizontalPodAutoscaler whose `maxReplicas` exceeds this. Default `100`. |
 | `OCM_MCP_READ_ONLY` | no | Set to `1`/`true` for a strictly-inspection deployment: every propose/apply tool refuses, a coarse backstop under the token gate. Default off. |
 | `OCM_MCP_CLIENT_TTL` | no | Seconds before the cached Kubernetes API client is rebuilt, so rotated/refreshed credentials are picked up. Default `600`. |
+| `OCM_MCP_FANOUT_WORKERS` | no | Concurrent spoke scans during `get_fleet_health`. Default `8` (floor `1`). |
 | `OCM_MCP_SPOKE_TIMEOUT` | no | Read timeout (seconds) for spoke health/event/log calls, so one large cluster cannot hang a tool. Default `30`. |
 | `OCM_MCP_HEALTH_LIMIT` | no | Max pods/deployments `get_cluster_health` fetches per cluster; the result notes truncation. Default `500`. |
 

@@ -1,6 +1,6 @@
 # Tools and Prompts
 
-**34 tools across ten toolsets, plus ten prompts.** Almost all of it is read: the
+**35 tools across ten toolsets, plus ten prompts.** Almost all of it is read: the
 whole Open Cluster Management API is safe to inspect. Only two toolsets can change
 anything, and only through the propose -> approve -> apply gate.
 
@@ -16,7 +16,7 @@ print a `PASS / EMPTY / SKIP / FAIL` table before wiring up an agent.
 | Toolset | What it covers | Tools | Writes |
 |---|---|---|---|
 | **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims, ManagedClusterInfo | 6 | - |
-| **observability** | cluster health, events, pod logs | 3 | - |
+| **observability** | cluster health, one-call fleet sweep, events, pod logs | 4 | - |
 | **placement** | Placements, PlacementDecisions, AddOnPlacementScores | 3 | - |
 | **work** | ManifestWork status feedback + the gated deploy flow | 7 | gated |
 | **addons** | ClusterManagementAddOns, fleet + per-cluster add-on health | 3 | - |
@@ -42,7 +42,9 @@ deployment, backstopping the token gate.
 - **inventory:** `list_clusters`, `get_cluster`, `list_cluster_sets`,
   `list_cluster_set_bindings`, `list_cluster_claims`, `get_cluster_info` (OpenShift
   version, nodes, console URL - from the hub, no spoke access needed).
-- **observability:** `get_cluster_health`, `query_events`, `get_pod_logs`.
+- **observability:** `get_cluster_health`, `get_fleet_health` (the whole fleet in one
+  call - hub conditions plus concurrent spoke scans, `OCM_MCP_FANOUT_WORKERS`),
+  `query_events`, `get_pod_logs`.
 - **placement:** `list_placements`, `get_placement_decision`,
   `list_addon_placement_scores`.
 - **work:** `list_manifestworks`, `get_manifestwork` (per-resource status feedback,

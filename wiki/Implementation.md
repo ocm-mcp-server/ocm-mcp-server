@@ -32,7 +32,7 @@ flowchart TD
 
 ## The tools, precisely
 
-The surface is **34 tools across ten toolsets**, but the shape is simple: almost
+The surface is **35 tools across ten toolsets**, but the shape is simple: almost
 everything is a safe read of the Open Cluster Management API, and only two toolsets
 can change anything, always through the same gate.
 
