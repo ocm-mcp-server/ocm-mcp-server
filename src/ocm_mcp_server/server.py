@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from typing import Any
 
 from kubernetes.client import ApiException
@@ -1066,7 +1067,27 @@ def rollout_status(name: str, namespace: str) -> str:
     )
 
 
+# Must track Settings.issuer / Settings.audience defaults (config.py ~line 222-225).
+_DEFAULT_ISSUER = "ocm-mcp"
+_DEFAULT_AUDIENCE = "ocm-mcp-server"
+
+
 def main() -> None:
+    if SETTINGS.approval_private_key_path.exists():
+        print(
+            "ocm-mcp-server: WARNING: the approval PRIVATE key is present in this "
+            "server's own state directory - a compromised server could mint its own "
+            "approval tokens. Move it off-box and set OCM_MCP_SIGNER_KEY.",
+            file=sys.stderr,
+        )
+    if SETTINGS.issuer == _DEFAULT_ISSUER and SETTINGS.audience == _DEFAULT_AUDIENCE:
+        print(
+            "ocm-mcp-server: NOTE: OCM_MCP_ISSUER/OCM_MCP_AUDIENCE are both left at "
+            "their defaults, so a token minted for another default deployment would "
+            "verify here too (content-hash binding still limits the blast radius, "
+            "but set deployment-specific values for defense-in-depth).",
+            file=sys.stderr,
+        )
     port = os.environ.get("OCM_MCP_METRICS_PORT", "").strip()
     if port.isdigit():
         from . import metrics

@@ -7,6 +7,12 @@ The proposal store and the spent-token store are plain files. Two apply calls (o
 CLI and the server) can race on them, so mutations take an exclusive lock on a sibling
 `<path>.lock` first. POSIX `fcntl.flock` is used where available; on platforms without
 it the context manager is a no-op (single-process use is still correct).
+
+Platform support: this module imports `fcntl`, which does not exist on Windows, so
+`_HAVE_FCNTL` is False there and `locked()` silently becomes a no-op - no exclusive
+lock is actually taken, so two processes racing on the same proposal/token store on
+Windows are not serialized. Windows is unsupported for this reason; run under WSL2
+(a real Linux kernel, so `fcntl` is available) instead.
 """
 
 from __future__ import annotations

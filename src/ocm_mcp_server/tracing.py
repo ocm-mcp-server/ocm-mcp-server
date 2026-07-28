@@ -41,6 +41,48 @@ def _canonical(entry: dict[str, Any]) -> str:
 
 _MAX_ARG_LEN = 2000
 
+# Structural/identity fields that are safe to forward to a SIEM as-is. Everything
+# else - manifest bodies, free-text summaries/reasons, error text - is replaced
+# with "[redacted]" in the stderr echo. This only affects _echo_safe's output;
+# the audit FILE (written above, before the echo) always keeps full fidelity.
+_ECHO_TOP_ALLOW = {"ts", "seq", "prev", "hash", "actor", "tool", "outcome", "duration_ms"}
+_ECHO_ARG_ALLOW = {
+    "cluster",
+    "clusters",
+    "name",
+    "namespace",
+    "placement",
+    "resource",
+    "proposal_id",
+    "rollback_proposal_id",
+    "action",
+    "operation",
+    "addon",
+    "limit",
+}
+
+
+def _echo_safe(entry: dict[str, Any]) -> dict[str, Any]:
+    """Redacted copy of an audit entry, for the optional stderr echo only.
+
+    Keeps the structural/identity shape of the entry (timestamps, chain fields,
+    tool name, outcome, and a handful of identity-like tool arguments) so a SIEM
+    can still correlate and alert; replaces every other value - manifests,
+    summaries, reasons, error text - with "[redacted]" so free-form payload
+    never leaves the box over the echo. Pure and side-effect free.
+    """
+    safe: dict[str, Any] = {}
+    for key, value in entry.items():
+        if key in _ECHO_TOP_ALLOW:
+            safe[key] = value
+        elif key == "args" and isinstance(value, dict):
+            safe[key] = {k: (v if k in _ECHO_ARG_ALLOW else "[redacted]") for k, v in value.items()}
+        elif key == "error":
+            safe[key] = "[redacted]" if value else value
+        else:
+            safe[key] = "[redacted]"
+    return safe
+
 
 def _audit_arg(key: str, value: Any) -> Any:
     """Redact the approval token and bound large argument values, so one big argument
@@ -131,7 +173,9 @@ def audit(entry: dict[str, Any]) -> None:
             os.fsync(f.fileno())
     if SETTINGS.audit_echo_stderr:
         # Echo to stderr (not stdout - that is the MCP transport) for SIEM forwarding.
-        print(line, file=sys.stderr, flush=True)
+        # Redacted, unlike the file line above: free-form payload (manifests, summaries,
+        # reasons, error text) never leaves the box over the echo.
+        print(json.dumps(_echo_safe(entry), default=str), file=sys.stderr, flush=True)
 
 
 def _safe_audit(entry: dict[str, Any]) -> None:

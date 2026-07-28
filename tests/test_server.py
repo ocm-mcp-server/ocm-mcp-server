@@ -614,3 +614,49 @@ def test_main_skips_metrics_without_port(tmp_home, monkeypatch):
     monkeypatch.setattr(srv.mcp, "run", lambda: calls.setdefault("run", True))
     srv.main()
     assert calls == {"run": True}
+
+
+def test_main_warns_when_private_signer_key_present(tmp_home, monkeypatch, capsys):
+    monkeypatch.delenv("OCM_MCP_SIGNER_KEY", raising=False)
+    monkeypatch.setattr(srv.mcp, "run", lambda: None)
+    SETTINGS.approval_private_key_path.write_text("fake-private-key")
+
+    srv.main()
+
+    err = capsys.readouterr().err
+    assert "PRIVATE key" in err
+    assert "OCM_MCP_SIGNER_KEY" in err
+
+
+def test_main_no_signer_warning_when_key_absent(tmp_home, monkeypatch, capsys):
+    monkeypatch.delenv("OCM_MCP_SIGNER_KEY", raising=False)
+    monkeypatch.setattr(srv.mcp, "run", lambda: None)
+    assert not SETTINGS.approval_private_key_path.exists()
+
+    srv.main()
+
+    err = capsys.readouterr().err
+    assert "PRIVATE key" not in err
+
+
+def test_main_warns_when_issuer_and_audience_are_defaults(tmp_home, monkeypatch, capsys):
+    monkeypatch.setattr(SETTINGS, "issuer", "ocm-mcp", raising=False)
+    monkeypatch.setattr(SETTINGS, "audience", "ocm-mcp-server", raising=False)
+    monkeypatch.setattr(srv.mcp, "run", lambda: None)
+
+    srv.main()
+
+    err = capsys.readouterr().err
+    assert "OCM_MCP_ISSUER" in err
+    assert "OCM_MCP_AUDIENCE" in err
+
+
+def test_main_no_issuer_warning_when_customized(tmp_home, monkeypatch, capsys):
+    monkeypatch.setattr(SETTINGS, "issuer", "my-org-hub", raising=False)
+    monkeypatch.setattr(SETTINGS, "audience", "ocm-mcp-server", raising=False)
+    monkeypatch.setattr(srv.mcp, "run", lambda: None)
+
+    srv.main()
+
+    err = capsys.readouterr().err
+    assert "OCM_MCP_ISSUER" not in err

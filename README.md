@@ -508,7 +508,8 @@ and [architecture - observability](docs/architecture.md#6-observability---three-
 </div>
 
 Requirements: docker, [kind](https://kind.sigs.k8s.io/), kubectl,
-[clusteradm](https://github.com/open-cluster-management-io/clusteradm), helm, Python 3.11+.
+[clusteradm](https://github.com/open-cluster-management-io/clusteradm), helm, Python 3.11+,
+Linux or macOS (Windows unsupported - use WSL2).
 The [deployment guide](docs/deployment.md) has install commands and the real-fleet path.
 
 ```bash
@@ -542,7 +543,7 @@ ready-to-paste values at the end).
 | `OCM_MCP_REQUIRE_DIGEST` | no | Set to `1` to require `@sha256` digest-pinned images (stricter than tag-pinning). Default off. |
 | `OCM_MCP_METRICS_PORT` | no | If set, expose Prometheus metrics at `/metrics` on this port. Default off. |
 | `OCM_MCP_METRICS_HOST` | no | Interface the metrics endpoint binds. Default `127.0.0.1` (localhost only); set `0.0.0.0` for a remote scraper. |
-| `OCM_MCP_AUDIT_ECHO` | no | Set to `1` to also echo each audit line to **stderr** as JSON, so a container log collector can forward the audit stream to a SIEM. Default off. |
+| `OCM_MCP_AUDIT_ECHO` | no | Set to `1` to also echo each audit line to **stderr** as JSON, so a container log collector can forward the audit stream to a SIEM. Free-form values (manifests, summaries, reasons, error text) are redacted (`"[redacted]"`) in the echo; the audit file itself keeps full fidelity. Default off. |
 | `OCM_MCP_MAX_PROPOSAL_BYTES` | no | Reject a proposal larger than this many bytes. Default `262144` (256 KiB). |
 | `OCM_MCP_MAX_HPA_REPLICAS` | no | Reject a HorizontalPodAutoscaler whose `maxReplicas` exceeds this. Default `100`. |
 | `OCM_MCP_READ_ONLY` | no | Set to `1`/`true` for a strictly-inspection deployment: every propose/apply tool refuses, a coarse backstop under the token gate. Default off. |

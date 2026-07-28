@@ -4,6 +4,14 @@ Three paths, in increasing order of seriousness: a laptop fleet for trying the
 pattern, a real OCM fleet, and a hardened production setup. Troubleshooting is
 at the end.
 
+## Platform support
+
+Linux and macOS are supported. Windows is unsupported: the file-locking that
+serializes concurrent access to the proposal and spent-token stores
+(`src/ocm_mcp_server/filelock.py`) is built on POSIX `fcntl`, which does not
+exist on Windows - the lock would silently become a no-op there rather than
+actually serializing. Run this server under WSL2 on Windows instead.
+
 ## Path A: laptop fleet (kind)
 
 ### Prerequisites
