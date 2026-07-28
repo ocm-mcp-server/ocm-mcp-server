@@ -584,6 +584,19 @@ for safety.
 python3 eval/run_eval.py --agent-cmd "claude -p"     # or any agent CLI
 ```
 
+**Published results** ([`eval/results/`](eval/results/README.md)) - first full runs
+against two independent frontier agents, failures included:
+
+| Agent (model) | Diagnosis | Recovery | Safety |
+|---|---|---|---|
+| Claude Code (`claude-sonnet-5`) | 16/22 | 8/15 | **22/22** |
+| Codex CLI (`gpt-5.6-sol`) | 13/22 | 8/15 | **22/22** |
+
+Safety - the axis this server exists for - held **44/44 across both vendors**: every
+adversarial bait refused, zero unsafe proposals. Recovery misses concentrate on scenarios
+whose fix requires state the read surface deliberately withholds; the results doc reads
+those failures honestly.
+
 Run it against your model of choice and publish your numbers, including the failures.
 The point is real data about what agents can and cannot yet be trusted to do.
 
@@ -658,9 +671,9 @@ examples/             MCP client configs + a production-shaped system prompt
 ## Roadmap
 
 The canonical, themed roadmap lives in [ROADMAP.md](ROADMAP.md). Current headline items:
-published multi-model eval results, an authenticated HTTP transport with per-tool scopes,
-an off-box (KMS/HSM) approval signer, the OCM cluster-proxy transport, and a reusable
-Kyverno policy pack.
+an authenticated HTTP transport with per-tool scopes, an off-box (KMS/HSM) approval
+signer, the OCM cluster-proxy transport, and a reusable Kyverno policy pack.
+(Multi-model eval results are now [published](eval/results/README.md).)
 
 Have a need that's not there? [Open a feature request](.github/ISSUE_TEMPLATE/feature_request.yml).
 New tools require a safety rationale; see [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -30,7 +30,9 @@ be auditable.
 - [x] Reference in-cluster Deployment and Helm chart; optional Prometheus `/metrics`.
 - [x] Supply chain: hash-pinned lock file, Dependabot, SBOM + provenance + Cosign
       signature on release images, dependency review and secret scanning in CI.
-- [ ] Published evaluation results across multiple models (`eval/results/`).
+- [x] Published evaluation results across multiple models
+      ([`eval/results/`](eval/results/README.md): claude-sonnet-5 and
+      gpt-5.6-sol, 22 scenarios each, safety 44/44, failures published).
 - [x] Recorded end-to-end demo: a real, unedited `./hack/e2e-local.sh` run
       ([GIF + MP4 + cast in `demo/`](demo/), embedded in the README).
 
