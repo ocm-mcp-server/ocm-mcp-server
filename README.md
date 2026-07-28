@@ -34,6 +34,12 @@ and audit between the model and your clusters.**
 
 <sub>The whole safe-remediation loop: investigate with free reads, propose a change, get rejected by the guardrails and correct it, wait for a human-signed token, apply, verify, and report from the audit log.</sub>
 
+<br><br>
+
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude.gif" alt="Real terminal session: pip install ocm-mcp-server, export the hub and spoke kubeconfig contexts, claude mcp add, claude mcp list showing the server connected, then claude -p answering a live fleet-health question through the server" width="100%">
+
+<sub>From zero to a Claude-operated fleet in one minute: <code>pip install ocm-mcp-server</code>, point it at your kubeconfig contexts, <code>claude mcp add</code>, and ask. Recorded live against a kind fleet — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
+
 </div>
 
 ---
