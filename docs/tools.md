@@ -3,7 +3,7 @@
 
 # Tools and Prompts reference
 
-The server exposes **34 tools across ten toolsets** plus **ten prompts**. This page is
+The server exposes **35 tools across ten toolsets** plus **ten prompts**. This page is
 the canonical reference: every tool, its class, its arguments, and the Open Cluster
 Management API it reads or writes. The short version lives in the
 [README](../README.md#toolsets); the safety model behind the classes is in
@@ -22,10 +22,13 @@ topology-agnostic. Two things depend on topology:
   When the hub is the HyperShift hosting cluster they are on the hub; when HCPs are
   hosted elsewhere, these tools report that and the `ManagedCluster` view still covers
   those spokes.
-- **`get_cluster_health`, `query_events`, `get_pod_logs`** read the spoke directly and
-  need a per-cluster context (a kubeconfig, or cluster-proxy + managed-serviceaccount).
-  `get_cluster_info` gives version, nodes, and console URL from the hub with no spoke
-  access at all.
+- **`get_cluster_health`, `get_fleet_health`, `query_events`, `get_pod_logs`** read the
+  spoke directly and need a per-cluster context (a kubeconfig, or cluster-proxy +
+  managed-serviceaccount). `get_fleet_health` fans the same per-cluster scan out
+  concurrently across every cluster (`OCM_MCP_FANOUT_WORKERS`, default 8); a cluster
+  with no context or a broken spoke shows as an `error` entry instead of failing the
+  sweep. `get_cluster_info` gives version, nodes, and console URL from the hub with no
+  spoke access at all.
 
 ## Validate against a live hub
 
@@ -67,6 +70,7 @@ prompt can call them.
 | Tool | Class | Arguments | Reads |
 |---|---|---|---|
 | `get_cluster_health` | read | `cluster` | hub conditions + spoke pods/deployments (needs a spoke context) |
+| `get_fleet_health` | read | `clusters?` | whole-fleet hub conditions + concurrent spoke pods/deployments (`OCM_MCP_FANOUT_WORKERS`); broken spokes are an `error` entry, not a failed call |
 | `query_events` | read | `cluster`, `namespace?`, `limit?` | spoke `Event`s, newest first |
 | `get_pod_logs` | read | `cluster`, `namespace`, `pod`, `container?`, `lines?` | spoke pod logs (falls back to previous instance) |
 

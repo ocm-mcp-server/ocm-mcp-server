@@ -52,7 +52,7 @@ Every box is a real component; every arrow is a real call path or protocol.
 ```mermaid
 flowchart TD
     subgraph CLIENT["AGENT SIDE - any MCP client"]
-        A["AI agent<br/>sees ONLY:<br/>34 tools, 10 prompts,<br/>6 resources<br/>never: kubeconfig,<br/>Secrets, exec, kubectl"]
+        A["AI agent<br/>sees ONLY:<br/>35 tools, 10 prompts,<br/>6 resources<br/>never: kubeconfig,<br/>Secrets, exec, kubectl"]
     end
 
     A -- "MCP JSON-RPC 2.0<br/>over stdio" --> B
@@ -61,7 +61,7 @@ flowchart TD
         B["FastMCP dispatch<br/>server.py<br/>argument schema validation<br/>readOnlyHint and<br/>destructiveHint per tool"]
         B --> C["traced_tool wrapper<br/>tracing.py<br/>1. optional OTel span<br/>2. classify outcome<br/>3. hash-chained audit line<br/>4. metrics.record"]
         C --> D{"toolset?"}
-        D -- "reads: 27 tools,<br/>6 resources" --> E["_read wrapper<br/>server.py<br/>missing API -> UNAVAILABLE<br/>ApiException -> clear<br/>message, no stack trace"]
+        D -- "reads: 28 tools,<br/>6 resources" --> E["_read wrapper<br/>server.py<br/>missing API -> UNAVAILABLE<br/>ApiException -> clear<br/>message, no stack trace"]
         D -- "writes: 7 tools" --> F["gate chain<br/>read-only backstop<br/>size cap, schema<br/>static guardrails<br/>Kyverno dry-run<br/>proposal store<br/>human token, apply"]
         E --> G["ocm.py<br/>typed OCM operations<br/>summarized CRs<br/>paged_list: limit 500,<br/>continue tokens,<br/>5000-item ceiling"]
         F --> G
@@ -144,6 +144,24 @@ Spoke-touching reads (`get_cluster_health`, `query_events`, `get_pod_logs`) diff
 in one step: `k8s.spoke_core(cluster)` resolves the per-cluster read context and
 every list is bounded (`limit=OCM_MCP_HEALTH_LIMIT`, request timeout `(5, 30)`s),
 with an explicit note when the cluster has more than the limit.
+
+`get_fleet_health` is `get_cluster_health` widened to the whole fleet in one call:
+one paged hub list for every cluster's conditions, then a bounded thread pool fans
+out the same per-cluster spoke scan concurrently instead of the agent looping the
+single-cluster tool once per member.
+
+```mermaid
+flowchart TD
+    FH0["get_fleet_health call"] --> FH1["hub conditions:<br/>every cluster, one list"]
+    FH0 --> FH2["fan-out: bounded workers<br/>OCM_MCP_FANOUT_WORKERS"]
+    FH2 --> FH3["spoke scan: cluster 1"]
+    FH2 --> FH4["spoke scan: cluster 2"]
+    FH2 --> FH5["spoke scan: cluster N<br/>error entry, not a failure"]
+    FH1 --> FH6["merge + sort:<br/>unhealthy clusters first"]
+    FH3 --> FH6
+    FH4 --> FH6
+    FH5 --> FH6
+```
 
 ### 3. The gated write path - every check, in order
 

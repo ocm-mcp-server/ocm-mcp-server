@@ -8,6 +8,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`get_fleet_health` tool**: whole-fleet health in one call instead of looping
+  `get_cluster_health` per cluster - hub conditions from a single paged list plus
+  concurrent spoke pod/deployment scans, fanned out on a bounded thread pool
+  (`OCM_MCP_FANOUT_WORKERS`, default 8, floor 1). A slow or broken cluster becomes a
+  per-cluster `error` entry instead of failing the whole sweep; unhealthy clusters
+  sort first.
 - **Tracing exercised end to end**: `make e2e` installs the `[tracing]` extra and a
   new step exports real OTel spans over OTLP/HTTP to a local sink, asserting the
   trace batch names the tool span and the service - so the "OTel spans -> Jaeger"
