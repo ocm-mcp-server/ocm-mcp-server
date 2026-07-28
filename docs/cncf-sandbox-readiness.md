@@ -38,10 +38,11 @@ transparent checklist of what is in place and where the project can go further.
 | Expectation | Status | Where |
 |---|---|---|
 | Working software, not a proposal | Done | full server + CLI + policies |
-| Automated tests | Done | 52 unit tests + 12 offline Kyverno policy tests, in CI |
+| Automated tests | Done | full unit suite (100% statement + branch coverage) plus offline Kyverno policy tests, in CI |
 | Reproducible local environment | Done | `make bootstrap` (kind-based fleet) |
 | Release automation | Done | tag-driven release + GHCR image publish |
 | Documentation for new users | Done | README, wiki, deployment and context guides |
+| In-cluster deployment artifacts | Done | [Helm chart](../deploy/charts/ocm-mcp-server) + [Deployment manifest](../deploy/deployment.yaml) |
 | Evaluation evidence | Partial | eval harness present; multi-model results pending |
 
 ## Where the project can go further
@@ -55,8 +56,6 @@ today:
   public evaluators strengthen it.
 - **Published evaluation results.** Running the harness against several models and
   publishing the numbers (including failures) turns the safety claims into evidence.
-- **In-cluster deployment artifacts.** A Helm chart and Deployment manifest (see the
-  [roadmap](../ROADMAP.md)) make it trivial to run the server as a hub workload.
 
 ## How to help
 

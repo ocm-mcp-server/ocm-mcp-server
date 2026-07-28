@@ -574,16 +574,12 @@ examples/             MCP client configs + a production-shaped system prompt
 
 ## Roadmap
 
-- [ ] Live end-to-end recording of the demo flow in this README
-- [ ] Published eval results across multiple models (`eval/results/`)
-- [ ] OCM cluster-proxy transport option (replace direct spoke contexts)
-- [ ] Filing the upstream proposals in [`docs/upstream-notes.md`](docs/upstream-notes.md)
-      (MCP long-running operations · OCM ManifestWork feedback · Kyverno catalog contribution)
-- [x] Container image publishing (ghcr.io, signed + SBOM + provenance) and a Helm chart for
-      in-cluster deployment
-- [ ] Additional chaos classes: node pressure, network partitions, noisy neighbors
+The canonical, themed roadmap lives in [ROADMAP.md](ROADMAP.md). Current headline items:
+published multi-model eval results, an authenticated HTTP transport with per-tool scopes,
+an off-box (KMS/HSM) approval signer, the OCM cluster-proxy transport, and a reusable
+Kyverno policy pack.
 
-Have a need that's not here? [Open a feature request](.github/ISSUE_TEMPLATE/feature_request.yml).
+Have a need that's not there? [Open a feature request](.github/ISSUE_TEMPLATE/feature_request.yml).
 New tools require a safety rationale; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing & community
