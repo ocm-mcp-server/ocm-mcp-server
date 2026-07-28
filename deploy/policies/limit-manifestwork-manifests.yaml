@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+# Per-proposal manifest count ceiling, mirroring the Python guardrails' limit of 10.
+# A huge batched proposal is both a review problem (a human cannot meaningfully approve
+# fifty changes at once) and a blast-radius problem; large changes must be split into
+# reviewable pieces.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: limit-manifestwork-manifests
+  annotations:
+    policies.kyverno.io/title: Cap Manifest Count in Agent ManifestWorks
+    policies.kyverno.io/category: Multi-Cluster Guardrails
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: ManifestWork
+    policies.kyverno.io/description: >-
+      An agent-proposed ManifestWork may embed at most 10 manifests, so every
+      approved change stays small enough for a human to actually review.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: cap-manifest-count
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: ocm-mcp-server
+      validate:
+        message: >-
+          An agent-proposed ManifestWork may embed at most 10 manifests; split
+          large changes into reviewable pieces.
+        deny:
+          conditions:
+            any:
+              - key: "{{ length(request.object.spec.workload.manifests || `[]`) }}"
+                operator: GreaterThan
+                value: 10

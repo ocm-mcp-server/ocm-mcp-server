@@ -245,6 +245,355 @@ spec:
                 - name: payments
                   image: registry.example.com/payments:latest
 ---
+# A compliant ClusterIP Service: must pass the service-exposure rule.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: good-service
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: Service
+        metadata:
+          name: payments
+          namespace: shop
+        spec:
+          type: ClusterIP
+          selector:
+            app: payments
+          ports:
+            - port: 80
+---
+# Spoofed API group (evil.example/v1 "Deployment"): the kind-only allowlist passes it,
+# the exact-GVK policy must deny it. Content is otherwise fully compliant.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-gvk-spoof
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: evil.example/v1
+        kind: Deployment
+        metadata:
+          name: impostor
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: impostor
+          template:
+            metadata:
+              labels:
+                app: impostor
+            spec:
+              automountServiceAccountToken: false
+              containers:
+                - name: impostor
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# NodePort Service: must be denied by the service-exposure rule.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-nodeport-service
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: Service
+        metadata:
+          name: exposed
+          namespace: shop
+        spec:
+          type: NodePort
+          selector:
+            app: payments
+          ports:
+            - port: 80
+---
+# ClusterIP Service smuggling externalIPs: must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-external-ips
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: Service
+        metadata:
+          name: hijack
+          namespace: shop
+        spec:
+          type: ClusterIP
+          externalIPs:
+            - 203.0.113.7
+          selector:
+            app: payments
+          ports:
+            - port: 80
+---
+# HPA with a runaway maxReplicas: must be denied by the HPA ceiling rule.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-hpa-ceiling
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: autoscaling/v2
+        kind: HorizontalPodAutoscaler
+        metadata:
+          name: runaway
+          namespace: shop
+        spec:
+          minReplicas: 1
+          maxReplicas: 1000
+          scaleTargetRef:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: payments
+---
+# PSS-compliant workload reading a Secret via env secretKeyRef: only the
+# secret-access policy must fail, proving the check is independent of PSS.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-secret-env
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: exfil
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: exfil
+          template:
+            metadata:
+              labels:
+                app: exfil
+            spec:
+              automountServiceAccountToken: false
+              containers:
+                - name: exfil
+                  image: registry.example.com/app:1.0.0
+                  env:
+                    - name: DB_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          name: db-credentials
+                          key: password
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# PSS-compliant workload projecting a serviceAccountToken volume: must be denied
+# by the secret-access policy (the PSS volume deny-list does not see projected sources).
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-projected-token
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: tokengrab
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: tokengrab
+          template:
+            metadata:
+              labels:
+                app: tokengrab
+            spec:
+              automountServiceAccountToken: false
+              volumes:
+                - name: token
+                  projected:
+                    sources:
+                      - serviceAccountToken:
+                          path: token
+              containers:
+                - name: tokengrab
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# awsElasticBlockStore volume: NOT in the old deny-list (secret/hostPath/PVC/CSI/NFS),
+# so only the volume ALLOW-list rule catches it - the gap that rule exists to close.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-volume-type
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: blockstore
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: blockstore
+          template:
+            metadata:
+              labels:
+                app: blockstore
+            spec:
+              automountServiceAccountToken: false
+              volumes:
+                - name: data
+                  awsElasticBlockStore:
+                    volumeID: vol-0123456789abcdef0
+              containers:
+                - name: blockstore
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# Targets openshift-gitops - not in the old enumerated list, caught only by the
+# openshift-* prefix wildcard: must be denied.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-prefix-namespace
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: sneaky-config
+          namespace: openshift-gitops
+        data:
+          key: value
+---
+# PSS-compliant except runAsUser 0: must be denied by the pod-security policy.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-run-as-root
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: rootly
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: rootly
+          template:
+            metadata:
+              labels:
+                app: rootly
+            spec:
+              automountServiceAccountToken: false
+              containers:
+                - name: rootly
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    runAsUser: 0
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# Eleven manifests in one proposal: must be denied by the manifest-count cap.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-too-many-manifests
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-0, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-1, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-2, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-3, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-4, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-5, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-6, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-7, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-8, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-9, namespace: shop}, data: {k: v}}
+      - {apiVersion: v1, kind: ConfigMap, metadata: {name: cm-10, namespace: shop}, data: {k: v}}
+---
 # Unlabeled ManifestWork (human-created): policies must NOT apply - passes.
 apiVersion: work.open-cluster-management.io/v1
 kind: ManifestWork

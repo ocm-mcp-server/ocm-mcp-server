@@ -1,0 +1,81 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+# Service exposure and autoscaler ceilings for embedded manifests, mirroring the Python
+# guardrails: a Service may only be ClusterIP (NodePort/LoadBalancer/ExternalName expose
+# the workload outside the cluster, externalIPs hijacks traffic), and a
+# HorizontalPodAutoscaler may not set maxReplicas above 100 (a runaway scale-up is a
+# denial-of-service path).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-manifestwork-service-hpa
+  annotations:
+    policies.kyverno.io/title: Restrict Service Exposure and HPA Ceilings in Agent ManifestWorks
+    policies.kyverno.io/category: Multi-Cluster Guardrails
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: ManifestWork
+    policies.kyverno.io/description: >-
+      Embedded Services must be ClusterIP with no externalIPs, and embedded
+      HorizontalPodAutoscalers must keep maxReplicas at or below 100, matching
+      the server's static guardrails as defense in depth.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: allowlist-service-type
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: ocm-mcp-server
+      validate:
+        message: >-
+          Embedded Services must be ClusterIP (NodePort, LoadBalancer, and
+          ExternalName are not allowed) and may not set externalIPs.
+        foreach:
+          - list: request.object.spec.workload.manifests
+            preconditions:
+              all:
+                - key: "{{ element.kind }}"
+                  operator: Equals
+                  value: Service
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.spec.type || '' }}"
+                    operator: AnyNotIn
+                    value:
+                      - ""
+                      - ClusterIP
+                  - key: "{{ length(element.spec.externalIPs || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+    - name: cap-hpa-max-replicas
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: ocm-mcp-server
+      validate:
+        message: >-
+          Embedded HorizontalPodAutoscalers may not set maxReplicas above 100;
+          a runaway scale-up is a denial-of-service path.
+        foreach:
+          - list: request.object.spec.workload.manifests
+            preconditions:
+              all:
+                - key: "{{ element.kind }}"
+                  operator: Equals
+                  value: HorizontalPodAutoscaler
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.spec.maxReplicas || `0` }}"
+                    operator: GreaterThan
+                    value: 100

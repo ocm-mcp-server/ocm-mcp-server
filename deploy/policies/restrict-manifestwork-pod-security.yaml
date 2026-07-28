@@ -38,7 +38,8 @@ spec:
           Embedded workload violates the Restricted Pod Security baseline
           (automountServiceAccountToken must be false; serviceAccountName must be
           default/empty; every container must set runAsNonRoot, allowPrivilegeEscalation=false,
-          drop ALL capabilities, and a seccomp profile; no Secret/hostPath/PVC/CSI/NFS volumes).
+          drop ALL capabilities, and a seccomp profile; no runAsUser 0; no
+          Secret/hostPath/PVC/CSI/NFS volumes).
         foreach:
           - list: request.object.spec.workload.manifests
             preconditions:
@@ -131,5 +132,16 @@ spec:
                     value: 0
                   # no unsafe volume sources
                   - key: "{{ length(element.spec.template.spec.volumes[?secret || hostPath || persistentVolumeClaim || csi || nfs] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # running as uid 0 is not allowed, at the pod or the container level
+                  # (0 is truthy in JMESPath, so `|| -1` only substitutes when unset)
+                  - key: "{{ element.spec.template.spec.securityContext.runAsUser || `-1` }}"
+                    operator: Equals
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.containers[?securityContext.runAsUser == `0`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.runAsUser == `0`] || `[]`) }}"
                     operator: GreaterThan
                     value: 0

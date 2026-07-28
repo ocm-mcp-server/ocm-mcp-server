@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+# Exact apiVersion/kind allow-list for embedded manifests. The kinds policy checks the
+# kind alone, which lets a manifest spoof the group (apiVersion: evil.example/v1,
+# kind: Deployment) - the CRD's admission would then see a "Deployment" that is not an
+# apps/v1 Deployment at all. This mirrors the Python guardrails' ALLOWED_GVK set so the
+# hub-side backstop matches the full group/version/kind, not just the kind.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-manifestwork-gvk
+  annotations:
+    policies.kyverno.io/title: Exact API Group/Version/Kind Allowlist for Agent ManifestWorks
+    policies.kyverno.io/category: Multi-Cluster Guardrails
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: ManifestWork
+    policies.kyverno.io/description: >-
+      Every embedded manifest in an agent-proposed ManifestWork must match an exact
+      apiVersion/kind pair from the allowlist, so a manifest cannot spoof a trusted
+      kind under an untrusted API group.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: allowlist-gvk
+      match:
+        any:
+          - resources:
+              kinds:
+                - work.open-cluster-management.io/v1/ManifestWork
+              selector:
+                matchLabels:
+                  app.kubernetes.io/managed-by: ocm-mcp-server
+      validate:
+        message: >-
+          Embedded manifest apiVersion/kind is not in the exact allowlist
+          (apps/v1 Deployment; v1 Service/ConfigMap/ResourceQuota;
+          autoscaling/v1 or v2 HorizontalPodAutoscaler; policy/v1
+          PodDisruptionBudget; networking.k8s.io/v1 NetworkPolicy).
+        foreach:
+          - list: request.object.spec.workload.manifests
+            deny:
+              conditions:
+                all:
+                  - key: "{{ element.apiVersion || '' }}/{{ element.kind || '' }}"
+                    operator: AnyNotIn
+                    value:
+                      - apps/v1/Deployment
+                      - v1/Service
+                      - v1/ConfigMap
+                      - v1/ResourceQuota
+                      - autoscaling/v2/HorizontalPodAutoscaler
+                      - autoscaling/v1/HorizontalPodAutoscaler
+                      - policy/v1/PodDisruptionBudget
+                      - networking.k8s.io/v1/NetworkPolicy

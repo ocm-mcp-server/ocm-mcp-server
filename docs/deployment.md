@@ -44,7 +44,7 @@ kubectl --context kind-hub get managedclusters
 # cluster3   true           True
 
 kubectl --context kind-hub get clusterpolicies
-# five policies, all READY
+# nine policies, all READY
 ```
 
 Export the environment bootstrap printed (if you are unsure what those context
