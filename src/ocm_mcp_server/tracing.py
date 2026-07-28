@@ -24,7 +24,9 @@ from typing import Any
 from .config import SETTINGS
 from .filelock import locked
 
-_tracer = None
+# The OTel tracer, resolved lazily: None = not attempted yet, False = disabled
+# (no endpoint or SDK not installed), otherwise the Tracer instance.
+_tracer: Any = None
 
 
 def _actor() -> str:

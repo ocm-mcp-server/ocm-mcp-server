@@ -207,14 +207,50 @@ external sink before any write-enabled use.
       a trusted terminal so tail truncation is detectable too.
 - [ ] **Metrics:** set `OCM_MCP_METRICS_PORT` for Prometheus `/metrics` (binds
       localhost unless `OCM_MCP_METRICS_HOST` is set).
-- [ ] **Tracing:** set `OTEL_EXPORTER_OTLP_ENDPOINT` at your collector; spans
-      carry tool names and redact approval tokens.
+- [ ] **Tracing:** install the `[tracing]` extra and set `OTEL_EXPORTER_OTLP_ENDPOINT`
+      at your collector; spans carry tool names and redact approval tokens. Full
+      how-to below in [Tracing with OpenTelemetry and Jaeger](#tracing-with-opentelemetry-and-jaeger).
 - [ ] **Token TTL:** drop `OCM_MCP_APPROVAL_TTL` below the default hour if
       your change windows are short.
 - [ ] **Policies:** extend `deploy/policies/` with org-specific rules; run
       `make policy-test` in your CI with your own test resources added.
 - [ ] **Upgrades:** pin the package version; read the [CHANGELOG](../CHANGELOG.md)
       before bumping; the tool surface is the compatibility contract.
+
+## Tracing with OpenTelemetry and Jaeger
+
+Every tool call is wrapped by `traced_tool` (`src/ocm_mcp_server/tracing.py`), which
+produces two independent records: the always-on, hash-chained **audit log**, and an
+optional **OpenTelemetry span** named `tool.<name>` with the call's arguments as
+attributes (`approval_token` is never attached; values are truncated at 200 chars).
+Tracing is strictly opt-in and fails soft: if the SDK is not installed or no endpoint
+is set, the span layer is a no-op and tools behave identically.
+
+**Enable it (two switches):**
+
+```bash
+pip install "ocm-mcp-server[tracing]"        # opentelemetry-sdk + OTLP/HTTP exporter
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+```
+
+Spans are exported over **OTLP/HTTP** (`POST /v1/traces`) by a `BatchSpanProcessor`,
+so any OTel-compatible backend works - Jaeger, an OpenTelemetry Collector, Grafana
+Tempo, or a vendor endpoint. For a local Jaeger:
+
+```bash
+docker run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one:1.60
+# then open http://localhost:16686 and pick the "ocm-mcp-server" service
+```
+
+`make bootstrap` starts this exact container for you (skip with
+`./hack/bootstrap.sh --no-jaeger`), so on the local fleet you get a trace per tool
+call - propose, apply, and every read - out of the box.
+
+**How it is tested:** the end-to-end suite (`make e2e`) includes a tracing-export
+step that stands up a local OTLP sink, runs a tool call in a fresh server process
+with `OTEL_EXPORTER_OTLP_ENDPOINT` pointed at it, and asserts a trace batch arrives
+naming both the tool span and the service - proving the exporter wiring works
+without needing a Jaeger container in CI.
 
 ## Troubleshooting
 

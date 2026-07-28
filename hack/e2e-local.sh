@@ -119,9 +119,9 @@ dep oc       "oc version --client 2>/dev/null | head -1" openshift-cli no
 b "2. Python package - install the server into a local virtualenv"
 [[ -x "$PYBIN" ]] || { info "creating .venv"; python3 -m venv "$ROOT/.venv"; }
 "$PYBIN" -m pip install -q --upgrade pip >/dev/null 2>&1
-if ! "$PYBIN" -m pip install -q -e "$ROOT" >/dev/null 2>&1; then
-  warn "pip install -e . FAILED"
-  rec "2. Python package" "pip install -e ." "Install the MCP server and its ocm-mcp CLI." FAIL "pip install -e ." "editable install failed"
+if ! "$PYBIN" -m pip install -q -e "$ROOT[tracing]" >/dev/null 2>&1; then
+  warn "pip install -e .[tracing] FAILED"
+  rec "2. Python package" "pip install -e .[tracing]" "Install the MCP server, its ocm-mcp CLI, and the OTel tracing extra (exercised by the tracing-export step)." FAIL "pip install -e .[tracing]" "editable install failed"
   cleanup; exit 1
 fi
 PKG_VER="$("$PYBIN" -c 'import importlib.metadata as m; print("ocm-mcp-server", m.version("ocm-mcp-server"))' 2>/dev/null || echo 'ocm-mcp-server (editable)')"

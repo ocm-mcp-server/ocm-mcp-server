@@ -60,7 +60,7 @@ an OTLP endpoint, and tune the approval TTL to your change windows.
 |---|---|
 | `OCM_MCP_HUB_CONTEXT` | kubeconfig context of the hub cluster |
 | `OCM_MCP_SPOKE_CONTEXTS` | `name=context,...` read-only spoke access for events/logs |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | optional tracing collector |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | optional tracing collector (needs the `[tracing]` extra; OTLP/HTTP, e.g. Jaeger on `:4318`) |
 | `OCM_MCP_HOME` | state dir (secret, proposals, audit); default `~/.ocm-mcp` |
 | `OCM_MCP_APPROVAL_TTL` | approval token lifetime, seconds; default 3600 |
 
