@@ -48,6 +48,7 @@ def compute() -> dict[str, int]:
     return {
         "tools": server.count("@mcp.tool("),
         "prompts": server.count("@mcp.prompt("),
+        "resources": server.count("@mcp.resource("),
         "policies": len(glob.glob(os.path.join(REPO, "deploy", "policies", "*.yaml"))),
         "policy_cases": sum(len(r["resources"]) for r in test_spec["results"]),
         "unit_tests": int(m.group(1)),
@@ -61,6 +62,7 @@ QUOTES: list[tuple[str, str, str]] = [
     ("README.md", r"runs a \*\*(\d+)-case offline suite\*\*", "policy_cases"),
     ("README.md", r"`make policy-test` runs (\d+) CLI", "policy_cases"),
     ("README.md", r"The surface is \*\*(\d+) tools", "tools"),
+    ("README.md", r"\*\*(\d+) MCP resources\*\*", "resources"),
     ("docs/deployment.md", r"# (\d+) policies, all READY", "policies"),
     ("docs/upstream-notes.md", r"Contribute the (\d+) policies", "policies"),
     ("wiki/Guardrails-Deep-Dive.md", r"The (\d+) policies in `deploy/policies/`", "policies"),

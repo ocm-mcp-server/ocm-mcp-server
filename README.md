@@ -434,6 +434,21 @@ workflow so any client can start from a good runbook instead of a blank box.
 | **`capacity_report`** | find clusters with headroom and clusters under pressure | - |
 | **`rollout_status`** | track a ManifestWorkReplicaSet rollout across selected clusters | `name`, `namespace` |
 
+## Resources
+
+The server also exposes **6 MCP resources** - read-only fleet state a client can pin,
+browse, or attach as context without a tool call (strictly a subset of the read tools;
+every access still writes an audit line):
+
+| URI | What it serves |
+|---|---|
+| `ocm://clusters` | all ManagedClusters (availability, version, labels, capacity) |
+| `ocm://clusters/{cluster}` | full view of one ManagedCluster |
+| `ocm://policies` | governance policies + per-cluster compliance (if installed) |
+| `ocm://proposals` | proposals waiting for human approval |
+| `ocm://audit/tail` | the last 50 entries of the tamper-evident audit log |
+| `ocm://guardrails` | the exact allow-lists and limits proposals are checked against - reading it first avoids a rejection round-trip |
+
 ## Quickstart (laptop, ~15 minutes)
 
 <div align="center">
