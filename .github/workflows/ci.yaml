@@ -64,6 +64,15 @@ jobs:
           release: v1.18.2
       - name: Offline policy tests
         run: kyverno test deploy/policies/tests
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Guardrail <-> Kyverno parity contract
+        # The same fixture corpus must get IDENTICAL verdicts from the Python
+        # static guardrails (layer 1) and Kyverno admission (layer 2).
+        run: |
+          python3 -m pip install pyyaml
+          python3 hack/parity_contract.py
 
   dependency-review:
     # Flags known-vulnerable or disallowed-license dependencies added in a PR.
