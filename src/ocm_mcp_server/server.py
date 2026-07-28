@@ -35,7 +35,19 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 from . import approvals, guardrails, ocm
-from .config import ALLOWED_CLUSTER_ACTIONS, MAX_PROPOSAL_BYTES, SETTINGS
+from .config import (
+    ALLOWED_CLUSTER_ACTIONS,
+    ALLOWED_GVK,
+    ALLOWED_SECCOMP_TYPES,
+    ALLOWED_SERVICE_ACCOUNTS,
+    ALLOWED_SERVICE_TYPES,
+    ALLOWED_VOLUME_TYPES,
+    MAX_HPA_REPLICAS,
+    MAX_PROPOSAL_BYTES,
+    PROTECTED_NAMESPACE_PREFIXES,
+    PROTECTED_NAMESPACES,
+    SETTINGS,
+)
 from .tracing import traced_tool
 
 mcp = FastMCP(
@@ -747,6 +759,37 @@ def get_resource(resource: str, name: str, namespace: str = "") -> str:
 @traced_tool
 def list_pending_proposals() -> str:
     """List proposals (ManifestWorks and cluster actions) waiting for human approval."""
+    return _pending_proposals()
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
+def get_audit_trail(last_n: int = 30) -> str:
+    """Return the last N entries of this server's own tool-call audit log.
+
+    Args:
+        last_n: number of trailing audit entries to return (default 30).
+
+    Use this at the end of an incident to write an accurate post-incident report
+    of what was inspected, proposed, approved, and applied - from the record, not
+    from memory.
+    """
+    return _audit_tail(last_n)
+
+
+def _audit_tail(last_n: int) -> str:
+    path = SETTINGS.audit_log
+    if not path.exists():
+        return "[]"
+    # Stream the tail with a bounded deque so a large audit log is never fully read.
+    from collections import deque
+
+    with path.open() as f:
+        lines = [ln.strip() for ln in deque(f, maxlen=max(1, last_n)) if ln.strip()]
+    return "[\n" + ",\n".join(lines) + "\n]" if lines else "[]"
+
+
+def _pending_proposals() -> str:
     return _json(
         [
             {
@@ -762,27 +805,72 @@ def list_pending_proposals() -> str:
     )
 
 
-@mcp.tool(annotations=READ)
+# ==================================================================== resources
+# Read-only MCP resources: fleet state a client can pin, browse, or attach as
+# context without a tool call. Strictly a subset of what the read tools expose -
+# same underlying reads, same audit line per access, nothing write-shaped.
+
+
+@mcp.resource("ocm://clusters")
 @traced_tool
-def get_audit_trail(last_n: int = 30) -> str:
-    """Return the last N entries of this server's own tool-call audit log.
+def resource_clusters() -> str:
+    """All ManagedClusters with availability, version, labels, and capacity."""
+    return _read(ocm.list_managed_clusters)
 
-    Args:
-        last_n: number of trailing audit entries to return (default 30).
 
-    Use this at the end of an incident to write an accurate post-incident report
-    of what was inspected, proposed, approved, and applied - from the record, not
-    from memory.
+@mcp.resource("ocm://clusters/{cluster}")
+@traced_tool
+def resource_cluster(cluster: str) -> str:
+    """Full view of one ManagedCluster (acceptance, taints, conditions, claims)."""
+    return _read(ocm.get_managed_cluster, cluster)
+
+
+@mcp.resource("ocm://policies")
+@traced_tool
+def resource_policies() -> str:
+    """Governance Policies and per-cluster compliance (if the add-on is installed)."""
+    return _read(ocm.list_policies, namespace="")
+
+
+@mcp.resource("ocm://proposals")
+@traced_tool
+def resource_proposals() -> str:
+    """Proposals currently waiting for human approval."""
+    return _pending_proposals()
+
+
+@mcp.resource("ocm://audit/tail")
+@traced_tool
+def resource_audit_tail() -> str:
+    """The last 50 entries of this server's own tamper-evident audit log."""
+    return _audit_tail(50)
+
+
+@mcp.resource("ocm://guardrails")
+@traced_tool
+def resource_guardrails() -> str:
+    """The effective static guardrail configuration this server enforces.
+
+    Reading this before proposing avoids a rejection round-trip: it is the
+    exact allow-list surface the guardrails check proposals against.
     """
-    path = SETTINGS.audit_log
-    if not path.exists():
-        return "[]"
-    # Stream the tail with a bounded deque so a large audit log is never fully read.
-    from collections import deque
-
-    with path.open() as f:
-        lines = [ln.strip() for ln in deque(f, maxlen=max(1, last_n)) if ln.strip()]
-    return "[\n" + ",\n".join(lines) + "\n]" if lines else "[]"
+    return _json(
+        {
+            "allowed_gvk": sorted(f"{a}/{k}" for a, k in ALLOWED_GVK),
+            "allowed_cluster_actions": sorted(ALLOWED_CLUSTER_ACTIONS),
+            "allowed_service_types": sorted(t or "(unset)" for t in ALLOWED_SERVICE_TYPES),
+            "allowed_service_accounts": sorted(t or "(unset)" for t in ALLOWED_SERVICE_ACCOUNTS),
+            "allowed_volume_types": sorted(ALLOWED_VOLUME_TYPES),
+            "allowed_seccomp_types": sorted(ALLOWED_SECCOMP_TYPES),
+            "protected_namespaces": sorted(PROTECTED_NAMESPACES),
+            "protected_namespace_prefixes": list(PROTECTED_NAMESPACE_PREFIXES),
+            "max_hpa_replicas": MAX_HPA_REPLICAS,
+            "max_manifests_per_proposal": 10,
+            "max_proposal_bytes": MAX_PROPOSAL_BYTES,
+            "require_image_digest": SETTINGS.require_image_digest,
+            "read_only_mode": SETTINGS.read_only,
+        }
+    )
 
 
 # ===================================================================== prompts
