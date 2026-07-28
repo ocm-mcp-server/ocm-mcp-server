@@ -28,7 +28,7 @@ and audit between the model and your clusters.**
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
-**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
+**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🔭 Observability](#observability---audit-tracing-opentelemetryjaeger-metrics) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
 <img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
@@ -449,6 +449,49 @@ every access still writes an audit line):
 | `ocm://proposals` | proposals waiting for human approval |
 | `ocm://audit/tail` | the last 50 entries of the tamper-evident audit log |
 | `ocm://guardrails` | the exact allow-lists and limits proposals are checked against - reading it first avoids a rejection round-trip |
+
+## Observability - audit, tracing (OpenTelemetry/Jaeger), metrics
+
+Every tool call produces up to three independent records, each with a different job:
+
+| Signal | Always on? | What it answers | Where it goes |
+|---|---|---|---|
+| **Audit log** | yes | *what* happened, in what order, on whose authority | `audit.jsonl` - hash-chained, anchor-signed, the source for incident reports and the eval harness |
+| **OTel trace span** | opt-in | *where* time went; the call structure behind a slow or failed operation | any OTLP backend: Jaeger, OTel Collector, Grafana Tempo, ... |
+| **Prometheus metrics** | opt-in | *how often* and *how slow*, per tool and outcome, for dashboards/alerts | `GET /metrics` (`OCM_MCP_METRICS_PORT`, localhost by default) |
+
+**What the tracing is:** [OpenTelemetry](https://opentelemetry.io/) is the CNCF
+standard for distributed tracing; [Jaeger](https://www.jaegertracing.io/) is a CNCF
+trace viewer. When enabled, this server opens one span per tool call - named
+`tool.<name>` (e.g. `tool.apply_manifestwork`) - with the call's arguments attached
+as attributes. The `approval_token` is **never** attached, and argument values are
+truncated at 200 characters, so traces are safe to ship to a shared backend.
+
+**Why it exists alongside the audit log:** the audit log is a *safety* artifact -
+append-only and tamper-evident - while spans are a *debugging* artifact: in Jaeger
+you can see that a `get_cluster_health` call spent 4 s waiting on one spoke, or
+follow the exact propose → apply sequence of an incident on a timeline. Nothing
+safety-related trusts the spans, which is why tracing can stay optional and
+fail-soft: without the extra installed and an endpoint set, it is a no-op.
+
+**How to use it (two switches + a viewer):**
+
+```bash
+pip install "ocm-mcp-server[tracing]"                    # OTel SDK + OTLP/HTTP exporter
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 # your collector
+
+# a local Jaeger to look at traces (make bootstrap starts this for you):
+docker run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one:1.60
+# open http://localhost:16686 and select the "ocm-mcp-server" service
+```
+
+**How it is tested:** unit tests cover span creation, token redaction, and the
+no-op paths; the e2e suite includes a tracing-export step that stands up a local
+OTLP sink, makes a tool call in a fresh server process, and asserts a real trace
+batch arrives naming both the `tool.*` span and the `ocm-mcp-server` service - so
+the export wiring is proven on every `make e2e` and in the nightly CI run. Details:
+[deployment guide - tracing](docs/deployment.md#tracing-with-opentelemetry-and-jaeger)
+and [architecture - observability](docs/architecture.md#6-observability---three-independent-signals-per-tool-call).
 
 ## Quickstart (laptop, ~15 minutes)
 
