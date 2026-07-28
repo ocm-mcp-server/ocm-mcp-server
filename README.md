@@ -543,6 +543,12 @@ report is git-ignored. Works on macOS (Homebrew + Podman) and Linux.
 
 `ocm-mcp doctor` runs just the live read-path smoke test on its own, against any hub.
 
+Here is a real, unedited run (recorded with asciinema, long waits compressed): the fleet
+comes up, every step passes, and the fleet is torn down again -
+[MP4 version](demo/e2e-local.mp4) · [terminal cast](demo/e2e-local.cast):
+
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/e2e-local.gif" alt="A real ./hack/e2e-local.sh run: dependencies verified, a kind-based OCM fleet bootstrapped with Kyverno and policies, every tool and prompt exercised including the gated approve-and-apply flow and a break-then-fix scenario, all steps passing, and the fleet deleted again" width="100%">
+
 ## Documentation
 
 | Page | What it covers |
