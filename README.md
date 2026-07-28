@@ -632,6 +632,7 @@ comes up, every step passes, and the fleet is torn down again -
 | [CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md) | a self-check against CNCF Sandbox expectations, used as a quality bar; honest gaps |
 | [Demo script](docs/demo-script.md) | a timed 3-act live demo with fallbacks |
 | [Upstream notes](docs/upstream-notes.md) | gaps found while building this; proposals for MCP, OCM, and Kyverno |
+| [Fleet-scale benchmarks](docs/benchmarks.md) | real measured numbers: hub-side pagination at 1000+ `ManagedCluster` CRs, concurrent vs. sequential `fleet_health` fan-out across real kwok spoke apiservers |
 | [Eval harness](eval/README.md) | scenario classes, scoring, how to run against your model |
 | [Changelog](CHANGELOG.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) | project meta |
 

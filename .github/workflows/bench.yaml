@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+#
+# Manual-dispatch fleet-scale benchmark: hack/bench_fleet.py against a real
+# kind-based OCM hub (hack/bootstrap.sh) plus ~20 real kwok-simulated spoke
+# apiservers. Not on a schedule - it creates and tears down real clusters and
+# is meant to be run deliberately when the fanout/pagination path changes, not
+# on every push. See docs/benchmarks.md for the method and the numbers this
+# has already produced on a real machine.
+name: bench
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install clusteradm
+        run: |
+          curl -sL https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh \
+            | INSTALL_DIR=/usr/local/bin bash
+          clusteradm version
+      - name: Install kwokctl
+        # kind/kubectl/helm/docker ship on the ubuntu-latest runner image already;
+        # kwokctl does not, so pin and fetch its release binary directly (same
+        # linux/amd64 target the runner always is). --runtime binary (the
+        # benchmark's default) then needs no container engine of its own -
+        # docker stays the engine for kind, unrelated to how kwok spokes run.
+        run: |
+          KWOK_VERSION=v0.8.0
+          curl -sL -o /usr/local/bin/kwokctl \
+            "https://github.com/kubernetes-sigs/kwok/releases/download/${KWOK_VERSION}/kwokctl-linux-amd64"
+          chmod +x /usr/local/bin/kwokctl
+          kwokctl --version
+      - name: Install the server into .venv
+        run: |
+          python3 -m venv .venv
+          ./.venv/bin/pip install -q --upgrade pip
+          ./.venv/bin/pip install -q -e .
+      - name: Bootstrap the kind hub (1 hub + 3 spokes)
+        run: bash hack/bootstrap.sh --no-jaeger
+      - name: Hub-scale benchmark (1000 fake ManagedCluster CRs)
+        run: |
+          OCM_MCP_HUB_CONTEXT=kind-hub ./.venv/bin/python hack/bench_fleet.py --phase hub \
+            | tee bench-hub.md
+      - name: Fan-out benchmark (~20 real kwok spoke apiservers)
+        run: |
+          OCM_MCP_HUB_CONTEXT=kind-hub ./.venv/bin/python hack/bench_fleet.py --phase fanout \
+            | tee bench-fanout.md
+      - name: Combine results
+        if: always()
+        run: |
+          {
+            echo "# bench_fleet.py results ($(date -u +%FT%TZ))"
+            echo
+            echo "## Hub phase"
+            cat bench-hub.md 2>/dev/null || echo "(not produced - see job log)"
+            echo
+            echo "## Fanout phase"
+            cat bench-fanout.md 2>/dev/null || echo "(not produced - see job log)"
+          } > bench-results.md
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bench-report
+          path: bench-results.md
+          retention-days: 30

@@ -8,6 +8,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Fleet-scale benchmark** (`hack/bench_fleet.py`, manual-dispatch `bench.yaml`,
+  `docs/benchmarks.md`): real measured numbers, not projections. Hub phase applies
+  1000 fake `ManagedCluster` CRs to the kind hub and times `ocm.paged_list` /
+  `fleet_health` reads (1023 clusters read back in ~0.08s). Fanout phase creates
+  ~20 real kwok-simulated spoke apiservers (`kwokctl --runtime binary`, ~50
+  kwok-simulated pods each), registers them on the hub, and times
+  `fleet_health` sequential vs. concurrent (`OCM_MCP_FANOUT_WORKERS`) - ~1.2x on
+  zero-latency localhost spokes, with the expected larger real-network win
+  documented, not fabricated. Setup/teardown (kwok clusters + their
+  ManagedCluster CRs) are wired into the script itself with a `--keep` debug flag.
 - **`get_fleet_health` tool**: whole-fleet health in one call instead of looping
   `get_cluster_health` per cluster - hub conditions from a single paged list plus
   concurrent spoke pod/deployment scans, fanned out on a bounded thread pool
