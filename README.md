@@ -36,9 +36,9 @@ and audit between the model and your clusters.**
 
 <br><br>
 
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude.gif" alt="Real terminal session: pip install ocm-mcp-server, export the hub and spoke kubeconfig contexts, claude mcp add, claude mcp list showing the server connected, then claude -p answering a live fleet-health question through the server" width="100%">
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude.gif" alt="A fleet operator's day with Claude, recorded live: pip install ocm-mcp-server, claude mcp add showing the server connected, a one-question fleet inventory with add-on health, placement reasoning, a privileged latest-tag deploy refused by the guardrails, a compliant proposal signed by a human with an Ed25519 token, applied and verified by Claude, and the day reconstructed from the audit trail" width="100%">
 
-<sub>From zero to a Claude-operated fleet in one minute: <code>pip install ocm-mcp-server</code>, point it at your kubeconfig contexts, <code>claude mcp add</code>, and ask. Recorded live against a kind fleet — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
+<sub>A fleet operator's day with <b>Claude</b>, live from a cold start: install from PyPI, <code>claude mcp add</code>, inventory the fleet, reason about placement — then ship a new service the gated way: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the whole day is read back <b>from the audit trail</b>. — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
 
 </div>
 
