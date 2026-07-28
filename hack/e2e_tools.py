@@ -470,12 +470,12 @@ def _mcp_protocol():
 
     try:
         out = asyncio.run(run())
-        checks_ok = (out["tools"] == 34 and out["prompts"] == 10 and out["resources"] == 6
+        checks_ok = (out["tools"] == 35 and out["prompts"] == 10 and out["resources"] == 6
                      and out["read_annotation_ok"] and out["apply_annotation_ok"]
                      and out["guardrails_resource_ok"] and out["list_clusters_over_wire"]
                      and out["prompt_over_wire_ok"])
         rec(P, "stdio JSON-RPC session", "Spawn the real server binary, complete the MCP handshake, and "
-            "verify the full advertised surface (34 tools with safety annotations, 10 prompts, "
+            "verify the full advertised surface (35 tools with safety annotations, 10 prompts, "
             "6 resources) plus a tool call, a resource read, and a prompt over the wire.",
             "PASS" if checks_ok else "FAIL", "mcp.client.stdio -> ocm-mcp-server", short(out))
     except Exception as e:  # noqa: BLE001

@@ -203,6 +203,22 @@ def get_cluster_health(cluster: str) -> str:
 
 @mcp.tool(annotations=READ)
 @traced_tool
+def get_fleet_health(clusters: str = "") -> str:
+    """Health of the WHOLE fleet in one call: hub conditions for every cluster plus
+    concurrent pod/deployment scans of each spoke that has a read context.
+
+    Args:
+        clusters: optional comma-separated managed-cluster names to scope the sweep;
+            empty means every cluster on the hub.
+
+    Clusters with problems sort first. A broken spoke shows an 'error' entry instead
+    of failing the sweep. Prefer this over calling get_cluster_health in a loop.
+    """
+    return _read(ocm.fleet_health, clusters=clusters)
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
 def query_events(cluster: str, namespace: str = "", limit: int = 40) -> str:
     """Recent Kubernetes events from a managed cluster, newest first.
 
