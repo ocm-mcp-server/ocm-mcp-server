@@ -9,6 +9,9 @@ single place.
 | File | What it is |
 |---|---|
 | `demo.gif` | The safe-remediation loop end to end: investigate with free reads, propose a change, get rejected by the guardrails and correct it, wait for a human-signed token, apply, verify, and report from the audit log. Shown at the top of the [README](../README.md), above "Why this exists". |
+| `connect-claude.gif` | Real recorded terminal session, install to first answer: `pip install ocm-mcp-server`, export the hub/spoke kubeconfig contexts, `claude mcp add`, `claude mcp list` showing `✔ Connected`, then `claude -p` answering a live fleet-health question through the server. Shown in the README below the safe-remediation demo. Re-record: run the flow under `asciinema rec` (idle capped at 4s), then `agg --idle-time-limit 4` → gif, `ffmpeg` → mp4. |
+| `connect-claude.mp4` | The same recording as MP4 with a narrated voice track (macOS `say`, segments aligned to the chapter markers), for embedding outside GitHub. |
+| `connect-claude.cast` | The raw asciinema cast for the connect demo. |
 | `e2e-local.gif` | A real, unedited `./hack/e2e-local.sh` run (asciinema recording, long waits compressed): fleet up, every tool/prompt exercised, break-then-fix, all steps passing, fleet deleted. Shown under "Try it end to end". |
 | `e2e-local.mp4` | The same recording as MP4, for embedding outside GitHub. |
 | `e2e-local.cast` | The raw asciinema cast the GIF/MP4 are rendered from (`agg e2e-local.cast out.gif` to re-render). |
