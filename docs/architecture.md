@@ -61,8 +61,8 @@ flowchart TD
         B["FastMCP dispatch<br/>server.py<br/>argument schema validation<br/>readOnlyHint and<br/>destructiveHint per tool"]
         B --> C["traced_tool wrapper<br/>tracing.py<br/>1. optional OTel span<br/>2. classify outcome<br/>3. hash-chained audit line<br/>4. metrics.record"]
         C --> D{"toolset?"}
-        D -- "reads: 28 tools,<br/>6 resources" --> E["_read wrapper<br/>server.py<br/>missing API -> UNAVAILABLE<br/>ApiException -> clear<br/>message, no stack trace"]
-        D -- "writes: 7 tools" --> F["gate chain<br/>read-only backstop<br/>size cap, schema<br/>static guardrails<br/>Kyverno dry-run<br/>proposal store<br/>human token, apply"]
+        D -- "reads: 29 tools,<br/>6 resources" --> E["_read wrapper<br/>server.py<br/>missing API -> UNAVAILABLE<br/>ApiException -> clear<br/>message, no stack trace"]
+        D -- "writes: 6 tools" --> F["gate chain<br/>read-only backstop<br/>size cap, schema<br/>static guardrails<br/>Kyverno dry-run<br/>proposal store<br/>human token, apply"]
         E --> G["ocm.py<br/>typed OCM operations<br/>summarized CRs<br/>paged_list: limit 500,<br/>continue tokens,<br/>5000-item ceiling"]
         F --> G
         G --> H["k8s.py client factory<br/>ApiClient cache per<br/>context, TTL 600 s<br/>hub: CustomObjectsApi<br/>spokes: CoreV1, AppsV1<br/>bounded, timed reads"]
