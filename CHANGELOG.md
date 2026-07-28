@@ -4,6 +4,52 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **6 MCP resources**: `ocm://clusters`, `ocm://clusters/{cluster}`, `ocm://policies`,
+  `ocm://proposals`, `ocm://audit/tail`, and `ocm://guardrails` (the exact allow-lists
+  proposals are checked against, so an agent can self-correct before a rejection
+  round-trip). Read-only, audited like tool calls.
+- **Signed audit anchors**: `ocm-mcp audit-anchor` signs the audit chain head with the
+  off-box approval key; `ocm-mcp audit-verify` now also fails unless the log still
+  extends every anchored head - tail truncation and wholesale rewrites are detectable.
+- **Kyverno full parity pack** (5 -> 9 policies): exact apiVersion/kind allow-list
+  (closes group spoofing past the kind-only allowlist), ClusterIP-only Services with no
+  externalIPs, HPA maxReplicas ceiling, no secret env refs or projected
+  serviceAccountToken/secret sources, volume types as an allow-list, a 10-manifest cap,
+  `runAsUser: 0` rejection, and `kube-*`/`openshift-*` namespace-prefix wildcards.
+  Offline suite grows from 16 to 39 cases.
+- **Guardrail <-> Kyverno parity contract in CI** (`make parity-test`): the shared
+  fixture corpus must get identical verdicts from the Python guardrails and
+  `kyverno apply`, making the two-layer defense-in-depth claim a tested invariant.
+- **Property-based guardrail tests** (hypothesis): totality on arbitrary input shapes
+  (pass or a clean violation, never a crash), secret refs and privileged containers
+  rejected in every container role, namespace and GVK fences, and content-independent
+  proposal bounds.
+- **Nightly end-to-end CI job** (`e2e.yaml`) running the full `hack/e2e-local.sh`
+  suite against a real kind-based OCM fleet, with the report as an artifact and a
+  README badge.
+- **e2e coverage**: the suite now also drives the real server binary over stdio
+  JSON-RPC with the official MCP client, exercises the gated rollback flow (including
+  an apply-scoped token being refused for rollback), every lifecycle action, all ten
+  prompts, remaining read tools, and a negative sweep (expired token, replayed token,
+  read-only mode, tampered audit log, signed anchor, `ocm-mcp doctor`).
+- **Docs stats drift gate** (`hack/docs_stats.py`): tool/prompt/resource/policy/test
+  counts quoted in README, docs, and wiki are computed from source and CI fails when
+  they drift.
+- **Recorded demo**: a real, unedited `./hack/e2e-local.sh` run (asciinema cast, GIF,
+  MP4 in `demo/`), embedded in the README under "Try it end to end".
+
+### Changed
+
+- **Hub reads are paged**: all hub list calls follow `continue` tokens in pages of
+  `OCM_MCP_LIST_PAGE_SIZE` (default 500) with an `OCM_MCP_LIST_MAX_ITEMS` ceiling
+  (default 5000) that reports truncation explicitly, instead of one unbounded response.
+- The release bump and CI version gate now also cover `__init__.__version__`, the Helm
+  chart `version`/`appVersion`, and the chart's default image tag.
+
 ## [0.2.2] - 2026-07-27
 
 A hardening and productization release addressing two follow-up enterprise-readiness

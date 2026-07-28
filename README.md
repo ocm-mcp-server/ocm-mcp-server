@@ -19,6 +19,7 @@ and audit between the model and your clusters.**
 [![OCM](https://img.shields.io/badge/multicluster-Open%20Cluster%20Management-326CE5?logo=kubernetes&logoColor=white)](https://open-cluster-management.io/)
 [![Kyverno](https://img.shields.io/badge/policy-Kyverno-ff6f00)](https://kyverno.io/)
 [![CI](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/ci.yaml/badge.svg)](https://github.com/sandeepbazar/ocm-mcp-server/actions)
+[![e2e](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/e2e.yaml/badge.svg)](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/e2e.yaml)
 [![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwiki%2Fsandeepbazar%2Focm-mcp-server%2Fcoverage-badge.json)](https://github.com/sandeepbazar/ocm-mcp-server/wiki/Unit-Test-Results)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/sandeepbazar/ocm-mcp-server/badge)](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)
 [![PyPI](https://img.shields.io/pypi/v/ocm-mcp-server?label=PyPI)](https://pypi.org/project/ocm-mcp-server/)
@@ -549,12 +550,18 @@ break-then-fix scenario, and writes a graphical HTML report:
 ```
 
 It (1) installs or version-checks the dependencies (Podman, kind, kubectl, clusteradm,
-helm; Docker is not required), (2) bootstraps a hub plus spokes, (3) runs the read
-tools, the gated propose -> approve -> apply write flow, a lifecycle action, and the
-prompts - each with a plain-language explanation of what it does and why, (4) injects a
-failing rollout and shows the diagnose-and-fix loop end to end, then (5) writes
+helm; Docker is not required), (2) bootstraps a hub plus spokes, (3) runs every read
+tool, the gated propose -> approve -> apply write flow, the gated ROLLBACK flow, every
+lifecycle action (cordon/uncordon, set_label, accept, enable/disable_addon), and all ten
+prompts - each with a plain-language explanation of what it does and why, (4) drives the
+real server binary over stdio JSON-RPC with the official MCP client (handshake, tools,
+prompts, resources, annotations), (5) runs a negative sweep proving every gate fails
+closed (expired token, replayed token, apply-scoped token refused for rollback, read-only
+mode, tampered audit log caught, signed audit anchor verified), (6) injects a failing
+rollout and shows the diagnose-and-fix loop end to end, then (7) writes
 `e2e-report.html` and tears the fleet back down (kind and Podman stay installed). The
-report is git-ignored. Works on macOS (Homebrew + Podman) and Linux.
+report is git-ignored. Works on macOS (Homebrew + Podman) and Linux, and runs
+[nightly in CI](.github/workflows/e2e.yaml).
 
 `ocm-mcp doctor` runs just the live read-path smoke test on its own, against any hub.
 
