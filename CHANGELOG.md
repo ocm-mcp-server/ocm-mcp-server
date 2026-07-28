@@ -8,6 +8,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Tracing exercised end to end**: `make e2e` installs the `[tracing]` extra and a
+  new step exports real OTel spans over OTLP/HTTP to a local sink, asserting the
+  trace batch names the tool span and the service - so the "OTel spans -> Jaeger"
+  path is tested, not just documented. A full tracing guide (enable, Jaeger
+  quickstart, what is recorded/redacted) was added to the deployment doc.
+- **Root `ARCHITECTURE.md`** entry point, and a full low-level design section in
+  `docs/architecture.md`: five vertical Mermaid diagrams (component stack, read-call
+  anatomy, gated write sequence, rollback/lifecycle paths, audit/anchor/key
+  machinery) plus a guarantee-to-enforcement index.
+
 - **6 MCP resources**: `ocm://clusters`, `ocm://clusters/{cluster}`, `ocm://policies`,
   `ocm://proposals`, `ocm://audit/tail`, and `ocm://guardrails` (the exact allow-lists
   proposals are checked against, so an agent can self-correct before a rejection

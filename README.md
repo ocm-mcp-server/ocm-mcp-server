@@ -482,7 +482,7 @@ ready-to-paste values at the end).
 | `OCM_MCP_HUB_CONTEXT` | yes | The kubeconfig **context that points at the OCM hub cluster**, where `ManagedCluster` and `ManifestWork` live. After `make bootstrap` this is `kind-hub`. Empty = current context. |
 | `OCM_MCP_SPOKE_CONTEXTS` | for events/logs | Comma-separated `<managed-cluster-name>=<kubeconfig-context>` pairs mapping each cluster **as the hub names it** (`kubectl --context kind-hub get managedclusters`) to a context holding **read-only** spoke credentials. Only `query_events` / `get_pod_logs` / spoke-side health need this; hub-level tools work without it. |
 | `KUBECONFIG` | no | Kubeconfig file path(s); defaults to `~/.kube/config`. |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Set (e.g. `http://localhost:4318`) to emit a trace span per tool call. Unset = tracing off, audit log still on. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Set (e.g. `http://localhost:4318`) to emit a trace span per tool call (needs the `[tracing]` extra; see the [tracing guide](docs/deployment.md#tracing-with-opentelemetry-and-jaeger)). Unset = tracing off, audit log still on. |
 | `OCM_MCP_HOME` | no | State directory (approval keypair, pending proposals, `audit.jsonl`, spent-token ids). Default `~/.ocm-mcp`. |
 | `OCM_MCP_SIGNER_KEY` | recommended | Path to the **private** Ed25519 signing key. Point this off the server (a separate account/device) so a compromised server cannot mint tokens. Default `OCM_MCP_HOME/approval_ed25519`. |
 | `OCM_MCP_VERIFIER_KEY` | no | Path to the **public** verifier key the server loads. Mount read-only. Default `OCM_MCP_HOME/approval_ed25519.pub`. |
@@ -557,7 +557,8 @@ prompts - each with a plain-language explanation of what it does and why, (4) dr
 real server binary over stdio JSON-RPC with the official MCP client (handshake, tools,
 prompts, resources, annotations), (5) runs a negative sweep proving every gate fails
 closed (expired token, replayed token, apply-scoped token refused for rollback, read-only
-mode, tampered audit log caught, signed audit anchor verified), (6) injects a failing
+mode, tampered audit log caught, signed audit anchor verified) plus a tracing-export
+check (OTel spans over OTLP received by a local sink), (6) injects a failing
 rollout and shows the diagnose-and-fix loop end to end, then (7) writes
 `e2e-report.html` and tears the fleet back down (kind and Podman stay installed). The
 report is git-ignored. Works on macOS (Homebrew + Podman) and Linux, and runs
@@ -579,7 +580,7 @@ comes up, every step passes, and the fleet is torn down again -
 | [Context names guide](docs/kubeconfig-contexts.md) | zero-background: what a kubeconfig context is and the exact commands to find yours (kind, EKS, GKE, AKS, OpenShift) |
 | [Deployment guide](docs/deployment.md) | laptop quickstart in depth, real OCM fleets, Docker, production hardening, troubleshooting |
 | [Worked examples](docs/examples.md) | full incident transcripts, approval sessions, adversarial rejections, audit output |
-| [Architecture](docs/architecture.md) | the choke-point idea, components, design decisions worth arguing about |
+| [Architecture](docs/architecture.md) (root pointer: [ARCHITECTURE.md](ARCHITECTURE.md)) | the choke-point idea, components, the full low-level design (vertical diagrams: stack, call anatomy, write gates, rollback, audit machinery), design decisions worth arguing about |
 | [Guardrails](docs/guardrails.md) | the four layers, deliberate absences, threat model, what we refuse to automate |
 | [Security self-assessment](docs/security-self-assessment.md) | CNCF TAG-Security-style assessment: actors, actions, security functions, limits |
 | [CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md) | a self-check against CNCF Sandbox expectations, used as a quality bar; honest gaps |

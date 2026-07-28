@@ -155,6 +155,7 @@ def main():
     _audit(srv)
     _mcp_protocol()
     _negative_sweep(srv, approvals, ocm, cl)
+    _tracing_export()
     _negative_scenario(srv, approvals, ocm, cl)
 
     print(f"\n{C['g'] if not FAILS else C['r']}e2e_tools.py finished "
@@ -569,6 +570,59 @@ def _negative_sweep(srv, approvals, ocm, cl):
             "ocm-mcp doctor", f"exit={code}")
     except Exception as e:  # noqa: BLE001
         rec(P, "ocm-mcp doctor", "Doctor smoke test.", "FAIL", "", f"{type(e).__name__}: {e}")
+
+
+# ------------------------------------------------------------- OTel tracing export
+def _tracing_export():
+    """Prove OTel spans actually leave the process over OTLP/HTTP.
+
+    A local OTLP sink stands in for Jaeger's collector (same wire protocol, port
+    4318 in real deployments). A fresh server process with OTEL_EXPORTER_OTLP_ENDPOINT
+    set makes one tool call; the sink must receive a trace batch naming the tool span
+    and the service. This covers the exporter wiring end to end without needing a
+    Jaeger container in CI.
+    """
+    P = "11c. Tracing - OTel spans export over OTLP (what Jaeger would receive)"
+    import http.server
+    import os
+    import threading
+
+    bodies = []
+
+    class Sink(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            n = int(self.headers.get("Content-Length", 0))
+            bodies.append((self.path, self.rfile.read(n)))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b"{}")
+
+        def log_message(self, *args):
+            pass  # keep the e2e console clean
+
+    sink = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Sink)
+    port = sink.server_address[1]
+    threading.Thread(target=sink.serve_forever, daemon=True).start()
+    try:
+        code = ("from ocm_mcp_server import server\n"
+                "server.list_pending_proposals()\n")
+        env = dict(os.environ, OTEL_EXPORTER_OTLP_ENDPOINT=f"http://127.0.0.1:{port}")
+        proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                              env=env, check=False, timeout=90)
+        blob = b"".join(b for _, b in bodies)
+        got_traces = any(p == "/v1/traces" for p, _ in bodies)
+        span_named = b"tool.list_pending_proposals" in blob and b"ocm-mcp-server" in blob
+        ok = proc.returncode == 0 and got_traces and span_named
+        rec(P, "OTLP span export", "With OTEL_EXPORTER_OTLP_ENDPOINT set (and the [tracing] extra "
+            "installed), every tool call opens a span named tool.<name> with redacted args; the "
+            "BatchSpanProcessor flushes it over OTLP/HTTP - the same endpoint a Jaeger all-in-one "
+            "or any OTel collector listens on (:4318).", "PASS" if ok else "FAIL",
+            "OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:PORT python -c 'tool call'",
+            f"posts={len(bodies)} paths={sorted({p for p, _ in bodies})} span_named={span_named} "
+            f"rc={proc.returncode}" + ("" if ok else f"\n{proc.stderr[-300:]}"))
+    finally:
+        sink.shutdown()
 
 
 # ------------------------------------------------- negative scenario: break then fix

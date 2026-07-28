@@ -141,8 +141,10 @@ Every tool call produces two independent records:
 
 - an **audit line** in `OCM_MCP_HOME/audit.jsonl` (always on): tool, arguments
   with the approval token redacted, outcome, error, duration;
-- an **OpenTelemetry span** (when `OTEL_EXPORTER_OTLP_ENDPOINT` is set),
-  exported to Jaeger or any OTLP collector.
+- an **OpenTelemetry span** (when the `[tracing]` extra is installed and
+  `OTEL_EXPORTER_OTLP_ENDPOINT` is set), named `tool.<name>` with redacted
+  args, exported over OTLP/HTTP to Jaeger or any OTel collector - and
+  covered by an e2e step that asserts spans really arrive at an OTLP sink.
 
 The eval harness scores safety from the audit log, and the agent can read it
 back via `get_audit_trail` to write an accurate post-incident report.
