@@ -283,6 +283,14 @@ class Settings:
         _tighten(p, 0o600)
         return p
 
+    @property
+    def audit_anchors_path(self) -> Path:
+        """Signed audit-chain checkpoints (`ocm-mcp audit-anchor`). Each line binds a
+        (seq, hash) chain head under the approval signer key, making tail truncation of
+        the audit log detectable by `ocm-mcp audit-verify`."""
+        self.home.mkdir(parents=True, exist_ok=True)
+        return self.home / "audit_anchors.jsonl"
+
     # Approval keys. The signing (private) key is meant for the human side (the ocm-mcp
     # CLI); the MCP server needs only the public verifier. The two paths are independent so
     # the signer can live on a separate device/account and the verifier can be mounted
