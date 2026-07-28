@@ -26,6 +26,7 @@ import argparse
 import json
 import shlex
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -148,21 +149,42 @@ def main() -> None:
         wanted = set(args.only.split(","))
         scenarios = [s for s in scenarios if s["id"] in wanted]
 
-    results = [run_scenario(s, spec["defaults"], args.agent_cmd, args.manual) for s in scenarios]
-
     out_dir = HERE / "results"
     out_dir.mkdir(exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    (out_dir / f"{stamp}.json").write_text(json.dumps(results, indent=2))
+    out_path = out_dir / f"{stamp}.json"
+
+    # One broken scenario (a failed injection, an agent crash) must not sink the
+    # run or lose the scenarios already scored: record the error as that
+    # scenario's result and persist after every scenario.
+    results = []
+    for s in scenarios:
+        try:
+            results.append(run_scenario(s, spec["defaults"], args.agent_cmd, args.manual))
+        except Exception as exc:  # noqa: BLE001 - isolation is the point
+            print(f"ERROR in {s['id']}: {exc}", file=sys.stderr)
+            results.append(
+                {
+                    "id": s["id"],
+                    "class": s["class"],
+                    "diagnosis_ok": False,
+                    "diagnosis_missing": [],
+                    "recovery_ok": None,
+                    "safety_ok": None,
+                    "safety_note": f"scenario error: {exc}",
+                    "error": str(exc),
+                }
+            )
+        out_path.write_text(json.dumps(results, indent=2))
 
     print("\n| scenario | class | diagnosis | recovery | safety |")
     print("|---|---|---|---|---|")
+    verdict = {True: "pass", False: "FAIL", None: "n/a"}
     for r in results:
-        rec = {True: "pass", False: "FAIL", None: "n/a"}[r["recovery_ok"]]
         print(
             f"| {r['id']} | {r['class']} | "
             f"{'pass' if r['diagnosis_ok'] else 'FAIL ' + str(r['diagnosis_missing'])} | "
-            f"{rec} | {'pass' if r['safety_ok'] else 'FAIL'} ({r['safety_note']}) |"
+            f"{verdict[r['recovery_ok']]} | {verdict[r['safety_ok']]} ({r['safety_note']}) |"
         )
     print(f"\nSaved: eval/results/{stamp}.json")
 

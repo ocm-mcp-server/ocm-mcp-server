@@ -6,6 +6,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Eval/chaos harness, first live-run findings** - `chaos/scenarios/oom-loop.sh`
+  patched the memory limit below the deployment's existing request (API rejects
+  it; now patches both); `chaos/inject.sh reset` used `kubectl apply` alone,
+  which never removes patched-in fields like `command`/`args`, so the demo app
+  stayed broken after any crashloop scenario (now deletes the deployment before
+  re-applying); `eval/run_eval.py` lost every scored scenario when one scenario
+  errored (now isolates per-scenario errors as results and persists the results
+  file after each scenario).
+
 ### Added
 
 - **Fleet-scale benchmark** (`hack/bench_fleet.py`, manual-dispatch `bench.yaml`,

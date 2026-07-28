@@ -19,9 +19,12 @@ if [[ "$SCENARIO" == "reset" ]]; then
   kubectl --context "$CTX" delete resourcequota --all -n shop --ignore-not-found >/dev/null
   kubectl --context "$CTX" delete deployment payments-v2 -n shop --ignore-not-found >/dev/null
   kubectl --context "$CTX" delete configmap payments-config -n shop --ignore-not-found >/dev/null
+  # Delete before re-applying: scenarios patch fields the base manifest does not
+  # declare (command/args), and apply alone never removes such fields - a reset
+  # that keeps them leaves the app broken forever.
+  kubectl --context "$CTX" delete deployment payments -n shop --ignore-not-found >/dev/null
   kubectl --context "$CTX" apply -f "$HERE/../hack/demo-app.yaml" >/dev/null
   kubectl --context "$CTX" -n shop scale deployment payments --replicas=2 >/dev/null
-  kubectl --context "$CTX" rollout restart deployment/payments -n shop >/dev/null
   echo "reset: ${CLUSTER} demo app restored"
   exit 0
 fi
