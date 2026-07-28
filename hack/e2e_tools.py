@@ -90,6 +90,9 @@ def main():
          lambda: ocm.list_cluster_claims(), None),
         (f"get_cluster_health({cl})", "The on-call view: unhealthy pods and degraded deployments.",
          lambda: ocm.cluster_health(cl), None),
+        ("get_fleet_health()", ("The whole-fleet sweep in one call: hub conditions for every "
+         "cluster plus a fanned-out spoke pod/deployment scan - no per-cluster looping needed."),
+         lambda: _fleet_health_checked(ocm, args.spokes), None),
         (f"query_events({cl})", "Recent Kubernetes events - the 'why' behind failures.",
          lambda: ocm.cluster_events(cl, limit=8), None),
         (f"list_manifestworks({cl})", "What the hub is currently delivering to this cluster.",
@@ -175,6 +178,22 @@ def _first_pod_logs(ocm, cl):
             return {"namespace": ns, "pod": pod,
                     "log_tail": ocm.pod_logs(cl, ns, pod, lines=5)[-400:]}
     raise LookupError("no running pod found to read logs from")
+
+
+def _fleet_health_checked(ocm, spokes):
+    """Whole-fleet sweep via get_fleet_health() (no args) - asserts the fan-out actually
+    covered every bootstrap cluster, not just that the call itself didn't raise."""
+    fh = ocm.fleet_health()
+    fleet = fh.get("fleet", {})
+    seen = {e.get("cluster") for e in fh.get("clusters", [])}
+    expected = {f"cluster{i}" for i in range(1, spokes + 1)}
+    missing = sorted(expected - seen)
+    assert fleet.get("total", 0) >= len(expected), \
+        f"fleet.total={fleet.get('total')} < {len(expected)} bootstrap clusters"
+    assert not missing, f"bootstrap cluster(s) missing from fleet_health clusters[]: {missing}"
+    assert fleet.get("spoke_checked", 0) >= 1, \
+        f"spoke_checked={fleet.get('spoke_checked')} < 1 - no spoke was actually scanned"
+    return fh
 
 
 # --------------------------------------------------------------------- fixtures
