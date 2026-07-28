@@ -36,9 +36,9 @@ and audit between the model and your clusters.**
 
 <br><br>
 
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude.gif" alt="Real terminal session: pip install ocm-mcp-server, export the hub and spoke kubeconfig contexts, claude mcp add, claude mcp list showing the server connected, then claude -p answering a live fleet-health question through the server" width="100%">
+<a href="https://github.com/sandeepbazar/ocm-mcp-server/blob/main/demo/connect-claude.mp4"><img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude-poster.png" alt="Narrated demo (click to play): pip install ocm-mcp-server, export the hub and spoke kubeconfig contexts, claude mcp add, claude mcp list showing the server connected, then claude -p answering a live fleet-health question through the server" width="100%"></a>
 
-<sub>From zero to a Claude-operated fleet in one minute: <code>pip install ocm-mcp-server</code>, point it at your kubeconfig contexts, <code>claude mcp add</code>, and ask. Recorded live against a kind fleet — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
+<sub>From zero to a Claude-operated fleet in one minute — <b>click to play the narrated demo</b>: <code>pip install ocm-mcp-server</code>, point it at your kubeconfig contexts, <code>claude mcp add</code>, and ask. Recorded live against a kind fleet. Prefer autoplay? <a href="demo/connect-claude.gif">Silent GIF</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
 
 </div>
 
