@@ -42,7 +42,9 @@ ok(){ printf '\033[1;32m  \xe2\x9c\x93 %s\033[0m\n' "$*"; }
 info(){ printf '\033[0;90m  \xe2\x80\xa2 %s\033[0m\n' "$*"; }
 warn(){ printf '\033[1;33m  ! %s\033[0m\n' "$*"; }
 
-mkdir -p "$RUN_DIR"; : > "$RESULTS"; : > "$CREATED"
+# Fresh server state (proposals, keys, audit log, anchors) every run: stale state
+# from an older run/format would poison the audit-chain and anchor verification steps.
+mkdir -p "$RUN_DIR"; : > "$RESULTS"; : > "$CREATED"; rm -rf "$RUN_DIR/state"
 
 # Append one JSON record for the HTML report (python handles escaping).
 rec(){ PHASE="$1" TITLE="$2" WHY="$3" STATUS="$4" CMD="${5:-}" OUTPUT="${6:-}" \
