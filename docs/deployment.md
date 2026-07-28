@@ -206,7 +206,8 @@ external sink before any write-enabled use.
       stream it to stderr for a collector. Run `ocm-mcp audit-anchor` on a schedule from
       a trusted terminal so tail truncation is detectable too.
 - [ ] **Metrics:** set `OCM_MCP_METRICS_PORT` for Prometheus `/metrics` (binds
-      localhost unless `OCM_MCP_METRICS_HOST` is set).
+      localhost unless `OCM_MCP_METRICS_HOST` is set). These are the server's own
+      tool-call counters - not fleet metrics from the clusters' Prometheus.
 - [ ] **Tracing:** install the `[tracing]` extra and set `OTEL_EXPORTER_OTLP_ENDPOINT`
       at your collector; spans carry tool names and redact approval tokens. Full
       how-to below in [Tracing with OpenTelemetry and Jaeger](#tracing-with-opentelemetry-and-jaeger).
