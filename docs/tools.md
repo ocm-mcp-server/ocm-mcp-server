@@ -26,7 +26,8 @@ topology-agnostic. Two things depend on topology:
   spoke directly and need a per-cluster context (a kubeconfig, or cluster-proxy +
   managed-serviceaccount). `get_fleet_health` fans the same per-cluster scan out
   concurrently across every cluster (`OCM_MCP_FANOUT_WORKERS`, default 8); a cluster
-  with no context or a broken spoke shows as an `error` entry instead of failing the
+  without configured spoke context shows `spoke_view: "unavailable (no read context configured)"`
+  with no error entry; broken spokes show as an `error` entry instead of failing the
   sweep. `get_cluster_info` gives version, nodes, and console URL from the hub with no
   spoke access at all.
 
