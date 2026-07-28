@@ -50,59 +50,59 @@ Every box is a real component; every arrow is a real call path or protocol.
 
 ```mermaid
 flowchart TD
-    subgraph CLIENT["AGENT SIDE - any MCP client (Claude Code, Codex, Gemini, ...)"]
-        A["AI agent<br/>sees ONLY: 34 tools + 10 prompts + 6 resources<br/>never: kubeconfig, Secrets, exec, raw kubectl"]
+    subgraph CLIENT["AGENT SIDE - any MCP client"]
+        A["AI agent<br/>sees ONLY:<br/>34 tools, 10 prompts,<br/>6 resources<br/>never: kubeconfig,<br/>Secrets, exec, kubectl"]
     end
 
-    A -- "MCP: JSON-RPC 2.0 over stdio<br/>(initialize / tools/list / tools/call /<br/>resources/read / prompts/get)" --> B
+    A -- "MCP JSON-RPC 2.0<br/>over stdio" --> B
 
-    subgraph SERVER["SERVER PROCESS - ocm-mcp-server (Python, single process)"]
-        B["FastMCP dispatch (server.py)<br/>schema validation of tool arguments<br/>annotations: readOnlyHint / destructiveHint per tool"]
-        B --> C["@traced_tool wrapper (tracing.py)<br/>1. optional OTel span (OTLP/HTTP exporter)<br/>2. classify outcome: ok / rejected / failed / error / unavailable<br/>3. append hash-chained audit line (seq, prev, hash)<br/>4. metrics.record(tool, outcome, duration_ms)"]
+    subgraph SERVER["SERVER PROCESS - ocm-mcp-server"]
+        B["FastMCP dispatch<br/>server.py<br/>argument schema validation<br/>readOnlyHint and<br/>destructiveHint per tool"]
+        B --> C["traced_tool wrapper<br/>tracing.py<br/>1. optional OTel span<br/>2. classify outcome<br/>3. hash-chained audit line<br/>4. metrics.record"]
         C --> D{"toolset?"}
-        D -- "reads (27 tools, 6 resources)" --> E["_read() wrapper (server.py)<br/>FeatureNotInstalled/LookupError -> 'UNAVAILABLE: ...'<br/>ApiException -> clear message, never a stack trace"]
-        D -- "writes (7 tools)" --> F["gate chain (server.py + guardrails.py + approvals.py)<br/>read-only backstop -> size cap -> schema -> static guardrails<br/>-> Kyverno dry-run -> proposal store -> human token -> apply"]
-        E --> G["ocm.py - typed OCM operations<br/>summarizes raw CRs to operator-relevant fields<br/>paged_list(): limit=500 + continue tokens, 5000-item ceiling"]
+        D -- "reads: 27 tools,<br/>6 resources" --> E["_read wrapper<br/>server.py<br/>missing API -> UNAVAILABLE<br/>ApiException -> clear<br/>message, no stack trace"]
+        D -- "writes: 7 tools" --> F["gate chain<br/>read-only backstop<br/>size cap, schema<br/>static guardrails<br/>Kyverno dry-run<br/>proposal store<br/>human token, apply"]
+        E --> G["ocm.py<br/>typed OCM operations<br/>summarized CRs<br/>paged_list: limit 500,<br/>continue tokens,<br/>5000-item ceiling"]
         F --> G
-        G --> H["k8s.py - client factory<br/>per-context ApiClient cache (TTL 600 s,<br/>so rotated/exec-refreshed creds are picked up)<br/>hub: CustomObjectsApi + CertificatesV1Api<br/>spokes: CoreV1Api + AppsV1Api (bounded, timed reads)"]
+        G --> H["k8s.py client factory<br/>ApiClient cache per<br/>context, TTL 600 s<br/>hub: CustomObjectsApi<br/>spokes: CoreV1, AppsV1<br/>bounded, timed reads"]
     end
 
-    subgraph STATE["LOCAL STATE - $OCM_MCP_HOME (0600/0700, flock + fsync)"]
-        S1["proposals/&lt;uuid4-hex&gt;.json<br/>status: pending -> approved/rejected -> applied -> rolled_back<br/>(forward-only transitions)"]
-        S2["audit.jsonl - hash chain<br/>+ audit_anchors.jsonl - Ed25519-signed heads"]
-        S3["approval_ed25519.pub (+ .pub.prev during rotation)<br/>public VERIFIER key only - the server can never sign"]
-        S4["used_tokens.jsonl - spent jti ledger<br/>O(1) append, compacted at 2000 lines"]
+    subgraph STATE["LOCAL STATE - OCM_MCP_HOME"]
+        S1["proposals/uuid.json<br/>0600, fsync, flock<br/>pending -> approved -><br/>applied -> rolled_back<br/>forward-only"]
+        S2["audit.jsonl<br/>hash chain<br/>audit_anchors.jsonl<br/>signed heads"]
+        S3["approval_ed25519.pub<br/>verifier key ONLY<br/>server can never sign"]
+        S4["used_tokens.jsonl<br/>spent jti ledger<br/>compacted at 2000"]
     end
     F -.-> S1
     C -.-> S2
     F -.-> S3
     F -.-> S4
 
-    subgraph HUMAN["TRUSTED TERMINAL - ocm-mcp CLI (cli.py) - never reachable by the agent"]
-        T1["ocm-mcp pending / show &lt;id&gt;<br/>human reviews the EXACT manifests"]
-        T2["ocm-mcp approve &lt;id&gt;<br/>signs claims with the Ed25519 PRIVATE key<br/>(OCM_MCP_SIGNER_KEY - ideally off-box/KMS)"]
-        T3["ocm-mcp audit-anchor / audit-verify<br/>signs + verifies the audit chain head"]
+    subgraph HUMAN["TRUSTED TERMINAL - ocm-mcp CLI"]
+        T1["ocm-mcp pending / show<br/>human reviews the<br/>EXACT manifests"]
+        T2["ocm-mcp approve<br/>signs claims with the<br/>Ed25519 PRIVATE key<br/>ideally off-box or KMS"]
+        T3["ocm-mcp audit-anchor<br/>and audit-verify<br/>sign + verify the<br/>audit chain head"]
     end
     T1 -. reads .-> S1
-    T2 -- "token handed to the agent out-of-band" --> A
+    T2 -- "token handed over<br/>out-of-band" --> A
     T3 -.-> S2
 
-    H -- "HTTPS to hub kube-apiserver<br/>(kubeconfig context, OCM_MCP_HUB_CONTEXT)" --> I
+    H -- "HTTPS to hub apiserver<br/>OCM_MCP_HUB_CONTEXT" --> I
 
     subgraph HUB["OCM HUB CLUSTER"]
         I["kube-apiserver"]
-        I --> J["Kyverno admission webhooks<br/>9 ClusterPolicies match ManifestWork<br/>foreach over spec.workload.manifests<br/>label-scoped: app.kubernetes.io/managed-by=ocm-mcp-server<br/>+ requester-identity rule closing the unlabeled bypass<br/>dry-run create (dryRun=All) = layer-2 gate at PROPOSE time"]
-        J --> K["RBAC (deploy/rbac.yaml)<br/>read OCM API groups; create/delete manifestworks;<br/>patch managedclusters; scoped CSR approval<br/>NO secrets, NO pods/exec, NO arbitrary delete"]
-        K --> L["OCM control plane CRs<br/>ManagedCluster / Placement / PlacementDecision<br/>ManifestWork / ManifestWorkReplicaSet<br/>ManagedClusterAddOn / Policy / CSR"]
+        I --> J["Kyverno admission<br/>9 ClusterPolicies<br/>match ManifestWork<br/>foreach embedded manifest<br/>label + requester scoped<br/>dry-run = layer 2 gate<br/>at propose time"]
+        J --> K["RBAC rbac.yaml<br/>read OCM groups<br/>create/delete works<br/>patch clusters<br/>scoped CSR approval<br/>NO secrets, NO exec,<br/>NO arbitrary delete"]
+        K --> L["OCM control plane CRs<br/>ManagedCluster, Placement<br/>PlacementDecision<br/>ManifestWork, MWRS<br/>ManagedClusterAddOn<br/>Policy, CSR"]
     end
 
-    L -- "OCM registration + work agents<br/>(klusterlet on each spoke, pull model)" --> M
+    L -- "OCM work agents<br/>klusterlet pull model" --> M
 
-    subgraph SPOKES["MANAGED CLUSTERS (spokes)"]
-        M["klusterlet work agent applies the<br/>embedded manifests; status feeds back<br/>into ManifestWork .status (Applied/Available)"]
-        N["ocm-mcp-reader SA (read-only RBAC)<br/>used by get_cluster_health / query_events /<br/>get_pod_logs via OCM_MCP_SPOKE_CONTEXTS<br/>(production path: OCM cluster-proxy instead)"]
+    subgraph SPOKES["MANAGED CLUSTERS - spokes"]
+        M["klusterlet applies the<br/>embedded manifests<br/>status feeds back into<br/>ManifestWork status<br/>Applied / Available"]
+        N["ocm-mcp-reader SA<br/>read-only RBAC for<br/>health, events, pod logs<br/>production: cluster-proxy"]
     end
-    H -- "HTTPS, bounded reads<br/>(limit=500, timeout 5s/30s)" --> N
+    H -- "HTTPS bounded reads<br/>limit 500, timeout 5/30 s" --> N
 ```
 
 ### 2. Anatomy of one read call - `list_clusters`
@@ -208,42 +208,42 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    R0["propose_rollback(applied_proposal_id)"] --> R1["loads the APPLIED proposal;<br/>creates a DISTINCT rollback proposal binding<br/>target work name + current UID + origin id"]
-    R1 --> R2["human approves it separately:<br/>token claims op=rollback"]
-    R2 --> R3["rollback_manifestwork(rollback_id, token)"]
-    R3 --> R4{"ownership checks<br/>BEFORE the token is burned"}
-    R4 -- "managed-by label missing" --> RX["REJECTED - never deletes<br/>a work it did not create"]
-    R4 -- "UID changed since approval" --> RX2["REJECTED - the work was<br/>re-created; re-propose"]
-    R4 -- ok --> R5["verify + consume rollback-scoped token<br/>-> DELETE ManifestWork<br/>-> rollback proposal: applied<br/>-> origin proposal: rolled_back"]
+    R0["propose_rollback<br/>applied proposal id"] --> R1["loads the APPLIED proposal<br/>creates a DISTINCT<br/>rollback proposal binding<br/>target work name,<br/>current UID, origin id"]
+    R1 --> R2["human approves it<br/>separately: token<br/>claims op=rollback"]
+    R2 --> R3["rollback_manifestwork<br/>rollback id + token"]
+    R3 --> R4{"ownership checks<br/>BEFORE the token<br/>is burned"}
+    R4 -- "managed-by<br/>label missing" --> RX["REJECTED<br/>never deletes a work<br/>it did not create"]
+    R4 -- "UID changed<br/>since approval" --> RX2["REJECTED<br/>work was re-created,<br/>re-propose"]
+    R4 -- ok --> R5["verify + consume<br/>rollback-scoped token<br/>DELETE ManifestWork<br/>rollback prop: applied<br/>origin prop: rolled_back"]
 
-    C0["propose_cluster_action(cluster, action, params)"] --> C1["action allow-list: cordon / uncordon /<br/>set_label / accept / enable_addon / disable_addon<br/>- nothing else is even proposable"]
-    C1 --> C2["server-side dry-run of the exact patch/create<br/>at PROPOSE time (fails early, clearly)"]
-    C2 --> C3["same store -> same human token -> apply_cluster_action"]
-    C3 --> C4["cordon/uncordon/set_label/accept: merge-patch ManagedCluster<br/>accept also approves ONLY the CSRs captured (name+uid+<br/>request-hash+CN verified) at approval time<br/>enable/disable_addon: create/delete ManagedClusterAddOn"]
+    C0["propose_cluster_action<br/>cluster, action, params"] --> C1["action allow-list:<br/>cordon, uncordon,<br/>set_label, accept,<br/>enable / disable addon<br/>nothing else proposable"]
+    C1 --> C2["server-side dry-run of<br/>the exact patch/create<br/>at PROPOSE time"]
+    C2 --> C3["same store, same<br/>human token,<br/>apply_cluster_action"]
+    C3 --> C4["patch actions merge-patch<br/>the ManagedCluster<br/>accept approves ONLY the<br/>captured CSRs: name, uid,<br/>request-hash, CN verified<br/>addon actions create or<br/>delete ManagedClusterAddOn"]
 ```
 
 ### 5. Integrity machinery - audit chain, anchors, keys, state
 
 ```mermaid
 flowchart TD
-    subgraph AUD["audit.jsonl - tamper-evident hash chain"]
-        A1["entry N-1<br/>hash H1"] --> A2["entry N<br/>prev=H1<br/>hash H2 = sha256(H1 + canonical(entry))"]
-        A2 --> A3["entry N+1<br/>prev=H2 ..."]
+    subgraph AUD["audit.jsonl - hash chain"]
+        A1["entry N-1<br/>hash H1"] --> A2["entry N<br/>prev = H1<br/>hash H2 = sha256 of<br/>H1 + canonical entry"]
+        A2 --> A3["entry N+1<br/>prev = H2 ..."]
     end
-    A3 --> V1["verify_audit_chain (ocm-mcp audit-verify)<br/>recomputes every hash -> catches edit,<br/>reorder, mid-log deletion"]
-    V1 --> V2["blind spot of a bare chain:<br/>tail truncation + full rewrite"]
-    V2 --> V3["closed by ANCHORS: ocm-mcp audit-anchor<br/>(trusted terminal) signs (seq, hash, ts)<br/>with the approval PRIVATE key -> audit_anchors.jsonl"]
-    V3 --> V4["audit-verify also fails unless the log still<br/>EXTENDS every anchored head (verifier key only)"]
+    A3 --> V1["verify_audit_chain<br/>ocm-mcp audit-verify<br/>recomputes every hash<br/>catches edit, reorder,<br/>mid-log deletion"]
+    V1 --> V2["blind spot of a bare chain:<br/>tail truncation,<br/>full rewrite"]
+    V2 --> V3["closed by ANCHORS<br/>ocm-mcp audit-anchor<br/>trusted terminal signs<br/>seq + hash + timestamp<br/>with the PRIVATE key"]
+    V3 --> V4["audit-verify also fails<br/>unless the log still<br/>EXTENDS every anchored<br/>head - verifier key only"]
 
     subgraph KEYS["key custody"]
-        K1["PRIVATE approval_ed25519<br/>CLI / trusted terminal / KMS<br/>signs tokens + anchors"]
-        K2["PUBLIC approval_ed25519.pub (+ .pub.prev)<br/>server side - verify only<br/>compromised server cannot mint"]
+        K1["PRIVATE approval key<br/>CLI, trusted terminal,<br/>or KMS<br/>signs tokens + anchors"]
+        K2["PUBLIC verifier key<br/>plus .pub.prev in rotation<br/>server side, verify only<br/>compromised server<br/>cannot mint"]
     end
 
-    subgraph FILES["$OCM_MCP_HOME on disk"]
-        F1["proposals/*.json (0600, fsync, forward-only status)"]
-        F2["audit.jsonl + audit_anchors.jsonl (0600, flock)"]
-        F3["used_tokens.jsonl (replay ledger)"]
+    subgraph FILES["OCM_MCP_HOME on disk"]
+        F1["proposals/*.json<br/>0600, fsync,<br/>forward-only status"]
+        F2["audit.jsonl +<br/>audit_anchors.jsonl<br/>0600, flock"]
+        F3["used_tokens.jsonl<br/>replay ledger"]
     end
 ```
 
