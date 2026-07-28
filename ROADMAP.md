@@ -61,8 +61,10 @@ be auditable.
       while keeping the content-bound, asymmetric-signature guarantee.
 - [ ] **Progressive rollout tools**: first-class support for ManifestWorkReplicaSet
       progressive strategies and decision groups.
-- [ ] **Externally-anchored audit**: the audit log is already hash-chained (done); anchor
-      or sign the chain head to a SIEM/object store so tail-truncation is also detectable.
+- [x] **Anchored audit**: `ocm-mcp audit-anchor` signs the chain head with the off-box
+      approval key and `audit-verify` enforces every anchored head, so tail truncation and
+      full rewrites are detectable. Shipping anchors to a SIEM/object store composes with
+      the structured-audit-sink item above.
 
 ## Project maturity
 

@@ -203,7 +203,8 @@ external sink before any write-enabled use.
       all of which are lost on restart with `emptyDir`.
 - [ ] **Audit shipping:** tail `audit.jsonl` (hash-chained; verify with
       `ocm-mcp audit-verify`) into your log pipeline, or set `OCM_MCP_AUDIT_ECHO=1` to
-      stream it to stderr for a collector. Tail truncation needs external anchoring.
+      stream it to stderr for a collector. Run `ocm-mcp audit-anchor` on a schedule from
+      a trusted terminal so tail truncation is detectable too.
 - [ ] **Metrics:** set `OCM_MCP_METRICS_PORT` for Prometheus `/metrics` (binds
       localhost unless `OCM_MCP_METRICS_HOST` is set).
 - [ ] **Tracing:** set `OTEL_EXPORTER_OTLP_ENDPOINT` at your collector; spans

@@ -11,7 +11,8 @@ Run on a trusted terminal, never by the agent:
     ocm-mcp reject <id>             mark a proposal rejected
     ocm-mcp audit [-n 20]           tail the tool-call audit log
     ocm-mcp doctor                  live read-path smoke test against the hub
-    ocm-mcp audit-verify            recompute the audit-log hash chain
+    ocm-mcp audit-verify            recompute the hash chain + check signed anchors
+    ocm-mcp audit-anchor            sign the audit-chain head (makes truncation detectable)
     ocm-mcp rotate-secret           new Ed25519 approval keypair (invalidates all tokens)
 """
 
@@ -83,11 +84,25 @@ def cmd_reject(args: argparse.Namespace) -> int:
 
 
 def cmd_audit_verify(_args: argparse.Namespace) -> int:
-    from .tracing import verify_audit_chain
+    from .tracing import verify_audit_anchors, verify_audit_chain
 
     ok, msg = verify_audit_chain()
     print(msg)
-    return 0 if ok else 1
+    anchors_ok, anchors_msg = verify_audit_anchors()
+    print(anchors_msg)
+    return 0 if ok and anchors_ok else 1
+
+
+def cmd_audit_anchor(_args: argparse.Namespace) -> int:
+    from .tracing import anchor_audit_chain
+
+    try:
+        anchor = anchor_audit_chain()
+    except approvals.ApprovalError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    print(f"anchored audit chain head: seq {anchor['seq']}, hash {anchor['hash'][:16]}...")
+    return 0
 
 
 def cmd_audit(args: argparse.Namespace) -> int:
@@ -230,6 +245,7 @@ def main() -> None:
 
     sub.add_parser("doctor").set_defaults(func=cmd_doctor)
     sub.add_parser("audit-verify").set_defaults(func=cmd_audit_verify)
+    sub.add_parser("audit-anchor").set_defaults(func=cmd_audit_anchor)
 
     p_rotate = sub.add_parser("rotate-secret")
     p_rotate.add_argument("-y", "--yes", action="store_true", help="skip confirmation prompt")

@@ -106,11 +106,11 @@ def audit(entry: dict[str, Any]) -> None:
 
     Each entry carries a monotonic `seq`, the previous entry's hash (`prev`), and its own
     `hash` = sha256(prev + canonical(entry)). `verify_audit_chain` detects any edit,
-    reordering, or deletion in the middle of the log. It does NOT detect truncation of the
-    tail (deleting the most recent entries) or a wholesale rewrite by an actor who can
-    recompute every hash - those require external anchoring (periodically signing or
-    exporting the chain head to a SIEM/object store; see the roadmap). Writes are fsynced
-    under a lock.
+    reordering, or deletion in the middle of the log. Truncation of the tail and wholesale
+    rewrites are covered separately: `ocm-mcp audit-anchor` signs the chain head with the
+    off-box approval key, and `verify_audit_anchors` fails if the log no longer extends an
+    anchored head. Entries newer than the last anchor remain unprotected until the next
+    anchor. Writes are fsynced under a lock.
     """
     path = SETTINGS.audit_log
     entry["ts"] = time.time()
@@ -162,6 +162,95 @@ def verify_audit_chain(path: Any = None) -> tuple[bool, str]:
                 return False, f"audit chain broken at line {i} (seq {rec.get('seq')})"
             prev, n = stated, n + 1
     return True, f"audit chain intact over {n} entries"
+
+
+def anchor_audit_chain() -> dict[str, Any]:
+    """Sign the current audit-chain head with the approval SIGNER key.
+
+    Run from the trusted terminal (`ocm-mcp audit-anchor`), like minting an
+    approval: the server holds only the verifier key, so a compromised server
+    cannot forge anchors. Each anchor binds (seq, hash) under an Ed25519
+    signature; once anchored, deleting or rewriting the log up to that head is
+    detectable by `verify_audit_anchors` - closing the tail-truncation gap the
+    bare hash chain cannot see.
+    """
+    from .approvals import ApprovalError, _b64, _private_key
+
+    seq, head = _chain_head()
+    if seq == 0:
+        raise ApprovalError("Nothing to anchor: the audit log has no entries.")
+    anchor = {"seq": seq, "hash": head, "anchored_at": int(time.time())}
+    anchor["sig"] = _b64(_private_key().sign(_canonical(anchor).encode()))
+    path = SETTINGS.audit_anchors_path
+    with locked(path), path.open("a") as f:
+        f.write(json.dumps(anchor) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
+    path.chmod(0o600)
+    return anchor
+
+
+def verify_audit_anchors() -> tuple[bool, str]:
+    """Check every signed anchor against the audit log with the verifier key.
+
+    Detects what the bare hash chain cannot: a truncated tail (an anchored seq
+    no longer present) and a wholesale rewrite (an anchored hash that no longer
+    matches). Entries newer than the last anchor are not yet protected - the
+    message says how many, so a monitoring job can alert on a growing gap.
+    """
+    from .approvals import _unb64, _verifier_keys
+
+    anchors_path = SETTINGS.audit_anchors_path
+    if not anchors_path.exists() or not anchors_path.read_text().strip():
+        return True, "no anchors recorded yet (run 'ocm-mcp audit-anchor' from a trusted terminal)"
+
+    by_seq: dict[int, str] = {}
+    with open(SETTINGS.audit_log) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                with_hash = json.loads(line)
+                by_seq[int(with_hash.get("seq", 0))] = str(with_hash.get("hash", ""))
+    head_seq = max(by_seq) if by_seq else 0
+
+    keys = _verifier_keys()
+    checked = 0
+    last_anchored = 0
+    with open(anchors_path) as f:
+        for i, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                anchor = json.loads(line)
+            except ValueError:
+                return False, f"anchor file corrupt at line {i} (unparseable entry)"
+            sig = _unb64(str(anchor.get("sig", "")))
+            payload = _canonical({k: anchor[k] for k in anchor if k != "sig"}).encode()
+            if not any(_valid_anchor_sig(k, sig, payload) for k in keys):
+                return False, f"anchor at line {i} has an invalid signature"
+            seq, stated = int(anchor.get("seq", 0)), str(anchor.get("hash", ""))
+            if by_seq.get(seq) != stated:
+                return False, (
+                    f"anchor at line {i} (seq {seq}) does not match the log - the audit "
+                    "log was truncated or rewritten after this head was anchored"
+                )
+            checked += 1
+            last_anchored = max(last_anchored, seq)
+    unanchored = head_seq - last_anchored
+    return True, (
+        f"{checked} anchor(s) verified; log head is seq {head_seq}, last anchored seq "
+        f"{last_anchored} ({unanchored} newer entr{'y' if unanchored == 1 else 'ies'} "
+        "not yet anchored)"
+    )
+
+
+def _valid_anchor_sig(key: Any, sig: bytes, payload: bytes) -> bool:
+    try:
+        key.verify(sig, payload)
+        return True
+    except Exception:  # noqa: BLE001 - any signature failure means "not this key"
+        return False
 
 
 def classify_outcome(result: Any) -> str:

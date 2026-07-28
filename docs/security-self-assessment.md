@@ -146,10 +146,12 @@ four independent controls between the model and the clusters.
   transitions, so a stale file cannot be re-applied.
 - **Tamper-evident audit.** Each audit line carries an actor, a monotonic sequence number,
   and a hash chained to the previous entry; `ocm-mcp audit-verify` recomputes the chain and
-  detects any edit, reordering, or mid-log deletion. It does **not** detect truncation of
-  the tail or a full rewrite by an actor who can recompute every hash - those need external
-  anchoring (signing/exporting the chain head to a SIEM or object store), which is on the
-  roadmap. An audit-write failure is surfaced to stderr and never masks a tool's result.
+  detects any edit, reordering, or mid-log deletion. Tail truncation and wholesale rewrites
+  are covered by signed anchors: `ocm-mcp audit-anchor` (run from the trusted terminal, like
+  minting an approval) signs the chain head with the off-box approval key, and
+  `audit-verify` fails unless the log still extends every anchored head. Entries newer than
+  the last anchor are unprotected until the next anchor - run it on a schedule. An
+  audit-write failure is surfaced to stderr and never masks a tool's result.
 - **Bounded, timed spoke reads** cap result size and set request timeouts so one large
   cluster cannot hang or flood a call.
 - **Read-only mode** (`OCM_MCP_READ_ONLY=1`) disables both write toolsets as a coarse
