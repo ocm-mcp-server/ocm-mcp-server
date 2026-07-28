@@ -12,9 +12,7 @@ def mc(name, available="True"):
     return {
         "metadata": {"name": name},
         "status": {
-            "conditions": [
-                {"type": "ManagedClusterConditionAvailable", "status": available}
-            ]
+            "conditions": [{"type": "ManagedClusterConditionAvailable", "status": available}]
         },
     }
 
@@ -24,8 +22,11 @@ def test_fleet_health_whole_fleet_no_spoke_contexts(monkeypatch):
     monkeypatch.setattr(ocm, "_spoke_health", lambda c: (_ for _ in ()).throw(LookupError()))
     res = ocm.fleet_health()
     assert res["fleet"] == {
-        "total": 2, "available": 1, "unavailable": 1,
-        "spoke_checked": 0, "with_issues": 1,
+        "total": 2,
+        "available": 1,
+        "unavailable": 1,
+        "spoke_checked": 0,
+        "with_issues": 1,
     }
     # unavailable cluster sorts first (issues-first ordering)
     assert res["clusters"][0]["cluster"] == "c2"
@@ -34,7 +35,9 @@ def test_fleet_health_whole_fleet_no_spoke_contexts(monkeypatch):
 
 def test_fleet_health_subset_and_unknown_name(monkeypatch):
     patch_hub(monkeypatch, items=[mc("c1"), mc("c2")])
-    monkeypatch.setattr(ocm, "_spoke_health", lambda c: {"unhealthy_pods": [], "degraded_deployments": []})
+    monkeypatch.setattr(
+        ocm, "_spoke_health", lambda c: {"unhealthy_pods": [], "degraded_deployments": []}
+    )
     res = ocm.fleet_health(clusters="c1, ghost")
     names = {e["cluster"] for e in res["clusters"]}
     assert names == {"c1", "ghost"}
@@ -62,7 +65,8 @@ def test_fleet_health_spoke_error_isolated(monkeypatch):
 def test_fleet_health_spoke_note_propagates(monkeypatch):
     patch_hub(monkeypatch, items=[mc("c1")])
     monkeypatch.setattr(
-        ocm, "_spoke_health",
+        ocm,
+        "_spoke_health",
         lambda c: {"unhealthy_pods": [], "degraded_deployments": [], "note": "truncated"},
     )
     res = ocm.fleet_health()

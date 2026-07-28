@@ -71,6 +71,16 @@ def test_read_tool_returns_json(tmp_home, monkeypatch):
     assert out[0]["name"] == "cluster1"
 
 
+def test_get_fleet_health(tmp_home, monkeypatch):
+    monkeypatch.setattr(
+        ocm,
+        "fleet_health",
+        lambda clusters="": {"fleet": {"total": 0}, "clusters": [], "got": clusters},
+    )
+    out = json.loads(srv.get_fleet_health(clusters="c1"))
+    assert out["got"] == "c1"
+
+
 def test_read_tool_unavailable_message(tmp_home, monkeypatch):
     def boom(*_a, **_k):
         raise ocm.FeatureNotInstalled("policy add-on not installed")

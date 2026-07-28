@@ -251,7 +251,7 @@ control that governs every human `kubectl apply`.
 
 ## Toolsets
 
-The surface is **34 tools across ten toolsets**. Almost all of it is read: the whole
+The surface is **35 tools across ten toolsets**. Almost all of it is read: the whole
 Open Cluster Management API is safe to inspect. Only two toolsets can change
 anything, and only through the propose -> approve -> apply gate. Every hub-level
 tool works for any managed spoke - a standalone OpenShift cluster, a HyperShift
