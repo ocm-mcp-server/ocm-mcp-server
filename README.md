@@ -458,7 +458,7 @@ Every tool call produces up to three independent records, each with a different 
 |---|---|---|---|
 | **Audit log** | yes | *what* happened, in what order, on whose authority | `audit.jsonl` - hash-chained, anchor-signed, the source for incident reports and the eval harness |
 | **OTel trace span** | opt-in | *where* time went; the call structure behind a slow or failed operation | any OTLP backend: Jaeger, OTel Collector, Grafana Tempo, ... |
-| **Prometheus metrics** | opt-in | *how often* and *how slow*, per tool and outcome, for dashboards/alerts | `GET /metrics` (`OCM_MCP_METRICS_PORT`, localhost by default) |
+| **Prometheus metrics** | opt-in | *how often* and *how slow*, per tool and outcome, for dashboards/alerts | `GET /metrics` (`OCM_MCP_METRICS_PORT`, localhost by default). **This server's own counters only** - it does not scrape or proxy Prometheus on managed/HCP clusters; fleet state comes from the Kubernetes APIs |
 
 **What the tracing is:** [OpenTelemetry](https://opentelemetry.io/) is the CNCF
 standard for distributed tracing; [Jaeger](https://www.jaegertracing.io/) is a CNCF
