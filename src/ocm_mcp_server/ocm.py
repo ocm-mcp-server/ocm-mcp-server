@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import concurrent.futures
 import hashlib
 import os
 from typing import Any
@@ -39,6 +40,9 @@ NONCOMPLIANT_STATES = ("NonCompliant", "Pending")
 # hang a tool call or pull an unbounded object set into memory.
 SPOKE_TIMEOUT = (5, int(os.environ.get("OCM_MCP_SPOKE_TIMEOUT", "30")))
 HEALTH_LIMIT = int(os.environ.get("OCM_MCP_HEALTH_LIMIT", "500"))
+
+# Fleet-wide health fanout: concurrent spoke scans bounded to prevent resource exhaustion.
+FANOUT_WORKERS = int(os.environ.get("OCM_MCP_FANOUT_WORKERS", "8"))
 
 # Label OCM stamps on a PlacementDecision to link it to its Placement, and the one
 # that records a ManagedCluster's ClusterSet membership.
@@ -80,6 +84,11 @@ def paged_list(list_fn: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
             "OCM_MCP_LIST_MAX_ITEMS"
         )
     return out
+
+
+def _fanout_workers() -> int:
+    """Bounded concurrency for fleet-wide spoke scans (floor 1)."""
+    return max(1, int(os.environ.get("OCM_MCP_FANOUT_WORKERS", "8")))
 
 
 class FeatureNotInstalled(LookupError):
@@ -199,6 +208,68 @@ def cluster_health(cluster: str) -> dict[str, Any]:
     health["spoke_view"] = "ok"
     health.update(spoke)
     return health
+
+
+def fleet_health(clusters: str = "") -> dict[str, Any]:
+    """Whole-fleet health in one call: hub conditions from ONE paged list, spoke
+    pod/deployment scans fanned out on a bounded thread pool. A slow or broken
+    cluster becomes a per-cluster 'error' entry - it never fails the sweep."""
+    res = paged_list(
+        hub_custom().list_cluster_custom_object, OCM_CLUSTER_GROUP, "v1", "managedclusters"
+    )
+    hub = {c["metadata"]["name"]: c for c in res.get("items", [])}
+    wanted = [c.strip() for c in clusters.split(",") if c.strip()] or sorted(hub)
+
+    def scan(name: str) -> dict[str, Any]:
+        if name not in hub:
+            return {"cluster": name, "error": f"'{name}' not found on the hub"}
+        conds = _condition_map(hub[name])
+        entry: dict[str, Any] = {
+            "cluster": name,
+            "available": conds.get("ManagedClusterConditionAvailable", "Unknown"),
+            "hub_conditions": conds,
+            "unhealthy_pods": [],
+            "degraded_deployments": [],
+            "spoke_view": "unavailable (no read context configured)",
+        }
+        try:
+            spoke = _spoke_health(name)
+        except LookupError:
+            return entry
+        except Exception as exc:  # noqa: BLE001 - isolation is the contract
+            entry["error"] = f"{type(exc).__name__}: {exc}"
+            return entry
+        entry["spoke_view"] = "ok"
+        entry.update(spoke)
+        return entry
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=_fanout_workers()) as pool:
+        entries = list(pool.map(scan, wanted))
+
+    def has_issues(e: dict[str, Any]) -> bool:
+        return bool(
+            e.get("error")
+            or e.get("unhealthy_pods")
+            or e.get("degraded_deployments")
+            or e.get("available") != "True"
+        )
+
+    entries.sort(key=lambda e: (not has_issues(e), e["cluster"]))
+    avail = sum(
+        1
+        for c in hub.values()
+        if _condition_map(c).get("ManagedClusterConditionAvailable") == "True"
+    )
+    return {
+        "fleet": {
+            "total": len(hub),
+            "available": avail,
+            "unavailable": len(hub) - avail,
+            "spoke_checked": sum(1 for e in entries if e.get("spoke_view") == "ok"),
+            "with_issues": sum(1 for e in entries if has_issues(e)),
+        },
+        "clusters": entries,
+    }
 
 
 def cluster_events(cluster: str, namespace: str = "", limit: int = 40) -> list[dict[str, Any]]:
