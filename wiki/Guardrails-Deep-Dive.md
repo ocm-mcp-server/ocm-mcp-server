@@ -36,7 +36,7 @@ the full list.
 
 ## Layer 2: Kyverno policy admission
 
-The nine policies in `deploy/policies/` validate the workload *inside* the
+The 9 policies in `deploy/policies/` validate the workload *inside* the
 `ManifestWork` envelope using Kyverno's `foreach` over
 `spec.workload.manifests`. This matters: normal pod-security policies only see
 resources after they land on a cluster. Here we validate on the hub, at propose
