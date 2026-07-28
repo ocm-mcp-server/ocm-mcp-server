@@ -12,6 +12,7 @@ cluster-proxy add-on - see docs/architecture.md.
 from __future__ import annotations
 
 import os
+import threading
 import time
 
 from kubernetes import client, config
@@ -22,6 +23,10 @@ from .config import SETTINGS
 # rotated credentials / refreshed exec tokens instead of caching them forever.
 _CLIENT_TTL = int(os.environ.get("OCM_MCP_CLIENT_TTL", "600"))
 _CLIENTS: dict[str, tuple[float, client.ApiClient]] = {}
+# Guards the read-check-build-store below. Duplicate client builds under the
+# fan-out were benign (last write wins, both clients are equally valid) but the
+# lock makes it a non-question rather than a relied-upon accident.
+_CLIENTS_LOCK = threading.Lock()
 
 OCM_CLUSTER_GROUP = "cluster.open-cluster-management.io"
 OCM_WORK_GROUP = "work.open-cluster-management.io"
@@ -43,13 +48,14 @@ def api_client(context: str = "") -> client.ApiClient:
     """
     ctx = context or (SETTINGS.hub_context or None)
     key = ctx or "__hub__"
-    now = time.monotonic()
-    cached = _CLIENTS.get(key)
-    if cached and (now - cached[0]) < _CLIENT_TTL:
-        return cached[1]
-    fresh = config.new_client_from_config(config_file=SETTINGS.kubeconfig or None, context=ctx)
-    _CLIENTS[key] = (now, fresh)
-    return fresh
+    with _CLIENTS_LOCK:
+        now = time.monotonic()
+        cached = _CLIENTS.get(key)
+        if cached and (now - cached[0]) < _CLIENT_TTL:
+            return cached[1]
+        fresh = config.new_client_from_config(config_file=SETTINGS.kubeconfig or None, context=ctx)
+        _CLIENTS[key] = (now, fresh)
+        return fresh
 
 
 def hub_custom(_api: client.CustomObjectsApi | None = None) -> client.CustomObjectsApi:

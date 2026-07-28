@@ -3,6 +3,8 @@
 
 """Tracing/audit outcome classification and the tool wrapper."""
 
+import json
+
 import pytest
 
 from ocm_mcp_server import tracing
@@ -59,3 +61,66 @@ def test_audit_echo_to_stderr(tmp_home, monkeypatch, capsys):
     tracing.audit({"tool": "list_clusters", "outcome": "ok"})
     err = capsys.readouterr().err
     assert '"tool": "list_clusters"' in err
+
+
+def test_audit_echo_to_stderr_redacts_free_form_payload(tmp_home, monkeypatch, capsys):
+    monkeypatch.setattr(SETTINGS, "audit_echo_stderr", True, raising=False)
+    tracing.audit(
+        {
+            "tool": "propose_manifestwork",
+            "args": {
+                "cluster": "cluster1",
+                "name": "payments",
+                "summary": "bump the image tag",
+                "manifests_json": '{"kind": "Deployment", "secret": "sh"}',
+            },
+            "outcome": "ok",
+            "error": "some traceback with sensitive detail",
+        }
+    )
+    err = capsys.readouterr().err
+    rec = json.loads(err.strip().splitlines()[-1])
+    # Structural/identity fields survive untouched.
+    assert rec["tool"] == "propose_manifestwork"
+    assert rec["outcome"] == "ok"
+    assert rec["args"]["cluster"] == "cluster1"
+    assert rec["args"]["name"] == "payments"
+    # Free-form payload is redacted, in both args and top-level error text.
+    assert rec["args"]["summary"] == "[redacted]"
+    assert rec["args"]["manifests_json"] == "[redacted]"
+    assert rec["error"] == "[redacted]"
+    # The audit FILE keeps full fidelity - only the stderr echo is redacted.
+    file_rec = json.loads(SETTINGS.audit_log.read_text().strip().splitlines()[-1])
+    assert file_rec["args"]["summary"] == "bump the image tag"
+    assert file_rec["args"]["manifests_json"] == '{"kind": "Deployment", "secret": "sh"}'
+    assert file_rec["error"] == "some traceback with sensitive detail"
+
+
+def test_echo_safe_is_a_pure_helper():
+    entry = {
+        "ts": 1.0,
+        "seq": 1,
+        "prev": "",
+        "hash": "abc",
+        "actor": "user:123",
+        "tool": "apply_cluster_action",
+        "outcome": "ok",
+        "duration_ms": 12,
+        "args": {"proposal_id": "p-1", "operation": "cordon", "reason": "draining for upgrade"},
+        "error": "",
+    }
+    safe = tracing._echo_safe(entry)
+    assert safe["args"]["proposal_id"] == "p-1"
+    assert safe["args"]["operation"] == "cordon"
+    assert safe["args"]["reason"] == "[redacted]"
+    # An empty error stays empty rather than being masked as "[redacted]".
+    assert safe["error"] == ""
+    # The input entry itself is untouched.
+    assert entry["args"]["reason"] == "draining for upgrade"
+
+
+def test_echo_safe_redacts_unrecognized_top_level_field():
+    # Any top-level field outside the allowlist (and not "args"/"error") is a
+    # defensive default: redact it rather than assume it is safe to forward.
+    safe = tracing._echo_safe({"tool": "sample", "some_future_field": "unexpected-detail"})
+    assert safe["some_future_field"] == "[redacted]"

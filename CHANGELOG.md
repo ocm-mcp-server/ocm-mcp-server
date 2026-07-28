@@ -6,6 +6,26 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- **Five low-severity hardening fixes from an external security assessment**:
+  the server now warns on stderr at startup if the approval **private** key is
+  present in its own state directory (a compromised server could mint its own
+  tokens - move it off-box with `OCM_MCP_SIGNER_KEY`) and separately if
+  `OCM_MCP_ISSUER`/`OCM_MCP_AUDIENCE` are both still left at their defaults
+  (content-hash binding still limits the blast radius, but set
+  deployment-specific values for defense-in-depth); the optional
+  `OCM_MCP_AUDIT_ECHO` stderr echo now redacts free-form payload (manifests,
+  summaries, reasons, error text) to `"[redacted]"` via a new pure
+  `tracing._echo_safe` helper, keeping only structural/identity fields
+  (timestamps, chain fields, tool name, outcome, cluster/name/proposal-id-like
+  arguments) - the audit **file** is unaffected, only the echo; the Kubernetes
+  API client cache in `k8s.py` is now guarded by a `threading.Lock` around its
+  read-check-build-store (duplicate builds under the fan-out were benign, the
+  lock makes it a non-question); and `filelock.py` + `docs/deployment.md` now
+  document that Windows is unsupported (the lock is `fcntl`-based and would be
+  a silent no-op there) - use WSL2.
+
 ### Fixed
 
 - **Eval/chaos harness, first live-run findings** - `chaos/scenarios/oom-loop.sh`

@@ -1,2 +1,9 @@
 # Default owners for review requests on all pull requests.
 * @sandeepbazar
+
+# Security-sensitive paths, listed explicitly so ownership stays obvious
+# when additional maintainers join.
+/src/ocm_mcp_server/approvals.py   @sandeepbazar
+/src/ocm_mcp_server/guardrails.py  @sandeepbazar
+/deploy/policies/                  @sandeepbazar
+/.github/workflows/                @sandeepbazar
