@@ -41,9 +41,6 @@ NONCOMPLIANT_STATES = ("NonCompliant", "Pending")
 SPOKE_TIMEOUT = (5, int(os.environ.get("OCM_MCP_SPOKE_TIMEOUT", "30")))
 HEALTH_LIMIT = int(os.environ.get("OCM_MCP_HEALTH_LIMIT", "500"))
 
-# Fleet-wide health fanout: concurrent spoke scans bounded to prevent resource exhaustion.
-FANOUT_WORKERS = int(os.environ.get("OCM_MCP_FANOUT_WORKERS", "8"))
-
 # Label OCM stamps on a PlacementDecision to link it to its Placement, and the one
 # that records a ManagedCluster's ClusterSet membership.
 PLACEMENT_LABEL = "cluster.open-cluster-management.io/placement"
