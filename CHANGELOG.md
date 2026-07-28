@@ -11,8 +11,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - **Tracing exercised end to end**: `make e2e` installs the `[tracing]` extra and a
   new step exports real OTel spans over OTLP/HTTP to a local sink, asserting the
   trace batch names the tool span and the service - so the "OTel spans -> Jaeger"
-  path is tested, not just documented. A full tracing guide (enable, Jaeger
-  quickstart, what is recorded/redacted) was added to the deployment doc.
+  path is tested, not just documented. Full observability documentation landed in
+  three places: a README section (audit vs tracing vs metrics - what each answers,
+  why spans are fail-soft, how to enable, how it is tested), an architecture
+  low-level-design diagram of the three signals, and the deployment-guide how-to.
 - **Root `ARCHITECTURE.md`** entry point, and a full low-level design section in
   `docs/architecture.md`: five vertical Mermaid diagrams (component stack, read-call
   anatomy, gated write sequence, rollback/lifecycle paths, audit/anchor/key

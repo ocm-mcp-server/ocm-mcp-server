@@ -40,9 +40,10 @@ ManifestWork → work agent on each managed cluster
 
 ## Low-level design - the full internals, vertically
 
-Everything below is the same system, cut four ways: the full component stack, the
-anatomy of one read call, the complete gated write sequence, and the integrity
-machinery (state, keys, audit). File references are to `src/ocm_mcp_server/`.
+Everything below is the same system, cut five ways: the full component stack, the
+anatomy of one read call, the complete gated write sequence, the integrity
+machinery (state, keys, audit), and the observability signals. File references
+are to `src/ocm_mcp_server/`.
 
 ### 1. The full vertical stack
 
@@ -247,7 +248,51 @@ flowchart TD
     end
 ```
 
-### 6. Where each guarantee is enforced (quick index)
+### 6. Observability - three independent signals per tool call
+
+Every tool call passes through the `traced_tool` decorator (`tracing.py`), which
+emits up to three records with different jobs and different trust properties:
+
+```mermaid
+flowchart TD
+    TC["one tool call<br/>traced_tool decorator<br/>tracing.py"]
+
+    TC --> AUD["AUDIT LINE - always on<br/>the tamper-evident record<br/>tool, args, outcome,<br/>duration, actor, seq,<br/>prev, hash - flock + fsync"]
+    AUD --> AUD2["audit.jsonl hash chain<br/>+ signed anchors<br/>answers: WHAT happened,<br/>in what order,<br/>on whose authority"]
+
+    TC --> SPAN["OTEL SPAN - opt-in<br/>span name: tool.name<br/>attributes: arg.* truncated<br/>to 200 chars<br/>approval_token NEVER attached"]
+    SPAN --> EXP["BatchSpanProcessor<br/>OTLP/HTTP exporter<br/>POST /v1/traces"]
+    EXP --> BE["Jaeger all-in-one :4318<br/>or any OTel collector<br/>Tempo, vendor backend<br/>UI: Jaeger :16686<br/>service: ocm-mcp-server<br/>answers: WHERE time went"]
+
+    TC --> MET["METRICS - opt-in<br/>metrics.py, stdlib only<br/>counters by tool + outcome<br/>+ duration sums"]
+    MET --> PROM["GET /metrics<br/>Prometheus format<br/>binds 127.0.0.1 unless<br/>OCM_MCP_METRICS_HOST set<br/>answers: HOW OFTEN and<br/>HOW SLOW, for alerting"]
+```
+
+Why three signals instead of one: the **audit log** is a safety artifact - append-only,
+hash-chained, anchor-signed, and always on; incident reports and the eval harness are
+built from it. The **OTel span** is a debugging artifact - it shows call structure and
+latency in Jaeger but is deliberately not trusted for anything safety-related, so it
+can be disabled (and is fail-soft: without the `[tracing]` extra installed and
+`OTEL_EXPORTER_OTLP_ENDPOINT` set, the span layer is a no-op and tools behave
+identically). **Metrics** are an alerting artifact - aggregate counters with no
+per-call payload at all.
+
+Enable tracing with two switches (full guide:
+[deployment.md](deployment.md#tracing-with-opentelemetry-and-jaeger)):
+
+```bash
+pip install "ocm-mcp-server[tracing]"
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318   # e.g. Jaeger all-in-one
+```
+
+Tested at three levels: unit tests cover span creation, redaction, and the no-op
+paths; the e2e suite's tracing-export step points a fresh server process at a local
+OTLP sink and asserts a real trace batch arrives naming the `tool.*` span and the
+`ocm-mcp-server` service; and `make bootstrap` starts a real Jaeger container
+(`--no-jaeger` to skip) so every local-fleet tool call is browsable at
+`http://localhost:16686`.
+
+### 7. Where each guarantee is enforced (quick index)
 
 | Guarantee | Enforced in | Independent backstop |
 |---|---|---|
