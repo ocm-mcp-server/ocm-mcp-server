@@ -654,7 +654,7 @@ comes up, every step passes, and the fleet is torn down again -
 | [Upstream notes](docs/upstream-notes.md) | gaps found while building this; proposals for MCP, OCM, and Kyverno |
 | [Fleet-scale benchmarks](docs/benchmarks.md) | real measured numbers: hub-side pagination at 1000+ `ManagedCluster` CRs, concurrent vs. sequential `fleet_health` fan-out across real kwok spoke apiservers |
 | [Eval harness](eval/README.md) | scenario classes, scoring, how to run against your model |
-| [Blog posts](blogs/README.md) | long-form deep dives - drafted in-repo, published to Medium with links back |
+| [Blog posts](blogs/README.md) | long-form deep dives, published on Medium - the index links to the live articles |
 | [Changelog](CHANGELOG.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) | project meta |
 
 ## Repository map

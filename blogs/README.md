@@ -3,15 +3,14 @@
 
 # Blog posts
 
-Long-form writing about the project - drafted here first, published to
-[Medium](https://medium.com/) (and echoed on LinkedIn/YouTube). Each post's
-header block records its status and, once live, the published URL; the
-in-repo file stays the canonical source so the story and the code version
-together.
+Long-form writing about the project, published on
+[Medium](https://medium.com/@sandeepbazar) (and echoed on LinkedIn/YouTube).
+This index links to the live articles; drafts live here only until they are
+published (git history keeps every draft).
 
 | Date | Post | Status | Published at |
 |---|---|---|---|
-| 2026-07-29 | [Can an AI Agent Take the 2 A.M. Page? I Built the Guardrails - and Published the Receipts](2026-07-29-can-an-ai-agent-take-the-2am-page.md) | draft | - |
+| 2026-07-29 | [Can an AI Agent Take the 2 A.M. Page? I Built the Guardrails - and Published the Receipts](https://medium.com/@sandeepbazar/can-an-ai-agent-take-the-2-a-m-page-i-built-the-guardrails-and-published-the-receipts-e98fa4c5a2db) | published | [Medium](https://medium.com/@sandeepbazar/can-an-ai-agent-take-the-2-a-m-page-i-built-the-guardrails-and-published-the-receipts-e98fa4c5a2db) |
 
 ## Conventions for new posts
 
