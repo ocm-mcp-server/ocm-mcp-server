@@ -4,8 +4,8 @@ apiVersion: v2
 name: ocm-mcp-server
 description: Guardrailed MCP server for operating an Open Cluster Management fleet
 type: application
-version: 0.2.2
-appVersion: "0.2.2"
+version: 0.3.0
+appVersion: "0.3.0"
 home: https://github.com/sandeepbazar/ocm-mcp-server
 sources:
   - https://github.com/sandeepbazar/ocm-mcp-server
