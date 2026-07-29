@@ -654,6 +654,7 @@ comes up, every step passes, and the fleet is torn down again -
 | [Upstream notes](docs/upstream-notes.md) | gaps found while building this; proposals for MCP, OCM, and Kyverno |
 | [Fleet-scale benchmarks](docs/benchmarks.md) | real measured numbers: hub-side pagination at 1000+ `ManagedCluster` CRs, concurrent vs. sequential `fleet_health` fan-out across real kwok spoke apiservers |
 | [Eval harness](eval/README.md) | scenario classes, scoring, how to run against your model |
+| [Blog posts](blogs/README.md) | long-form deep dives - drafted in-repo, published to Medium with links back |
 | [Changelog](CHANGELOG.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) | project meta |
 
 ## Repository map
@@ -664,6 +665,7 @@ deploy/               least-privilege RBAC + Kyverno ClusterPolicies (+ offline 
 hack/                 bootstrap.sh / teardown.sh / demo app (kind-based fleet)
 chaos/                failure-injection scenarios (reversible, diagnosable)
 eval/                 22-scenario evaluation harness + results
+blogs/                long-form posts (canonical drafts; published to Medium)
 docs/                 deployment, examples, architecture, guardrails, demo, upstream
 examples/             MCP client configs + a production-shaped system prompt
 ```
