@@ -171,11 +171,13 @@ documented threat model.
 
 - **Development pipeline**: contributions arrive via pull request. CI runs linting and
   format checks (ruff), static typing (mypy), the unit test suite with a coverage gate
-  (222 tests, 85% branch coverage, no cluster required), the offline Kyverno policy tests
-  (16 cases, including a
+  (387 tests, 100% branch coverage, no cluster required), the offline Kyverno policy tests
+  (39 cases, including a
   requester-identity bypass test), a dependency review, and a secret scan (gitleaks). A
   CodeQL workflow scans the code.
-- **Commits** are signed off under the Developer Certificate of Origin.
+- **Commits**: new contributions are asked to sign off under the Developer Certificate
+  of Origin via the pull-request checklist; automated DCO enforcement is not yet wired
+  up, and part of the early single-maintainer history predates the sign-off practice.
 - **Dependencies** are bounded above and below in `pyproject.toml` and pinned with hashes
   in `requirements.lock`; Dependabot proposes updates for pip and GitHub Actions.
 - **Container image** is built from a minimal base and published to GHCR on a release with

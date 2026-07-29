@@ -68,6 +68,8 @@ QUOTES: list[tuple[str, str, str]] = [
     ("wiki/Guardrails-Deep-Dive.md", r"The (\d+) policies in `deploy/policies/`", "policies"),
     ("wiki/Guardrails-Deep-Dive.md", r"`make policy-test`, (\d+) cases", "policy_cases"),
     ("wiki/Implementation.md", r"unit tests \((\d+);", "unit_tests"),
+    ("docs/security-self-assessment.md", r"\((\d+) tests, 100% branch coverage", "unit_tests"),
+    ("docs/security-self-assessment.md", r"Kyverno policy tests\n  \((\d+) cases", "policy_cases"),
 ]
 
 

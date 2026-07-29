@@ -167,12 +167,19 @@ cosign verify \
   ghcr.io/sandeepbazar/ocm-mcp-server:latest
 ```
 
-## Path D: in-cluster via Helm (or raw manifests)
+## Path D: in-cluster via Helm (or raw manifests) - a security-shape reference today
 
 A reference [Deployment](../deploy/deployment.yaml) and a Helm chart
-([`deploy/charts/ocm-mcp-server`](../deploy/charts/ocm-mcp-server)) run the server as a
-workload on the hub, with a Restricted pod security context, resource limits, a
+([`deploy/charts/ocm-mcp-server`](../deploy/charts/ocm-mcp-server)) show how the server
+is meant to run on the hub: Restricted pod security context, resource limits, a
 read-only verifier-key mount, a NetworkPolicy, and a PodDisruptionBudget.
+
+**Be clear about what this path is until the authenticated HTTP transport lands
+(see [ROADMAP.md](../ROADMAP.md)): a reference for the security shape, not a usable
+remote endpoint.** The server speaks stdio only, so an MCP client on your laptop
+cannot connect to this pod over the network; the manifest keeps stdin open so the
+pod idles instead of crash-looping. Use Paths A-C (local stdio) to actually operate
+a fleet today.
 
 ```bash
 # 1. Apply the least-privilege RBAC (ServiceAccount + ClusterRole/Binding).
