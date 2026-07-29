@@ -8,6 +8,10 @@
 # "exec format error".
 FROM python@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 
+# The MCP Registry validates OCI-package ownership against this label; without
+# it the registry refuses to list the image (as of the 0.3.0 publish).
+LABEL io.modelcontextprotocol.server.name="io.github.sandeepbazar/ocm-mcp-server"
+
 WORKDIR /app
 
 # Install dependencies from the hash-pinned lock first (reproducible, tamper-evident),
