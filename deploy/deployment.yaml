@@ -1,6 +1,18 @@
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 #
+# ============================================================================
+# HONESTY NOTICE: this manifest is a SECURITY-SHAPE REFERENCE, not a working
+# network deployment - until the authenticated HTTP transport lands, no MCP
+# client can connect to this Deployment over the network. The server speaks
+# MCP over stdio only; a Pod's stdio is not network-reachable. Use this file
+# to see the correct RBAC, securityContext, and probe shape to replicate for
+# whatever actually attaches to the process (e.g. a sidecar sharing stdio, or
+# `kubectl exec`). `stdin: true` below keeps the pod alive (stdio held open)
+# instead of crash-looping on stdin EOF; it does NOT make the server reachable
+# over the network.
+# ============================================================================
+#
 # Reference in-cluster Deployment for ocm-mcp-server on the OCM hub. It shows the
 # security-correct pod shape: the least-privilege ServiceAccount from rbac.yaml, a
 # Restricted Pod Security context, a read-only root filesystem, no auto-mounted API
@@ -46,6 +58,11 @@ spec:
           # Pin to an immutable digest in production: ghcr.io/...@sha256:<64-hex>.
           image: ghcr.io/sandeepbazar/ocm-mcp-server:v0.2.2
           imagePullPolicy: IfNotPresent
+          # stdio-only server: hold stdin open so the process does not see an
+          # immediate EOF and crash-loop. This does NOT expose the server over
+          # the network - see the HONESTY NOTICE at the top of this file.
+          stdin: true
+          tty: false
           env:
             - name: OCM_MCP_READ_ONLY
               value: "1"

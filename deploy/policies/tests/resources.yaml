@@ -643,6 +643,149 @@ spec:
         data:
           a: b
 ---
+# Compliant main container, but an initContainer image floating on ':latest'. Only the
+# image-pinning rule must fail here - proving initContainers are checked for pinning,
+# not just main containers (the gap this fixture closes).
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-init-latest-tag
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: sneaky-init-image
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: sneaky-init-image
+          template:
+            metadata:
+              labels:
+                app: sneaky-init-image
+            spec:
+              automountServiceAccountToken: false
+              initContainers:
+                - name: init
+                  image: registry.example.com/init-tool:latest
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+              containers:
+                - name: app
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# Compliant main container, but an ephemeralContainer image with no tag at all. Exercises
+# the ephemeralContainers branch of the image-pinning rule; ephemeralContainers are also
+# blanket-denied by restrict-manifestwork-pod-security, so both layers still agree (fail).
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-ephemeral-unpinned-image
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: sneaky-ephemeral-image
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: sneaky-ephemeral-image
+          template:
+            metadata:
+              labels:
+                app: sneaky-ephemeral-image
+            spec:
+              automountServiceAccountToken: false
+              ephemeralContainers:
+                - name: debugger
+                  image: registry.example.com/debug-tool
+              containers:
+                - name: app
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
+# Everything pinned: main container AND initContainer both pass every guardrail,
+# including image pinning. Must pass every policy - the positive counterpart to
+# bad-init-latest-tag above.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: good-init-container-pinned
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: tidy-init
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: tidy-init
+          template:
+            metadata:
+              labels:
+                app: tidy-init
+            spec:
+              automountServiceAccountToken: false
+              initContainers:
+                - name: init
+                  image: registry.example.com/init-tool:1.4.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+              containers:
+                - name: app
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
+---
 # Compliant main container, but a privileged/non-compliant INIT container. Python guardrails
 # catch this; the PSS policy must too (init containers are a real privilege path).
 apiVersion: work.open-cluster-management.io/v1
