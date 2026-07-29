@@ -53,6 +53,28 @@ spec:
                   - key: "{{ length(element.spec.template.spec.containers[?securityContext.capabilities.add] || `[]`) }}"
                     operator: GreaterThan
                     value: 0
+                  # initContainers are a real privilege path too, and
+                  # ephemeralContainers are already blanket-denied by
+                  # restrict-manifestwork-pod-security - both checked here as
+                  # well so this policy is a self-sufficient backstop.
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.privileged == `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.allowPrivilegeEscalation == `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.capabilities.add] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.ephemeralContainers[?securityContext.privileged == `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.ephemeralContainers[?securityContext.allowPrivilegeEscalation == `true`] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.ephemeralContainers[?securityContext.capabilities.add] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
                   - key: "{{ element.spec.template.spec.hostNetwork || `false` }}"
                     operator: Equals
                     value: true

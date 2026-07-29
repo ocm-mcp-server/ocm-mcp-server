@@ -35,7 +35,6 @@ REPORT_MD="$ROOT/wiki/Test-Results.md"
 CREATED="$RUN_DIR/created-clusters"
 OS="$(uname -s)"
 PYBIN="$ROOT/.venv/bin/python"
-TRAP_ARMED=0
 
 b(){ printf '\n\033[1;36m========== %s ==========\033[0m\n' "$*"; }
 ok(){ printf '\033[1;32m  \xe2\x9c\x93 %s\033[0m\n' "$*"; }
@@ -119,7 +118,7 @@ dep oc       "oc version --client 2>/dev/null | head -1" openshift-cli no
 b "2. Python package - install the server into a local virtualenv"
 [[ -x "$PYBIN" ]] || { info "creating .venv"; python3 -m venv "$ROOT/.venv"; }
 "$PYBIN" -m pip install -q --upgrade pip >/dev/null 2>&1
-if ! "$PYBIN" -m pip install -q -e "$ROOT[tracing]" >/dev/null 2>&1; then
+if ! "$PYBIN" -m pip install -q -e "${ROOT}[tracing]" >/dev/null 2>&1; then
   warn "pip install -e .[tracing] FAILED"
   rec "2. Python package" "pip install -e .[tracing]" "Install the MCP server, its ocm-mcp CLI, and the OTel tracing extra (exercised by the tracing-export step)." FAIL "pip install -e .[tracing]" "editable install failed"
   cleanup; exit 1
@@ -161,7 +160,7 @@ if [[ ${#PRE[@]} -gt 0 ]]; then
   exit 1   # trap not armed yet - nothing of ours to clean
 fi
 printf '%s\n' "${NAMES[@]}" > "$CREATED"   # these are ours to delete later
-trap cleanup EXIT; TRAP_ARMED=1
+trap cleanup EXIT
 
 # ---------------------------------------------------------------- 4. bootstrap fleet
 b "4. Bootstrap - 1 hub + $SPOKES spoke clusters, OCM, Kyverno, policies, demo app"
@@ -172,7 +171,8 @@ BOOT_RC=$?
 tail -6 "$BOOT_LOG" | scrub | sed 's/^/  /'
 
 export OCM_MCP_HUB_CONTEXT="kind-hub"
-export OCM_MCP_SPOKE_CONTEXTS="$(for i in $(seq 1 "$SPOKES"); do printf 'cluster%d=kind-cluster%d,' "$i" "$i"; done | sed 's/,$//')"
+OCM_MCP_SPOKE_CONTEXTS="$(for i in $(seq 1 "$SPOKES"); do printf 'cluster%d=kind-cluster%d,' "$i" "$i"; done | sed 's/,$//')"
+export OCM_MCP_SPOKE_CONTEXTS
 export OCM_MCP_HOME="$RUN_DIR/state"
 
 MC="$(kubectl --context kind-hub get managedclusters 2>&1)"
@@ -180,7 +180,7 @@ AVAIL="$(echo "$MC" | awk '$5=="True"{n++} END{print n+0}')"
 if [[ "$AVAIL" -ge "$SPOKES" ]]; then
   ok "fleet up: $AVAIL/$SPOKES spokes Available"
   rec "4. Bootstrap fleet" "bootstrap.sh" "Stand up a real OCM hub with spokes so every tool talks to genuine clusters, not mocks." OK "CONTAINER_ENGINE=$ENGINE SPOKES=$SPOKES ./hack/bootstrap.sh --no-jaeger" "$(tail -20 "$BOOT_LOG" | scrub)"
-  echo "$MC" | sed 's/^/  /'
+  echo "  ${MC//$'\n'/$'\n  '}"
   rec "4. Bootstrap fleet" "managed clusters" "Proof the spokes are registered and Available on the hub." OK "kubectl --context kind-hub get managedclusters" "$MC"
 else
   warn "only $AVAIL/$SPOKES spokes Available (bootstrap rc=$BOOT_RC) - aborting"
@@ -300,6 +300,10 @@ HARNESS_RC=$?
 # ---------------------------------------------------------------- 6. report
 b "6. Rendering the report (local HTML + wiki Markdown)"
 "$PYBIN" "$ROOT/hack/e2e_report.py" --results "$RESULTS" --out "$REPORT" --md "$REPORT_MD"
-[[ $HARNESS_RC -eq 0 ]] && ok "all steps passed" || warn "harness reported failures (exit $HARNESS_RC) - see the report"
+if [[ $HARNESS_RC -eq 0 ]]; then
+  ok "all steps passed"
+else
+  warn "harness reported failures (exit $HARNESS_RC) - see the report"
+fi
 # cleanup() runs on EXIT and regenerates the report with the teardown step.
 exit "$HARNESS_RC"

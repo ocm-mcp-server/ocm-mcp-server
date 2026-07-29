@@ -30,6 +30,6 @@ if [[ "$SCENARIO" == "reset" ]]; then
 fi
 
 SCRIPT="$HERE/scenarios/${SCENARIO}.sh"
-[[ -f "$SCRIPT" ]] || { echo "unknown scenario '$SCENARIO'"; ls "$HERE/scenarios" | sed 's/\.sh$//'; exit 1; }
+[[ -f "$SCRIPT" ]] || { echo "unknown scenario '$SCENARIO'"; find "$HERE/scenarios" -maxdepth 1 -name '*.sh' -exec basename {} .sh \;; exit 1; }
 CTX="$CTX" CLUSTER="$CLUSTER" bash "$SCRIPT"
 echo "injected: ${SCENARIO} into ${CLUSTER}"

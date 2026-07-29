@@ -1,5 +1,17 @@
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
+#
+# ============================================================================
+# HONESTY NOTICE: this chart's Deployment is a SECURITY-SHAPE REFERENCE, not a
+# working network deployment - until the authenticated HTTP transport lands,
+# no MCP client can connect to it over the network. The server speaks MCP
+# over stdio only; a Pod's stdio is not network-reachable. Use this template
+# to see the correct RBAC, securityContext, and probe shape to replicate for
+# whatever actually attaches to the process (e.g. a sidecar sharing stdio, or
+# `kubectl exec`). `stdin: true` below keeps the pod alive (stdio held open)
+# instead of crash-looping on stdin EOF; it does NOT make the server reachable
+# over the network.
+# ============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,6 +42,11 @@ spec:
         - name: server
           image: "{{ .Values.image.repository }}{{ if .Values.image.digest }}@{{ .Values.image.digest }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # stdio-only server: hold stdin open so the process does not see an
+          # immediate EOF and crash-loop. This does NOT expose the server over
+          # the network - see the HONESTY NOTICE at the top of this file.
+          stdin: true
+          tty: false
           env:
             - name: OCM_MCP_READ_ONLY
               value: {{ if .Values.readOnly }}"1"{{ else }}"0"{{ end }}

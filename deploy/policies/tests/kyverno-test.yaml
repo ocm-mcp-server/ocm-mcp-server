@@ -92,6 +92,20 @@ results:
     kind: ManifestWork
     resources: [cluster2/bad-latest-tag]
     result: fail
+  # ---- restrict-manifestwork-kinds: image pinning also covers initContainers
+  # and ephemeralContainers, not just main containers (closes the gap where a
+  # compromised server could slip an unpinned init/ephemeral image past this
+  # backstop while the Python guardrail already catches it).
+  - policy: restrict-manifestwork-kinds
+    rule: require-pinned-images
+    kind: ManifestWork
+    resources: [cluster2/good-init-container-pinned]
+    result: pass
+  - policy: restrict-manifestwork-kinds
+    rule: require-pinned-images
+    kind: ManifestWork
+    resources: [cluster2/bad-init-latest-tag, cluster2/bad-ephemeral-unpinned-image]
+    result: fail
   # ---- restrict-manifestwork-pod-security: runAsUser 0 (parity with guardrails)
   - policy: restrict-manifestwork-pod-security
     rule: require-restricted-pod-security

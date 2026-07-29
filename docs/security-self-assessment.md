@@ -172,7 +172,7 @@ documented threat model.
 - **Development pipeline**: contributions arrive via pull request. CI runs linting and
   format checks (ruff), static typing (mypy), the unit test suite with a coverage gate
   (387 tests, 100% branch coverage, no cluster required), the offline Kyverno policy tests
-  (39 cases, including a
+  (42 cases, including a
   requester-identity bypass test), a dependency review, and a secret scan (gitleaks). A
   CodeQL workflow scans the code.
 - **Commits**: new contributions are asked to sign off under the Developer Certificate
