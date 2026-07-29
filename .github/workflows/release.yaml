@@ -66,7 +66,11 @@ jobs:
           v="${TAG#v}"
           pv=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           sv=$(jq -r '.version' server.json)
-          pkgs=$(jq -r '[.packages[].version] | unique | join(",")' server.json)
+          # Non-OCI packages carry a version field; OCI packages embed it in
+          # the identifier tag (registry schema) - check both against the tag.
+          pkgs=$(jq -r '[.packages[] | select(.registryType != "oci") | .version] | unique | join(",")' server.json)
+          ociv=$(jq -r '[.packages[] | select(.registryType == "oci") | .identifier | split(":")[1]] | unique | join(",")' server.json)
+          [ -z "$ociv" ] || [ "$ociv" = "$v" ] || { echo "OCI identifier tag '$ociv' != tag '$v'"; exit 1; }
           iv=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' src/ocm_mcp_server/__init__.py)
           cv=$(sed -n 's/^version: \(.*\)$/\1/p' deploy/charts/ocm-mcp-server/Chart.yaml)
           av=$(sed -n 's/^appVersion: "\(.*\)"$/\1/p' deploy/charts/ocm-mcp-server/Chart.yaml)
@@ -115,7 +119,14 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           v="${TAG#v}"
-          jq --arg v "$v" '.version = $v | (.packages[] | .version) = $v' server.json > server.json.tmp
+          # OCI packages carry the version in the identifier tag and must NOT
+          # have a separate "version" field (registry schema requirement).
+          jq --arg v "$v" '
+            .version = $v
+            | (.packages[] | select(.registryType != "oci") | .version) = $v
+            | (.packages[] | select(.registryType == "oci")) |=
+                (del(.version) | .identifier |= ((split(":")[0]) + ":" + $v))
+          ' server.json > server.json.tmp
           mv server.json.tmp server.json
       - name: Publish to the MCP Registry
         run: |

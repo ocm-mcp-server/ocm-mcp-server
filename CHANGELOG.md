@@ -6,7 +6,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- **MCP Registry OCI schema compliance**: the registry now requires OCI
+  packages to carry the version in the identifier tag
+  (`ghcr.io/...:X.Y.Z`) with no separate `version` field; `server.json`,
+  `hack/release.sh`, and the release workflow's stamping and version gate
+  all updated. This is what failed the v0.3.0 registry publish (PyPI,
+  the GitHub Release, and the signed image all succeeded). A new
+  manual-dispatch `publish-registry.yaml` workflow re-publishes the
+  listing from main without ever moving a released tag.
 
 ## [0.3.0] - 2026-07-29
 
