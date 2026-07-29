@@ -31,7 +31,7 @@ make bootstrap   # full local fleet, if you want end-to-end
 
 ## Sign-off
 
-Every commit must be signed off under the
+Contributions are expected to be signed off under the
 [Developer Certificate of Origin](https://developercertificate.org/) (DCO): by signing
 off you certify you wrote the change, or otherwise have the right to submit it under the
 project's license. Add the `Signed-off-by` trailer with:
@@ -41,6 +41,14 @@ git commit -s
 ```
 
 Do not add any other trailers to commit messages.
+
+## Releases are immutable
+
+A published version tag is never deleted, moved, or re-cut. If a release fails
+partway (CI, PyPI, image publish), the fix rolls forward to the **next** patch
+version; the failed tag stays as history. This keeps the Git tag, the PyPI
+artifact, the GHCR image, and the MCP Registry listing traceable to one commit
+per version, forever.
 
 ## Reporting security issues
 

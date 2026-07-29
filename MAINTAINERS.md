@@ -6,9 +6,13 @@
 This file lists the maintainers of ocm-mcp-server. See [GOVERNANCE.md](GOVERNANCE.md)
 for what maintainers do and how to become one.
 
-| Name | GitHub | Contact |
-|---|---|---|
-| Sandeep Bazar | [@sandeepbazar](https://github.com/sandeepbazar) | [LinkedIn](https://www.linkedin.com/in/sandeepbazar/) |
+| Name | GitHub | Company/Organization | Contact |
+|---|---|---|---|
+| Sandeep Bazar | [@sandeepbazar](https://github.com/sandeepbazar) | Independent | [LinkedIn](https://www.linkedin.com/in/sandeepbazar/) |
+
+> Growing this table is the project's top community goal: current CNCF lifecycle
+> requirements ask for at least three maintainers from at least two employer
+> organizations. See [GOVERNANCE.md](GOVERNANCE.md) for how to become one.
 
 ## Emeritus maintainers
 
