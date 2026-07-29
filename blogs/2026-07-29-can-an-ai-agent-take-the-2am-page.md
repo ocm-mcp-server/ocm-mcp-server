@@ -41,6 +41,10 @@ Fleets managed by OCM (a CNCF project, the upstream of Red Hat ACM) expose a hub
 
 None of these layers live in the system prompt, so none of them can be talked out of.
 
+The animated version makes the shape of the whole system legible at a glance — dangerous capabilities on the left *do not exist*; everything that reaches your fleet flows through the gate on the right:
+
+![How ocm-mcp-server keeps an AI agent safe on your fleet: blocked capabilities (Secrets, exec, delete, privileged pods) simply do not exist; reads are free; every change flows propose → policy → approve → apply with Kyverno policy, a human token, and full audit](https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/architecture-flow.gif)
+
 One design consequence worth underlining: **nothing here is specific to any one agent.** The server speaks plain MCP over stdio, so anything that speaks MCP connects the same way — Claude Code and Claude Desktop, Codex CLI, Gemini CLI, Cursor, IDE assistants like IBM BOB, or your own LangChain / Agent-SDK orchestrator. The guardrails live *behind* the protocol, which is exactly why they can't be prompted away: swap the model, and the gate doesn't move. I demonstrate with Claude and publish evaluations for Claude and Codex — treat those two as the tested existence proof, not the compatibility list.
 
 ## Fifteen minutes to a live guardrailed fleet
