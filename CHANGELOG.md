@@ -6,8 +6,28 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.3.0] - 2026-07-29
+
+The evidence release. The claims this project makes are now backed by published
+data: first multi-model evaluation results (safety 44/44 across two independent
+frontier agents), a fleet-scale benchmark with real measured numbers, a one-call
+concurrent fleet-health sweep as the 35th tool, two waves of external-audit
+fixes (five security hardenings plus a closed init-container gap in the Kyverno
+backstop), and a re-validated 84-step end-to-end suite. Also the first release
+cut under the new tag-immutability policy: this version rolls forward from
+v0.2.2 and its tag will never move.
+
 ### Security
 
+- **Kyverno backstop now covers init and ephemeral containers**: the
+  image-pinning, privileged-container, and secret-access policies checked only
+  `spec.template.spec.containers`, so an unpinned or privileged
+  **initContainer** could pass the policy layer (the Python guardrails already
+  rejected it - defense-in-depth restored). Offline policy suite grows 39 -> 42
+  cases and the guardrail-Kyverno parity contract now proves both layers agree
+  on exactly this gap.
 - **Five low-severity hardening fixes from an external security assessment**:
   the server now warns on stderr at startup if the approval **private** key is
   present in its own state directory (a compromised server could mint its own
