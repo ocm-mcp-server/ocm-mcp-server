@@ -65,7 +65,14 @@ sub_file(
 s = json.load(open("server.json"))
 s["version"] = v
 for pkg in s["packages"]:
-    pkg["version"] = v
+    if pkg.get("registryType") == "oci":
+        # Registry schema: OCI packages carry the version in the identifier
+        # tag and must NOT have a separate "version" field.
+        base = pkg["identifier"].rsplit(":", 1)[0]
+        pkg["identifier"] = f"{base}:{v}"
+        pkg.pop("version", None)
+    else:
+        pkg["version"] = v
 open("server.json", "w").write(json.dumps(s, indent=2) + "\n")
 PY
 

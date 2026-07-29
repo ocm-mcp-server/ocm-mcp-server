@@ -43,8 +43,7 @@
     },
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/sandeepbazar/ocm-mcp-server",
-      "version": "0.3.0",
+      "identifier": "ghcr.io/sandeepbazar/ocm-mcp-server:0.3.0",
       "runtimeHint": "docker",
       "transport": {
         "type": "stdio"

@@ -1,0 +1,65 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+#
+# Re-publish the MCP Registry listing on demand, from main's server.json.
+# Exists because the tag-triggered release pipeline runs from the immutable
+# tag: if the registry publish fails for a reason fixed later on main (e.g. a
+# registry schema change), the listing can be re-published here without ever
+# moving a released tag. Publishes whatever version main's pyproject.toml
+# declares unless an explicit version input is given.
+name: publish-registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to stamp (default: pyproject.toml version)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  mcp-registry:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # GitHub OIDC login to the MCP registry
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Resolve and validate version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          v="$INPUT_VERSION"
+          [ -n "$v" ] || v=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "invalid version: $v"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+      - name: Install mcp-publisher
+        run: |
+          arch=$(uname -m); case "$arch" in x86_64) arch=amd64 ;; aarch64) arch=arm64 ;; esac
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_${arch}.tar.gz" \
+            | tar xz mcp-publisher
+      - name: Stamp server.json version
+        run: |
+          # Same stamping contract as release.yaml: OCI packages carry the
+          # version in the identifier tag and must NOT have a "version" field.
+          jq --arg v "$VERSION" '
+            .version = $v
+            | (.packages[] | select(.registryType != "oci") | .version) = $v
+            | (.packages[] | select(.registryType == "oci")) |=
+                (del(.version) | .identifier |= ((split(":")[0]) + ":" + $v))
+          ' server.json > server.json.tmp
+          mv server.json.tmp server.json
+      - name: Publish to the MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            echo "publish attempt ${attempt} failed; retrying in 30s"
+            sleep 30
+          done
+          exit 1
