@@ -11,7 +11,7 @@ published (git history keeps every draft).
 | Date | Post | Status | Published at |
 |---|---|---|---|
 | 2026-07-29 | [Can an AI Agent Take the 2 A.M. Page? I Built the Guardrails - and Published the Receipts](https://medium.com/@sandeepbazar/can-an-ai-agent-take-the-2-a-m-page-i-built-the-guardrails-and-published-the-receipts-e98fa4c5a2db) | published | [Medium](https://medium.com/@sandeepbazar/can-an-ai-agent-take-the-2-a-m-page-i-built-the-guardrails-and-published-the-receipts-e98fa4c5a2db) |
-| 2026-08-01 | [Your MCP Server Is a Security Boundary, Not an API Wrapper](2026-08-01-mcp-server-security-boundary.md) | draft | - |
+| 2026-08-01 | [Your MCP Server Is a Security Boundary, Not an API Wrapper](https://medium.com/@sandeepbazar/your-mcp-server-is-a-security-boundary-not-an-api-wrapper-95c975fc94d4) | published | [Medium](https://medium.com/@sandeepbazar/your-mcp-server-is-a-security-boundary-not-an-api-wrapper-95c975fc94d4) |
 
 ## Conventions for new posts
 
