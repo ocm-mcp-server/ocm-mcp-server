@@ -6,149 +6,170 @@ Published: (pending)
 Canonical: (pending)
 -->
 
-# The Operator's Chair: What It Actually Feels Like When an AI Agent Manages Your Kubernetes Fleet
+# I Gave an AI Agent the Keys to 40 Kubernetes Clusters. Here Is What I Actually Do All Day Now.
 
-*A practitioner walkthrough - not the agent's side, but yours. Placement decisions, fleet health at 3am, the approval token, and what the audit log hands you when something goes wrong.*
+*Not the security story. Not the architecture deep-dive. Just an honest account from the person sitting in front of the screen - what changed, what stayed the same, and the one incident that made me stop second-guessing the audit log.*
 
 ---
 
 ![HERO IMAGE PLACEHOLDER](./images/03-hero-operator-chair.png)
 <!-- IMAGE 1: HERO
 Prompt for ChatGPT image generation:
-"A human operator sitting in a dimly lit operations center, facing a large curved monitor wall displaying a live Kubernetes multi-cluster fleet map. Multiple hexagonal cluster nodes glow in teal and blue across a dark topology map. On a separate panel to the right, a chat interface shows an AI assistant conversation. The operator's hand is hovering over a physical hardware token/key on the desk. Atmosphere: calm authority, late night, cinematic. Style: photorealistic digital art, dark theme with teal and blue accent lighting. No text overlays."
+"A human operator sitting in a dimly lit operations center, facing a large curved monitor wall showing a live Kubernetes multi-cluster fleet map. Hexagonal cluster nodes glow in teal and blue. A chat interface on the right shows an AI assistant conversation. The operator's hand hovers over a physical hardware key on the desk. Calm authority, late night, cinematic. Photorealistic digital art, dark theme, teal and blue accent lighting. No text overlays."
 -->
 
 ---
 
-Most writing about AI agents and Kubernetes focuses on the agent. What it can do. What it tries to do. What you have to stop it from doing. That framing makes sense when you are designing the guardrails.
+My pager went off at 2:47am last Tuesday.
 
-But once the guardrails exist, someone still has to sit in the operator's chair. That person is not building the agent. They are running a fleet - today 12 clusters, next quarter probably 40 - and the question they are asking is much more practical: does this thing actually make my job easier, or does it just add a new thing I have to watch?
+By the time I had my laptop open - about ninety seconds - I already had the answer. Three clusters showing elevated pod restart counts, one degraded deployment in the `payments` namespace on `ocp-frankfurt-01`, root cause pointing at a memory limit that was too tight for the new release. No guessing. No grepping through YAML. Just a structured summary sitting in my AI assistant chat, ready before my coffee was.
 
-This is that story.
+Six months ago that same investigation would have taken me twenty minutes and a second terminal window.
 
-I run a mixed fleet: production OpenShift clusters on-prem, a handful of ROSA clusters in AWS, and several development clusters on bare-metal kind nodes that the platform team spins up for testing. Open Cluster Management (OCM) sits as the hub layer. I recently started routing agent requests through [ocm-mcp-server](https://github.com/sandeepbazar/ocm-mcp-server) - an MCP server that gives AI assistants a read/write interface to OCM, with every write gated behind static guardrails, a Kyverno dry-run, and a human approval token that only I can sign.
+This is not a post about AI being magical. It is a post about what actually changed for me - someone who runs 40 Kubernetes clusters across on-prem OpenShift, ROSA on AWS, and HyperShift Hosted Control Planes - after I wired an AI agent into Open Cluster Management through [ocm-mcp-server](https://github.com/sandeepbazar/ocm-mcp-server).
 
-What follows is not a pitch. It is a log of what the operator's side of this actually looks like.
+Spoiler: most of my job looks the same. But the parts that used to drain me quietly? Those are gone.
 
 ---
 
-## The thing that changed first: the morning briefing
+## The 2:47am thing is not the point
 
-Before: I open a terminal, run `clusteradm get clusters`, look at the output, grep for anything that looks wrong, open the hub dashboard, cross-reference alerts. This takes about fifteen minutes and still misses things, because "looks wrong" is a fuzzy standard and my eyes are not perfect.
+Everyone leads with the on-call story. I get it - it is dramatic. But the real change was not the 2:47am page.
 
-After: I open my AI assistant, type "fleet health", and get back a structured summary. Clusters sorted by problem severity, degraded deployments with namespace context, unhealthy pods with their restart counts, conditions from the hub, and a diff from yesterday's scan when one is available. The whole thing takes about thirty seconds of reading.
+It was the 9:15am Monday morning. The routine check. The "nothing is on fire but I need to know the state of everything" scan that used to eat the first thirty minutes of every day.
 
-![FLEET HEALTH COMPARISON PLACEHOLDER](./images/03-fleet-health-before-after.png)
-<!-- IMAGE 2: FLEET HEALTH COMPARISON
+Before this setup, my morning looked like:
+
+1. `clusteradm get clusters` - scroll, scroll, scroll
+2. `kubectl get pods --all-namespaces` on three different hub contexts
+3. Open the ACM dashboard, wait for it to load
+4. Open another tab for policy violations
+5. Open another tab for alerts
+6. Try to hold all of it in my head at once
+
+After:
+
+1. Type "fleet health" in the chat
+2. Read the summary for thirty seconds
+3. Know exactly where to look
+
+The underlying data is identical. The same hub API, the same cluster conditions, the same pod counts. What changed is that I stopped being the one who has to parse it. The agent calls `get_fleet_health`, `query_events`, and `list_policy_violations` and hands me something I can actually act on.
+
+Thirty seconds versus thirty minutes. Every single morning.
+
+![FLEET HEALTH BEFORE AFTER PLACEHOLDER](./images/03-fleet-health-before-after.png)
+<!-- IMAGE 2: BEFORE/AFTER
 Prompt for ChatGPT image generation:
-"A split-screen comparison. LEFT side: a dark terminal window showing raw kubectl and clusteradm command output - walls of YAML and JSON text, status fields buried in noise. RIGHT side: a clean structured AI chat response showing a fleet health summary with color-coded cluster cards - green healthy clusters, amber warning clusters, red critical clusters with clear bullet-point descriptions. Style: flat illustration, dark background, teal/green/amber/red status colors. Label the sides 'Before' and 'After'. No real cluster names."
+"Split-screen illustration. LEFT: a stressed operator at a terminal, surrounded by walls of raw YAML and kubectl output on a dark screen, multiple browser tabs open, overwhelmed expression. RIGHT: the same operator looking calm and focused at a clean AI chat summary showing color-coded cluster health cards - green, amber, red - with clear bullet points. Label the panels 'Before' and 'After'. Dark background, teal and green accent colors. Flat editorial illustration style."
 -->
-
-The underlying tools are `get_fleet_health` and `query_events`. The agent calls them, formats the result, and surfaces what matters. I verified that the raw data matches what I would get from `kubectl` directly - it does, because the server reads from the same hub API. What changed is not the data. It is the time cost of parsing it.
-
-That might sound like a small thing. It is not. When you run forty clusters and get paged at 3am, the difference between fifteen minutes to understand the blast radius and forty seconds is real.
 
 ---
 
-## Placement: the question I used to answer by hand
+## The placement debugging that used to ruin my Tuesdays
 
-OCM's placement API is elegant in theory. In practice, the loop of "write a Placement, check which PlacementDecision it produced, notice it selected the wrong clusters, figure out why, adjust the label selectors, repeat" used to eat an hour easily.
+Every platform team has that one thing that eats time for no good reason. For me it was placement debugging.
 
-A typical session now looks like this:
+Write a `Placement`. Check the `PlacementDecision`. Notice it picked the wrong clusters. Try to figure out which label selector is wrong. Adjust. Wait for reconciliation. Repeat. On a bad day, two hours gone.
 
-> **Me:** Which clusters does the `production-eu` placement currently select?
->
-> **Agent:** The `production-eu` placement selects 3 clusters: `ocp-frankfurt-01`, `ocp-paris-02`, `rosa-dublin-01`. All three meet the `region=eu` and `environment=production` label requirements. `ocp-amsterdam-03` is excluded because it is cordoned - taint `ocm-mcp-server.io/cordoned` was applied 4 days ago.
->
-> **Me:** Why is Amsterdam cordoned?
->
-> **Agent:** The cordon proposal (ID `prop-0042`) was applied on 2026-08-05. The approval record shows the reason: "network instability during maintenance window, pending validation." No uncordon proposal exists.
->
-> **Me:** Can you propose uncordoning it?
->
-> **Agent:** PROPOSED - proposal ID `prop-0089`. Summary: "Remove cordon from ocp-amsterdam-03; maintenance-window network issue resolved per NOC ticket OPS-4471." Run `ocm-mcp approve prop-0089` to generate the approval token.
+Here is that same workflow now:
 
-That last step is the one that matters. The agent produces a proposal. The proposal is stored. To apply it, I run `ocm-mcp approve prop-0089` from my terminal - the CLI that holds the Ed25519 signing key. The token is content-bound: it will only authorize that exact change on that exact cluster. It expires in one hour.
+> **Me:** Why is `ocp-amsterdam-03` not getting workloads from the `production-eu` placement?
+>
+> **Agent:** `ocp-amsterdam-03` is excluded because it is cordoned. Taint `ocm-mcp-server.io/cordoned` was applied 4 days ago. The approval record shows the reason: "network instability during maintenance window, pending validation." No uncordon proposal exists. The other three clusters - `ocp-frankfurt-01`, `ocp-paris-02`, `rosa-dublin-01` - all match the `region=eu` and `environment=production` label requirements and are currently selected.
+>
+> **Me:** Can you propose uncordoning Amsterdam?
+>
+> **Agent:** Proposed - ID `prop-0089`. Summary: "Remove cordon from ocp-amsterdam-03; maintenance window resolved, NOC ticket OPS-4471 closed." Run `ocm-mcp approve prop-0089` to generate the approval token.
 
-The agent never gets the key. The agent cannot approve its own proposals. The chain of custody is: model output, then proposal, then human review, then human-signed token, then apply.
+That last line is important. The agent proposes. I approve. I run `ocm-mcp approve prop-0089` from my own terminal - the one with the signing key on it. The token it generates is bound to that exact change on that exact cluster. It expires in an hour. Nothing moves without me saying so.
+
+The agent does not have the key. The agent cannot approve anything. And that is precisely why I trust it with the proposals in the first place.
 
 ![APPROVAL FLOW PLACEHOLDER](./images/03-approval-flow-operator.png)
 <!-- IMAGE 3: APPROVAL FLOW
 Prompt for ChatGPT image generation:
-"A clear linear flow diagram on a dark background. Four distinct stages connected by arrows: (1) 'AI Agent' icon proposing a change, shown as a robot/AI symbol with a document; (2) 'Proposal Store' shown as a locked filing cabinet with a padlock; (3) 'Human Operator' shown as a person at a terminal typing an approve command, with a physical key icon; (4) 'OCM Hub' shown as a Kubernetes wheel/helm symbol with clusters beneath it receiving the change. The arrow from stage 2 to 3 is labeled 'Review Required', the arrow from 3 to 4 is labeled 'Signed Token'. Color scheme: dark navy background, teal accents, amber for the human operator stage. Style: clean technical diagram, flat design."
+"A clean four-stage flow diagram on a dark navy background. Stage 1: AI Agent with a robot icon and a document (proposal). Stage 2: Proposal Store with a locked safe/vault icon. Stage 3: Human Operator at a keyboard with a physical key icon - this stage is highlighted in amber/gold. Stage 4: OCM Hub with a Kubernetes helm wheel and cluster nodes. Arrows connect each stage. Arrow from Stage 2 to 3 labeled 'Human Review'. Arrow from Stage 3 to 4 labeled 'Signed Token'. Teal accents throughout, amber highlight on the human stage. Flat technical diagram, no shadows, clean labels."
 -->
 
 ---
 
-## The incident that made me trust the audit log
+## The Frankfurt incident
 
-Six weeks in, a deployment on `ocp-frankfurt-01` rolled back unexpectedly. My first instinct was to check whether the agent had done something. That is a reasonable first instinct when you have introduced a new actor into your environment.
+Six weeks in, a deployment on `ocp-frankfurt-01` rolled back without warning. My stomach dropped. I had introduced a new actor into my environment three months earlier and now something had gone wrong.
 
-I ran `ocm-mcp get-audit-trail --last 50`. The output is a hash-chained JSON log: every tool call, with the arguments, the outcome, the actor identity, and the timestamp. Each entry carries the SHA-256 hash of the previous entry, so you can verify the chain has not been tampered with.
+I ran `ocm-mcp get-audit-trail --last 50`.
 
-The agent had made three read calls in the relevant window - `get_cluster_health`, `list_manifestworks`, `query_events` - and nothing else. No write proposals. No applies. The rollback had a different cause: a resource quota that had silently been too low for the new pod count.
+What came back was a hash-chained JSON log - every tool call the agent had made, with arguments, outcome, timestamp, and a SHA-256 hash linking each entry to the previous one. I could see exactly what happened and in what order. The agent had made three read calls in the window around the incident: `get_cluster_health`, `list_manifestworks`, `query_events`. No proposals. No applies. Nothing.
 
-What struck me was not the exoneration. It was how quickly I had a definitive answer. The audit log is not a nice-to-have compliance artifact. It is the primary debugging tool for "what did the agent do, and when." The hash chain means I cannot convince myself that an entry was modified after the fact. And the chain head can be cryptographically anchored with `ocm-mcp audit-anchor`, so even wholesale rewrites of the log are detectable later.
+The rollback had a completely different cause. A resource quota that had been silently too tight for the new replica count. Nothing to do with the agent at all.
+
+But here is what I took from that incident: the audit log was not a box I checked for compliance. It was the fastest debugging tool I had. Forty seconds from "what happened" to "the agent did not touch it." That is the kind of confidence that makes you stop second-guessing the tool and start using it properly.
+
+The hash chain matters here. I cannot edit an entry after the fact. I cannot convince myself something did or did not happen. The record is the record. And if you run `ocm-mcp audit-anchor` from your terminal after a significant change, the chain head gets cryptographically signed - so even if someone tried to rewrite the whole log file, you would know.
 
 ---
 
-## What OpenShift operators notice specifically
+## If you run OpenShift, a few things are specifically yours
 
-If you run OpenShift rather than vanilla Kubernetes, a few things are worth calling out.
+I have seen people assume this only works for vanilla Kubernetes. It does not. Here is what is different if you run OpenShift or ROSA.
 
-**The namespace protections are OpenShift-aware.** The guardrail layer has an explicit deny list of protected namespaces: not just `kube-system` and `default`, but `openshift`, `openshift-config`, `openshift-monitoring`, `openshift-ingress`, `openshift-apiserver`, and the entire `openshift-*` prefix family. An agent proposal that targets any of these is rejected before it reaches Kyverno. There is no way for a misphrased request to land a ConfigMap in `openshift-etcd`.
+**The guardrails know about OpenShift namespaces.** The deny list covers `openshift`, `openshift-config`, `openshift-monitoring`, `openshift-ingress`, `openshift-apiserver`, and the entire `openshift-*` prefix. An agent cannot write into any of those namespaces - not through a misphrased prompt, not through a crafted manifest, not at all. The rejection happens before Kyverno even sees the proposal.
 
-**ManagedClusterInfo works across ROSA and HCP.** The `get_cluster_info` tool reads from `ManagedClusterInfo` on the hub - the extended inventory object that the ACM/MCE `multicloud-operators-foundation` add-on populates. For ROSA clusters and Hosted Control Planes (HyperShift), this gives you the OCP version, node count, and console URL without needing a spoke context. The agent can answer "what version is running on rosa-dublin-01" without ever touching the spoke's API server.
+**ROSA and HCP clusters work without spoke credentials.** `get_cluster_info` reads from `ManagedClusterInfo` on the hub - the ACM/MCE extended inventory object. For ROSA clusters and HyperShift Hosted Control Planes, it gives you the OCP version, node count, and console URL without the agent ever touching the spoke's API server. This is a bigger deal than it sounds. Spoke credentials never leave the hub boundary.
 
-**HyperShift NodePools are first-class.** If you run HCP spokes, `list_hosted_clusters` and `list_node_pools` surface the full HyperShift object graph. I use this to monitor replica counts and upgrade status of NodePools across control-plane hosting clusters. The agent can describe a degraded NodePool and the HostedCluster conditions in one call - something that previously required cross-referencing three separate `oc get` outputs.
+**HyperShift NodePools are proper first-class objects.** `list_hosted_clusters` and `list_node_pools` give you the full HyperShift object graph. I monitor NodePool replica counts and upgrade status across all my hosting clusters in a single call. Previously that was three different `oc get` commands cross-referenced by hand.
 
 ![OPENSHIFT FLEET MAP PLACEHOLDER](./images/03-openshift-fleet-map.png)
 <!-- IMAGE 4: OPENSHIFT FLEET MAP
 Prompt for ChatGPT image generation:
-"A topology map of a multi-cluster OpenShift fleet managed by Open Cluster Management. A central 'Hub' node in the center labeled 'OCM Hub' with the OpenShift logo. Surrounding it: 4-5 cluster nodes of different types - on-premise clusters (server rack icon), ROSA cloud clusters (cloud icon with AWS symbol), HyperShift Hosted Control Plane clusters (nested box icon). Connecting lines show management relationships. Color code: on-prem clusters in dark teal, cloud clusters in blue, HCP clusters in purple. The hub has a shield icon indicating the MCP server guardrail layer. Background: dark space-like with subtle grid. Style: clean technical network diagram, flat design with slight glow effects on nodes."
+"A network topology diagram showing a multi-cluster OpenShift fleet. Central node labeled 'OCM Hub' with an OpenShift logo and a shield icon. Connected to 5 cluster nodes: 2 on-premise OpenShift clusters (server rack icons, dark teal), 2 ROSA cloud clusters (cloud with AWS symbol, blue), 1 HyperShift HCP cluster (nested box icon, purple). Connecting lines show hub-to-cluster management. Dark space-like background with a subtle grid. Slight glow on nodes. Clean flat technical diagram style."
 -->
 
 ---
 
-## Three things I did not expect
+## Three surprises
 
-**1. I stopped dreading the "how many clusters have this version?" question.**
+I expected the fleet health thing. I did not expect these.
 
-Before, answering version distribution across the fleet required iterating every cluster and parsing `ManagedCluster` status. Now it is a single query. The agent synthesises the `ClusterClaims` - version, platform, region - into a readable summary. I run this before every maintenance window.
+**Version queries stopped being a production blocker.** Before every maintenance window I need to know what version is running on every cluster and which ones are eligible for the upgrade path. That used to take fifteen minutes of `clusteradm` and `kubectl` output parsing. Now it is: "what versions are running across the fleet?" The agent reads the `ClusterClaims` across all clusters and gives me a clean breakdown. Thirty seconds. I do this every week now.
 
-**2. The cordon/uncordon workflow became the preferred way to gate maintenance.**
+**Cordon/uncordon became my standard maintenance gate.** My old workflow was: update labels, update placement, wait, verify, document somewhere. My new workflow is: ask the agent to propose a cordon with a stated reason, approve it, let it land, do the maintenance, propose the uncordon, approve that too. Every step is in the audit log with timestamps and stated reasons. The next time someone asks why Frankfurt was out of rotation for four days, I do not have to dig through Slack or Confluence. I run `get-audit-trail` and the answer is right there.
 
-Before I started using the agent, my maintenance workflow was: update a label, update a placement, wait, verify. Now it is: ask the agent to propose a cordon, approve it with `ocm-mcp approve`, verify the Placement excluded the cluster, do the maintenance, then propose and approve the uncordon. Each step has a record. The audit log entry for the cordon includes my process identity and the stated reason. When someone asks "why was Frankfurt out of rotation for four days," the answer is one `get-audit-trail` call away.
-
-**3. Policy compliance surfaced problems I did not know existed.**
-
-The `list_policy_violations` tool reads from the OCM governance policy add-on. On my second day of use, it surfaced three non-compliant policy-cluster pairs I had not noticed in the dashboard. Two were stale label mismatches from a cluster rename three months ago. One was a genuine misconfiguration in a NetworkPolicy. My usual dashboard workflow was tuned to workload health, not policy compliance. The agent looks at both.
+**Policy violations surfaced things I had missed.** On day two of using `list_policy_violations` properly, it showed me three non-compliant cluster-policy pairs I had not noticed. Two were stale label mismatches from a cluster rename three months earlier. One was a live misconfiguration in a NetworkPolicy. My dashboard was tuned to workload health. The agent does not make that distinction.
 
 ---
 
-## What it does not do, and why that is the right call
+## The things it deliberately cannot do
 
-The server does not expose `kubectl exec`, log reads from arbitrary namespaces, or `Secret` reads. There is no tool that can pull a running pod's environment variables, read a mounted kubeconfig, or exec a shell command on a node.
+No `kubectl exec`. No reading logs from arbitrary namespaces. No `Secret` reads. No shell access to nodes. If you ask the agent to pull environment variables from a running pod, it cannot. If you ask it to check what credentials are mounted in a deployment, it cannot. The tools do not exist.
 
-For an operator used to having all of these things in their terminal, this feels like a constraint. It is. But the constraint is load-bearing. The agent's value here comes entirely from the fact that you can hand it to a model without lying awake wondering if it will exec its way into a secret mount and exfiltrate a database password.
+I know that sounds like a limitation. From a security standpoint it is actually the whole point. The surface area is small enough that I can reason about it. I handed this thing access to forty clusters. The reason I sleep fine about that is because I know exactly what it can and cannot reach - and "everything I would not want a misbehaving model to touch" is firmly in the cannot column.
 
-The tools that exist are the ones that can read cluster state and propose controlled writes. Everything else is simply absent from the tool surface - not disabled, not guarded, just not there. You cannot prompt your way to a capability that was never registered.
-
----
-
-## Six months in: the honest balance sheet
-
-**What got easier:** Morning fleet triage. Placement debugging. Maintenance-window choreography. Cross-cluster version queries. Policy compliance monitoring. Incident post-mortems - the audit log is genuinely useful here.
-
-**What did not change:** The actual remediation work. When a workload is broken, the agent can tell me it is broken and propose a change to the Deployment spec. I still review the manifest, I still approve the token, and I still watch the rollout. The agent accelerates the diagnosis and drafting. The judgment and authorization stay with me.
-
-**What I would do differently:** I would have enabled `OCM_MCP_AUDIT_ECHO=1` from day one. Streaming the audit log to stderr and forwarding it to the team's SIEM gives you a live feed of every agent action. I turned it on after the Frankfurt incident and found it immediately useful - not for catching the agent doing something wrong, but for building confidence in the team that the record is clean.
+You cannot prompt your way to a capability that was never registered. That is not a guardrail. That is an absence.
 
 ---
 
-## Getting started on your own fleet
+## What actually changed vs what stayed the same
 
-If you want to try this on your own OCM hub:
+**Changed:**
+- Morning fleet triage (30 minutes down to 90 seconds)
+- Placement debugging (hours down to minutes)
+- Maintenance-window coordination (manual, fragile process to audited, reproducible workflow)
+- Version distribution queries (manual parsing to instant)
+- Policy compliance (invisible to surfaced and actionable)
+- Post-incident review (memory-dependent to log-backed)
+
+**Stayed the same:**
+- Every remediation decision is still mine
+- Every write still needs my signed approval token
+- Deep log dives and exec sessions still happen in my terminal
+- The thing that is broken still needs a human to fix it
+
+The agent is not a replacement. It is the part of the job that used to be parsing, now handed to something that is very good at parsing.
+
+---
+
+## Getting started
 
 ```bash
 pip install ocm-mcp-server
@@ -156,10 +177,12 @@ ocm-mcp keygen
 OCM_MCP_HUB_CONTEXT=your-hub-context ocm-mcp-server
 ```
 
-The `keygen` command generates the Ed25519 keypair under `~/.ocm-mcp/`. The server needs read access to the hub (the RBAC manifest is in `deploy/rbac.yaml`). Point your MCP-capable client at the running server and start with `list_clusters` to confirm connectivity.
+`keygen` generates the Ed25519 keypair under `~/.ocm-mcp/`. The server needs read access to the hub - the RBAC manifest is in `deploy/rbac.yaml`. Point your MCP client at it and start with `list_clusters` to confirm things are working.
 
-The full [demo](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/demo) shows a real unedited `e2e-local.sh` run - refused writes and approved ones - if you want to see the approval flow end to end before running it yourself.
+One thing I wish I had done from day one: set `OCM_MCP_AUDIT_ECHO=1`. It streams every audit entry to stderr so your log collector picks it up. I turned it on after the Frankfurt incident. I have not turned it off.
+
+The [demo](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/demo) is a real, unedited end-to-end run - refused writes, approved writes, the full approval flow. Worth watching before you wire this into a production hub.
 
 ---
 
-*Sandeep Bazar builds infrastructure tooling at the AI/cluster boundary. The server described here is open source at [github.com/sandeepbazar/ocm-mcp-server](https://github.com/sandeepbazar/ocm-mcp-server). Questions and issues welcome.*
+*Sandeep Bazar ships infrastructure tooling at the AI/cluster boundary. Everything described here is open source at [github.com/sandeepbazar/ocm-mcp-server](https://github.com/sandeepbazar/ocm-mcp-server).*
