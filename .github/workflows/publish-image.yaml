@@ -16,13 +16,14 @@ on:
 
 permissions:
   contents: read
-  packages: write
-  id-token: write # keyless Cosign signing via OIDC
-  attestations: write # build provenance attestation
 
 jobs:
   image:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write        # push to ghcr.io
+      id-token: write        # keyless Cosign signing via OIDC
+      attestations: write    # build provenance attestation
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

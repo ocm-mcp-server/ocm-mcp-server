@@ -105,7 +105,10 @@ dep(){  # name  "version command"  "brew formula"  required(yes/no)
 if ! command -v clusteradm >/dev/null 2>&1; then
   info "installing clusteradm from the official script..."
   DEST=/opt/homebrew/bin; [[ -w "$DEST" ]] || DEST=/usr/local/bin
-  INSTALL_DIR="$DEST" curl -sL https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh | INSTALL_DIR="$DEST" bash >/dev/null 2>&1 || true
+  CLUSTERADM_VERSION=v0.9.2
+  curl -fsSL -o /tmp/clusteradm_install.sh \
+    "https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/${CLUSTERADM_VERSION}/install.sh"
+  INSTALL_DIR="$DEST" bash /tmp/clusteradm_install.sh >/dev/null 2>&1 || true
 fi
 dep podman   "podman --version"                 podman         yes
 dep kind     "kind version"                      kind           yes
