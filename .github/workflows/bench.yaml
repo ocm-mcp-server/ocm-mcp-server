@@ -28,8 +28,10 @@ jobs:
           python-version: "3.12"
       - name: Install clusteradm
         run: |
-          curl -sL https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh \
-            | INSTALL_DIR=/usr/local/bin bash
+          CLUSTERADM_VERSION=v0.9.2
+          curl -fsSL -o /tmp/clusteradm_install.sh \
+            "https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/${CLUSTERADM_VERSION}/install.sh"
+          INSTALL_DIR=/usr/local/bin bash /tmp/clusteradm_install.sh
           clusteradm version
       - name: Install kwokctl
         # kind/kubectl/helm/docker ship on the ubuntu-latest runner image already;
@@ -46,7 +48,7 @@ jobs:
       - name: Install the server into .venv
         run: |
           python3 -m venv .venv
-          ./.venv/bin/pip install -q --upgrade pip
+          ./.venv/bin/pip install -q pip==26.2.1
           ./.venv/bin/pip install -q -e .
       - name: Bootstrap the kind hub (1 hub + 3 spokes)
         run: bash hack/bootstrap.sh --no-jaeger
