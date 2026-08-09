@@ -5,9 +5,10 @@ security reports get first-class attention.
 
 ## Reporting
 
-Please report vulnerabilities privately via GitHub Security Advisories
-("Report a vulnerability" on the repository's Security tab). Expect an
-acknowledgement within a few days.
+Please report vulnerabilities privately via GitHub Security Advisories at
+https://github.com/sandeepbazar/ocm-mcp-server/security/advisories/new
+
+Expect an acknowledgement within a few days.
 
 In scope, especially:
 
@@ -21,7 +22,7 @@ In scope, especially:
 
 ## Threat model
 
-See [docs/guardrails.md](docs/guardrails.md) for the layer model and abridged
-threat table. The standing assumptions: the agent is untrusted, the model
-provider is semi-trusted, the human approval terminal and the hub's RBAC are
-the trust anchors.
+See https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/guardrails.md
+for the layer model and abridged threat table. The standing assumptions: the
+agent is untrusted, the model provider is semi-trusted, the human approval
+terminal and the hub's RBAC are the trust anchors.
