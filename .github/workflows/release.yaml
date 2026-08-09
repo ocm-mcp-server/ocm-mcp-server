@@ -53,7 +53,7 @@ jobs:
       url: https://pypi.org/p/ocm-mcp-server
     permissions:
       contents: read
-      id-token: write # OIDC token for PyPI trusted publishing
+      id-token: write # OIDC token for PyPI trusted publishing + PEP 740 attestations
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,6 +93,9 @@ jobs:
           # Make tag-triggered re-runs idempotent: if this exact version is
           # already on PyPI, succeed instead of failing the whole release chain.
           skip-existing: true
+          # PEP 740 attestations: Sigstore-signed provenance attached to the
+          # PyPI package, verifiable by scorecard's Signed-Releases check.
+          attestations: true
 
   mcp-registry:
     # Publish server metadata to the official MCP Registry
