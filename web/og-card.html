@@ -13,14 +13,19 @@
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         b = p.chromium.launch()
-        pg = b.new_page(viewport={"width": 1200, "height": 630})
+        # deviceScaleFactor 2: the card is authored at 1200x630 but exported at
+        # 2400x1260, or the text goes soft on HiDPI screens and in feed previews.
+        pg = b.new_page(viewport={"width": 1200, "height": 630},
+                        device_scale_factor=2)
         pg.goto("http://localhost:8199/web/og-card.html")
         pg.wait_for_timeout(400)
         pg.screenshot(path="web/static/og.png")
         b.close()
     PY
 
-  1200x630 is the size LinkedIn and X both crop cleanly (1.91:1).
+  Authored at 1200x630 (the 1.91:1 ratio LinkedIn and X crop cleanly) and
+  exported at 2x. Update og:image:width/height in web/templates/base.html if
+  the export size ever changes.
 -->
 <html lang="en">
 <head>
