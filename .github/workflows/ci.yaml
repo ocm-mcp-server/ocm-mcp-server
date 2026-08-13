@@ -73,7 +73,7 @@ jobs:
         # The same fixture corpus must get IDENTICAL verdicts from the Python
         # static guardrails (layer 1) and Kyverno admission (layer 2).
         run: |
-          python3 -m pip install pyyaml==6.0.3
+          python3 -m pip install --require-hashes -r hack/requirements/parity.txt
           python3 hack/parity_contract.py
 
   dependency-review:
