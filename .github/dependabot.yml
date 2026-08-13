@@ -16,6 +16,14 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
 
+  # Hash-pinned CI build tools (see hack/requirements/README.md). Kept separate
+  # from "/" so a tool bump never lands in the server's runtime closure.
+  - package-ecosystem: pip
+    directory: "/hack/requirements"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
   - package-ecosystem: docker
     directory: "/"
     schedule:

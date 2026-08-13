@@ -48,7 +48,7 @@ jobs:
       - name: Install the server into .venv
         run: |
           python3 -m venv .venv
-          ./.venv/bin/pip install -q pip==26.2.1
+          ./.venv/bin/pip install -q --require-hashes -r hack/requirements/pip.txt
           ./.venv/bin/pip install -q -e .
       - name: Bootstrap the kind hub (1 hub + 3 spokes)
         run: bash hack/bootstrap.sh --no-jaeger

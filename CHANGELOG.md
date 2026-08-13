@@ -6,8 +6,32 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- **CI build tools are now hash-pinned**, not just version-pinned. `pyyaml`
+  (parity contract), `build` (release), and `pip` (bench) install from
+  `hack/requirements/*.txt` with `--require-hashes`, so a compromised or
+  re-uploaded PyPI artifact fails the build instead of running in it. A
+  version pin trusts the index to keep serving the same bytes; a hash pin
+  does not. Dependabot watches the new directory separately from the
+  server's own runtime closure. Closes OpenSSF Scorecard Pinned-Dependencies
+  findings on `ci.yaml`, `release.yaml`, and `bench.yaml`.
+- **Branch protection on `main` now requires status checks and forbids force
+  pushes.** Previously protection carried no required checks at all, so a PR
+  could merge with CI red, and `main` history was rewritable.
+- **The security policy states a disclosure process.** `SECURITY.md` now
+  commits to concrete windows — acknowledgement, triage, fix, and a 90-day
+  coordinated-disclosure default — plus CVE handling, reporter credit, and
+  which half of the system a severity judgement applies to. It previously
+  promised only "an acknowledgement within a few days".
+
 ### Fixed
 
+- **Loose API-group assertion in the reader tests**: `test_reader.py` checked
+  the resolved group with a suffix match, which would also accept a lookalike
+  such as `evil-open-cluster-management.io`. It now pins the exact expected
+  group per kind, so a sub-group drift (cluster/work/addon) fails the test.
+  Also clears a CodeQL `py/incomplete-url-substring-sanitization` finding.
 - **MCP Registry OCI schema compliance**: the registry now requires OCI
   packages to carry the version in the identifier tag
   (`ghcr.io/...:X.Y.Z`) with no separate `version` field; `server.json`,

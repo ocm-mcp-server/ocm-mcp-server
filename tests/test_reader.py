@@ -15,9 +15,18 @@ from ocm_mcp_server.config import READABLE_RESOURCES
 
 
 def test_known_ocm_types_resolve():
-    for name in ("managedclusters", "placements", "manifestworks", "managedclusteraddons"):
+    # Pin the exact API group per kind rather than matching a suffix: a suffix test
+    # would also accept a lookalike group such as "evil-open-cluster-management.io",
+    # and the sub-group (cluster/work/addon) is itself part of what must not drift.
+    expected_groups = {
+        "managedclusters": "cluster.open-cluster-management.io",
+        "placements": "cluster.open-cluster-management.io",
+        "manifestworks": "work.open-cluster-management.io",
+        "managedclusteraddons": "addon.open-cluster-management.io",
+    }
+    for name, expected_group in expected_groups.items():
         group, _version, plural, _namespaced = ocm._resolve_resource(name)
-        assert group.endswith("open-cluster-management.io")
+        assert group == expected_group
         assert plural == name
 
 
