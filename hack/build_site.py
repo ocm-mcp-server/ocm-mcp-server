@@ -418,6 +418,11 @@ def build(base: str) -> int:
 
     css_href = asset_href("site.css")
     js_href = asset_href("site.js")
+    # Absolute and content-hashed: social crawlers need a fully-qualified URL,
+    # and the hash means a regenerated card is refetched rather than served
+    # from the platform's cache.
+    og_digest = hashlib.sha256((WEB / "static" / "og.png").read_bytes()).hexdigest()[:10]
+    og_image = f"{SITE_URL}static/og.png?v={og_digest}"
 
     base_tpl = (WEB / "templates" / "base.html").read_text()
     page_tpl = (WEB / "templates" / "page.html").read_text()
@@ -430,6 +435,7 @@ def build(base: str) -> int:
             {
                 "base": base,
                 "css_href": css_href,
+                "og_image": og_image,
                 "js_href": js_href,
                 "title": title,
                 "description": html.escape(description, quote=True),

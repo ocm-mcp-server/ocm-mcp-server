@@ -8,8 +8,20 @@
 <meta property="og:title" content="{{title}}">
 <meta property="og:description" content="{{description}}">
 <meta property="og:type" content="website">
-<meta property="og:image" content="{{site_url}}assets/banner.svg">
+<meta property="og:site_name" content="ocm-mcp-server">
+<meta property="og:url" content="{{canonical}}">
+<!-- PNG, not the SVG banner: LinkedIn, X, Slack and Facebook all reject SVG
+     for og:image and render no preview at all. 1200x630 is the 1.91:1 ratio
+     they crop cleanly. Source: web/og-card.html. -->
+<meta property="og:image" content="{{og_image}}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ocm-mcp-server — AgentOps for Kubernetes fleets, done safely">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{title}}">
+<meta name="twitter:description" content="{{description}}">
+<meta name="twitter:image" content="{{og_image}}">
 <link rel="canonical" href="{{canonical}}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128737;</text></svg>">
 <link rel="stylesheet" href="{{css_href}}">
