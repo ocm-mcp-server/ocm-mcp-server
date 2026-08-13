@@ -168,8 +168,9 @@ cosign verify \
 ```
 
 The Python distributions are signed the same keyless way. Each GitHub Release
-from v0.4.0 onward carries the sdist and wheel plus a `.sigstore.json` bundle
-per artifact; verify a download before installing it:
+from v0.4.0 onward carries the sdist and wheel, a `.sigstore.json` bundle per
+artifact, and a `provenance.intoto.jsonl` recording which workflow and commit
+built them. Verify a download before installing it:
 
 ```bash
 pip install sigstore
