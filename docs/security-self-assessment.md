@@ -22,10 +22,10 @@ be honest about limits, not to market.
 
 | Document | URL |
 |---|---|
-| Security policy | [SECURITY.md](../SECURITY.md) |
+| Security policy | [SECURITY.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SECURITY.md) |
 | Guardrail model and threat model | [docs/guardrails.md](guardrails.md) |
 | Architecture | [docs/architecture.md](architecture.md) |
-| RBAC | [deploy/rbac.yaml](../deploy/rbac.yaml) |
+| RBAC | [deploy/rbac.yaml](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/deploy/rbac.yaml) |
 
 ## Overview
 
@@ -117,7 +117,7 @@ four independent controls between the model and the clusters.
 - **Allow-listed capability surface.** The tool set is fixed and small. The generic
   reader accepts only an allow-list of OCM API types, so Secrets and core kinds are not
   expressible - the dangerous read does not exist rather than being merely restricted.
-- **Least-privilege RBAC.** The hub identity ([deploy/rbac.yaml](../deploy/rbac.yaml))
+- **Least-privilege RBAC.** The hub identity ([deploy/rbac.yaml](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/deploy/rbac.yaml))
   grants exactly the verbs the tools use: read across the OCM API, plus create/delete
   ManifestWorks and ManagedClusterAddOns, patch ManagedClusters, and approve OCM join
   CSRs. No Secret reads, no exec, no arbitrary delete. RBAC cannot restrict writes to
@@ -185,7 +185,7 @@ documented threat model.
 
 ## Security issue resolution
 
-- **Reporting**: see [SECURITY.md](../SECURITY.md). Vulnerabilities are reported
+- **Reporting**: see [SECURITY.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SECURITY.md). Vulnerabilities are reported
   privately (via GitHub private advisories or by contacting a maintainer on LinkedIn),
   not in public issues.
 - **Response**: a maintainer acknowledges the report, confirms the issue, prepares a fix

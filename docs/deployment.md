@@ -57,7 +57,7 @@ kubectl --context kind-hub get clusterpolicies
 
 Export the environment bootstrap printed (if you are unsure what those context
 names mean, the [context names guide](kubeconfig-contexts.md) explains them),
-register the server with your MCP client ([examples/](../examples/)), and run
+register the server with your MCP client ([examples/](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/examples/)), and run
 the smoke test from the [worked examples](examples.md).
 
 Tear down with `make teardown`.
@@ -187,13 +187,13 @@ have always been present.
 
 ## Path D: in-cluster via Helm (or raw manifests) - a security-shape reference today
 
-A reference [Deployment](../deploy/deployment.yaml) and a Helm chart
-([`deploy/charts/ocm-mcp-server`](../deploy/charts/ocm-mcp-server)) show how the server
+A reference [Deployment](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/deploy/deployment.yaml) and a Helm chart
+([`deploy/charts/ocm-mcp-server`](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/deploy/charts/ocm-mcp-server)) show how the server
 is meant to run on the hub: Restricted pod security context, resource limits, a
 read-only verifier-key mount, a NetworkPolicy, and a PodDisruptionBudget.
 
 **Be clear about what this path is until the authenticated HTTP transport lands
-(see [ROADMAP.md](../ROADMAP.md)): a reference for the security shape, not a usable
+(see [ROADMAP.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/ROADMAP.md)): a reference for the security shape, not a usable
 remote endpoint.** The server speaks stdio only, so an MCP client on your laptop
 cannot connect to this pod over the network; the manifest keeps stdin open so the
 pod idles instead of crash-looping. Use Paths A-C (local stdio) to actually operate
@@ -248,7 +248,7 @@ external sink before any write-enabled use.
       your change windows are short.
 - [ ] **Policies:** extend `deploy/policies/` with org-specific rules; run
       `make policy-test` in your CI with your own test resources added.
-- [ ] **Upgrades:** pin the package version; read the [CHANGELOG](../CHANGELOG.md)
+- [ ] **Upgrades:** pin the package version; read the [CHANGELOG](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/CHANGELOG.md)
       before bumping; the tool surface is the compatibility contract.
 
 ## Tracing with OpenTelemetry and Jaeger
