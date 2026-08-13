@@ -721,7 +721,10 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 }
 .stat__l { font-size: 12.6px; color: var(--text-faint); letter-spacing: 0.03em; }
 
-.sec { margin: 96px 0 0; }
+/* `auto` on the sides is load-bearing: `.sec` is also a `.shell`, and a
+   `margin: 96px 0 0` shorthand here would reset .shell's `margin: 0 auto`
+   and left-align every section on viewports wider than --maxw. */
+.sec { margin: 96px auto 0; }
 .sec__head { text-align: center; margin-bottom: 34px; }
 .sec__head h2 {
   font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.2rem);

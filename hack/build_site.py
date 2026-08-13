@@ -23,6 +23,7 @@ Either failure exits non-zero, which fails the Pages workflow.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import re
 import shutil
@@ -409,6 +410,15 @@ def build(base: str) -> int:
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
 
+    def asset_href(name: str) -> str:
+        """Content-hashed URL. Without it, a returning visitor keeps the CSS
+        their browser cached and sees the old design after every deploy."""
+        digest = hashlib.sha256((WEB / "static" / name).read_bytes()).hexdigest()[:10]
+        return f"{base}static/{name}?v={digest}"
+
+    css_href = asset_href("site.css")
+    js_href = asset_href("site.js")
+
     base_tpl = (WEB / "templates" / "base.html").read_text()
     page_tpl = (WEB / "templates" / "page.html").read_text()
     home_tpl = (WEB / "templates" / "home.html").read_text()
@@ -419,6 +429,8 @@ def build(base: str) -> int:
             base_tpl,
             {
                 "base": base,
+                "css_href": css_href,
+                "js_href": js_href,
                 "title": title,
                 "description": html.escape(description, quote=True),
                 "site_url": SITE_URL,
