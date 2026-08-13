@@ -25,12 +25,20 @@ tracing = [
     "opentelemetry-sdk>=1.25.0",
     "opentelemetry-exporter-otlp-proto-http>=1.25.0",
 ]
+# Building the GitHub Pages site (hack/build_site.py).
+site = [
+    "markdown-it-py>=3.0",
+    "mdit-py-plugins>=0.4",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.5",
     "mypy>=1.10",
     "hypothesis>=6.100",
+    # so the site-builder tests run in CI alongside everything else
+    "markdown-it-py>=3.0",
+    "mdit-py-plugins>=0.4",
 ]
 
 [project.urls]

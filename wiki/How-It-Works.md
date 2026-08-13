@@ -74,7 +74,7 @@ sequenceDiagram
             Sv->>Sv: verify token vs content hash + TTL
             Sv->>Hub: 4. create ManifestWork (RBAC-scoped)
             Hub-->>Sv: applied
-            Sv-->>Ag: applied; verify with reads
+            Sv-->>Ag: applied, verify with reads
         end
     end
 ```
