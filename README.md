@@ -5,6 +5,8 @@
 
 # 🛡️ ocm-mcp-server
 
+### **[📖 Read the docs site → sandeepbazar.github.io/ocm-mcp-server](https://sandeepbazar.github.io/ocm-mcp-server/)**
+
 ### AgentOps for Kubernetes fleets, done safely.
 
 **An MCP server that lets AI agents operate a multi-cluster Kubernetes fleet through an

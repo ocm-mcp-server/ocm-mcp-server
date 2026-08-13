@@ -1,0 +1,67 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+#
+# Build the documentation site from wiki/ and docs/ and publish it to GitHub
+# Pages. The source of truth stays in markdown; hack/build_site.py renders it.
+#
+# Pages is served from this workflow rather than from a branch: a branch deploy
+# can only publish one folder, and the site is built from two source trees.
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wiki/**"
+      - "docs/**"
+      - "web/**"
+      - "hack/build_site.py"
+      - "hack/requirements/site.txt"
+      - "src/ocm_mcp_server/__init__.py" # the version shown in the hero
+      - ".github/workflows/pages.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a half-finished deploy; queue behind it instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install the builder
+        run: |
+          python3 -m pip install --require-hashes -r hack/requirements/site.txt
+          # The hero's counts come from docs_stats.compute(), which collects the
+          # test suite, so the package and its dev extra have to be importable.
+          python3 -m pip install -e ".[dev]"
+      - name: Build the site
+        # Fails the job on an unnavigated page or an internal link that
+        # resolves to nothing - neither is visible once deployed.
+        run: python3 hack/build_site.py
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write # publish to Pages
+      id-token: write # OIDC verification of the deployment origin
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-base="{{base}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{description}}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{{site_url}}assets/banner.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="{{canonical}}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128737;</text></svg>">
+<link rel="stylesheet" href="{{base}}static/site.css">
+<script>
+  // Dark is the default for everyone, regardless of OS preference — this is a
+  // dark-first design and it is what the project should lead with. A visitor
+  // who picks light with the toggle keeps it; nothing else overrides them.
+  // Applied before first paint so there is no flash of the wrong theme.
+  (() => {
+    let t;
+    try { t = localStorage.getItem("theme"); } catch { t = null; }
+    document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header class="hdr">
+  <a class="hdr__brand" href="{{base}}">
+    <svg class="hdr__mark" viewBox="0 0 32 32" aria-hidden="true">
+      <defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6f6cf6"/><stop offset="1" stop-color="#38bdf8"/>
+      </linearGradient></defs>
+      <path d="M16 2.5 4.5 7v9.2c0 7.1 4.8 11.8 11.5 13.9 6.7-2.1 11.5-6.8 11.5-13.9V7z" fill="url(#hg)" opacity=".22"/>
+      <path d="M16 2.5 4.5 7v9.2c0 7.1 4.8 11.8 11.5 13.9 6.7-2.1 11.5-6.8 11.5-13.9V7z" fill="none" stroke="url(#hg)" stroke-width="1.8"/>
+      <path d="m10.8 16.2 3.6 3.7 7-7.4" fill="none" stroke="#38bdf8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    ocm-mcp-server
+  </a>
+  <nav class="hdr__nav">{{megamenu}}</nav>
+  <div class="hdr__spacer"></div>
+  <button class="iconbtn" id="theme" type="button" aria-label="Toggle colour theme">
+    <svg class="theme-light-only" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>
+    </svg>
+    <svg class="theme-dark-only" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8"/>
+    </svg>
+  </button>
+  <a class="ghlink" href="https://github.com/sandeepbazar/ocm-mcp-server">
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg>
+    GitHub
+  </a>
+</header>
+
+{{body}}
+
+<footer class="ftr">
+  <div class="ftr__in">
+    <span>Built and maintained by <a href="https://www.linkedin.com/in/sandeepbazar/">Sandeep Bazar</a> · Apache-2.0 · generated from the repository's own markdown</span>
+    <nav>
+      <a href="https://github.com/sandeepbazar/ocm-mcp-server">Code</a>
+      <a href="https://pypi.org/p/ocm-mcp-server">PyPI</a>
+      <a href="https://github.com/sandeepbazar/ocm-mcp-server/wiki">Wiki</a>
+      <a href="https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SECURITY.md">Security</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="{{base}}static/site.js" defer></script>
+</body>
+</html>

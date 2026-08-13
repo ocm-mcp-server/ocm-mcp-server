@@ -1,0 +1,138 @@
+<main id="main">
+<section class="shell hero">
+  <span class="hero__eyebrow" data-reveal><i class="hero__dot"></i> v{{version}} · signed releases with provenance</span>
+  <h1 data-reveal style="--d:70ms">AgentOps for Kubernetes fleets, done safely.</h1>
+  <p class="hero__sub" data-reveal style="--d:140ms">
+    An MCP server that lets AI agents operate a multi-cluster Kubernetes fleet through an
+    Open&nbsp;Cluster&nbsp;Management hub. The agent never holds a kubeconfig. Every write is
+    policy-checked, human-approved, and traced.
+  </p>
+  <div class="hero__cta" data-reveal style="--d:210ms">
+    <a class="btn btn--primary" href="{{base}}journey/why-this-exists/">
+      Read the journey
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+    <a class="btn btn--ghost" href="{{base}}reference/deployment/">Get started</a>
+  </div>
+
+  <!-- The write path, animated: a request travels left to right and must pass
+       four gates. Decorative - the same story is told in prose below. -->
+  <div class="flow" data-reveal style="--d:280ms" aria-hidden="true">
+    <svg viewBox="0 0 940 172" role="presentation">
+      <defs>
+        <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#6f6cf6"/><stop offset=".5" stop-color="#38bdf8"/><stop offset="1" stop-color="#34d399"/>
+        </linearGradient>
+      </defs>
+
+      <path class="wire" d="M112 86 H828"/>
+      <path class="spark" stroke="url(#fg)" d="M112 86 H828"/>
+
+      <g>
+        <rect class="lane" x="12" y="54" width="100" height="64" rx="13"/>
+        <text class="lbl" x="62" y="82" text-anchor="middle">AI agent</text>
+        <text class="sub" x="62" y="99" text-anchor="middle">no kubeconfig</text>
+      </g>
+
+      <g>
+        <rect class="lane" x="168" y="54" width="118" height="64" rx="13"/>
+        <text class="lbl" x="227" y="82" text-anchor="middle">MCP server</text>
+        <text class="sub" x="227" y="99" text-anchor="middle">narrow surface</text>
+      </g>
+
+      <g class="gate" style="animation-delay:.15s">
+        <rect class="lane" x="330" y="42" width="104" height="88" rx="13" stroke="#6f6cf6"/>
+        <text class="sub" x="382" y="64" text-anchor="middle" fill="#8ea2ff">LAYER 1</text>
+        <text class="lbl" x="382" y="86" text-anchor="middle">guardrails</text>
+        <text class="sub" x="382" y="104" text-anchor="middle">static checks</text>
+      </g>
+
+      <g class="gate" style="animation-delay:.5s">
+        <rect class="lane" x="452" y="42" width="104" height="88" rx="13" stroke="#38bdf8"/>
+        <text class="sub" x="504" y="64" text-anchor="middle" fill="#7dd3fc">LAYER 2</text>
+        <text class="lbl" x="504" y="86" text-anchor="middle">Kyverno</text>
+        <text class="sub" x="504" y="104" text-anchor="middle">dry-run admission</text>
+      </g>
+
+      <g class="gate" style="animation-delay:.85s">
+        <rect class="lane" x="574" y="42" width="104" height="88" rx="13" stroke="#fb923c"/>
+        <text class="sub" x="626" y="64" text-anchor="middle" fill="#fdba74">LAYER 3</text>
+        <text class="lbl" x="626" y="86" text-anchor="middle">approval</text>
+        <text class="sub" x="626" y="104" text-anchor="middle">human, Ed25519</text>
+      </g>
+
+      <g class="gate" style="animation-delay:1.2s">
+        <rect class="lane" x="696" y="42" width="104" height="88" rx="13" stroke="#34d399"/>
+        <text class="sub" x="748" y="64" text-anchor="middle" fill="#6ee7b7">LAYER 4</text>
+        <text class="lbl" x="748" y="86" text-anchor="middle">RBAC</text>
+        <text class="sub" x="748" y="104" text-anchor="middle">least privilege</text>
+      </g>
+
+      <g>
+        <rect class="lane" x="828" y="54" width="100" height="64" rx="13"/>
+        <text class="lbl" x="878" y="82" text-anchor="middle">fleet</text>
+        <text class="sub" x="878" y="99" text-anchor="middle">OCM hub</text>
+      </g>
+    </svg>
+  </div>
+
+  <ul class="stats" data-reveal style="--d:340ms">
+    <li class="stat"><span class="stat__n" data-count="{{stat_tools}}">{{stat_tools}}</span><span class="stat__l">MCP tools</span></li>
+    <li class="stat"><span class="stat__n" data-count="{{stat_prompts}}">{{stat_prompts}}</span><span class="stat__l">prompts</span></li>
+    <li class="stat"><span class="stat__n" data-count="{{stat_resources}}">{{stat_resources}}</span><span class="stat__l">resources</span></li>
+    <li class="stat"><span class="stat__n" data-count="{{stat_tests}}">{{stat_tests}}</span><span class="stat__l">unit tests</span></li>
+    <li class="stat"><span class="stat__n" data-count="100" data-suffix="%">100%</span><span class="stat__l">coverage</span></li>
+    <li class="stat"><span class="stat__n" data-count="{{stat_cases}}">{{stat_cases}}</span><span class="stat__l">policy cases</span></li>
+  </ul>
+</section>
+
+<section class="shell sec">
+  <div class="sec__head" data-reveal>
+    <h2>Four layers between the model and your clusters</h2>
+    <p>Each one can refuse independently. A request has to satisfy all of them, and the
+       two policy layers are tested against a shared fixture corpus to prove they agree.</p>
+  </div>
+  <div class="layers">
+    <article class="layer" data-reveal style="--c1:#6f6cf6;--c2:#8ea2ff;--d:0ms">
+      <span class="layer__n">LAYER 1</span>
+      <h3>Static guardrails</h3>
+      <p>Dangerous reads cannot be expressed: Secrets and non-OCM kinds are absent from the
+         allow-list, so they are refused before any API call.</p>
+    </article>
+    <article class="layer" data-reveal style="--c1:#38bdf8;--c2:#7dd3fc;--d:80ms">
+      <span class="layer__n">LAYER 2</span>
+      <h3>Kyverno admission</h3>
+      <p>An independent second opinion in dry-run. A parity contract asserts it reaches the
+         same verdict as layer&nbsp;1 on every fixture.</p>
+    </article>
+    <article class="layer" data-reveal style="--c1:#fb923c;--c2:#fdba74;--d:160ms">
+      <span class="layer__n">LAYER 3</span>
+      <h3>Human approval</h3>
+      <p>Writes are two-phase. An Ed25519 token, minted by a person out of band, binds the
+         exact content hash and expires.</p>
+    </article>
+    <article class="layer" data-reveal style="--c1:#34d399;--c2:#6ee7b7;--d:240ms">
+      <span class="layer__n">LAYER 4</span>
+      <h3>Least-privilege RBAC</h3>
+      <p>No Secret reads, no exec, no arbitrary delete — enforced by the hub itself, not by
+         the server asking nicely.</p>
+    </article>
+  </div>
+</section>
+
+<section class="shell sec">
+  <div class="sec__head" data-reveal>
+    <h2>Start here</h2>
+    <p>Why it exists, how it works, and what it refuses to automate — in order.</p>
+  </div>
+  <div class="cards">{{journey_cards}}</div>
+</section>
+
+<section class="shell sec">
+  <div class="sec__head" data-reveal>
+    <h2>Run it</h2>
+    <p>Architecture, deployment paths, the full tool surface, and the threat model.</p>
+  </div>
+  <div class="cards">{{reference_cards}}</div>
+</section>
+</main>

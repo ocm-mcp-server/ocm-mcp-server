@@ -6,6 +6,32 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **A documentation site at
+  [sandeepbazar.github.io/ocm-mcp-server](https://sandeepbazar.github.io/ocm-mcp-server/)**,
+  built by `hack/build_site.py` from `wiki/` and `docs/` — the same markdown
+  those trees already hold, so nothing is duplicated and `hack/publish-wiki.sh`
+  keeps feeding the GitHub wiki from the same files. Dark-first with a light
+  toggle, a mega-menu that shows each section's chapters before you click,
+  scroll-reveal and scrollspy, and click-to-zoom on every diagram. Mermaid is
+  **vendored** rather than pulled from a CDN: a project that pins every action
+  by SHA and every dependency by hash should not load an unpinned third-party
+  script into its own homepage.
+- **Two build-time invariants for the site**, in the spirit of the
+  guardrail↔Kyverno parity contract: every markdown file under `wiki/` and
+  `docs/` must be either navigated to or explicitly excluded with a reason, and
+  every internal link must resolve to a generated page. Either failure exits
+  non-zero and fails the Pages workflow, because both are silent once deployed.
+
+### Fixed
+
+- **A mermaid sequence diagram in `wiki/How-It-Works.md` never rendered.** The
+  message text `applied; verify with reads` contains a semicolon, which mermaid
+  treats as a statement separator, so the diagram failed to parse — on the
+  GitHub wiki as well as the new site. Now `applied, verify with reads`. All 22
+  diagrams across the site parse.
+
 ## [0.4.0] - 2026-08-13
 
 The supply-chain release. What this project asks of its users — verify before
