@@ -6,6 +6,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-13
+
+The supply-chain release. What this project asks of its users — verify before
+you trust — it now applies to itself end to end: release artifacts you can
+check, build tools that fail closed on a tampered index, a branch you cannot
+rewrite, and a security policy that commits to dates rather than adjectives.
+Twelve open code-scanning alerts went to four, and the four that remain are
+honest ones no code change can close: repository age, a solo maintainer who
+cannot approve their own pull requests, and a badge only a human can register.
+
 ### Security
 
 - **CI build tools are now hash-pinned**, not just version-pinned. `pyyaml`
@@ -23,9 +33,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   `.sigstore.json` bundles and a `provenance.intoto.jsonl` to the Release.
   Provenance is the stronger claim — a signature attests that this repository
   signed the bytes, provenance attests which workflow at which commit built
-  them — and it is the same guarantee the container image already ships. The distributions handed to
-  the signer are the exact bytes published to PyPI, passed between jobs as a
-  build artifact rather than rebuilt. Previously the Releases page carried no
+  them — and it is the same guarantee the container image already ships. The
+  distributions handed to the signer are the exact bytes published to PyPI,
+  passed between jobs as a build artifact rather than rebuilt. Previously the Releases page carried no
   downloadable artifact at all — the PEP 740 attestations lived on PyPI and
   the Cosign signature in the OCI registry, so anyone fetching from GitHub had
   nothing to verify against. `docs/deployment.md` documents verification.
