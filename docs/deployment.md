@@ -167,6 +167,23 @@ cosign verify \
   ghcr.io/sandeepbazar/ocm-mcp-server:latest
 ```
 
+The Python distributions are signed the same keyless way. Each GitHub Release
+from v0.4.0 onward carries the sdist and wheel plus a `.sigstore.json` bundle
+per artifact; verify a download before installing it:
+
+```bash
+pip install sigstore
+python -m sigstore verify github ocm_mcp_server-<version>-py3-none-any.whl \
+  --repository sandeepbazar/ocm-mcp-server \
+  --ref refs/tags/v<version>
+```
+
+Installing from PyPI instead? Those uploads carry PEP 740 attestations, which
+`pip` checks for you — the bundles above are for artifacts fetched from the
+GitHub Releases page. Releases up to and including v0.3.0 predate this and have
+no attached artifacts; install those from PyPI or GHCR, where the signatures
+have always been present.
+
 ## Path D: in-cluster via Helm (or raw manifests) - a security-shape reference today
 
 A reference [Deployment](../deploy/deployment.yaml) and a Helm chart

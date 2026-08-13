@@ -15,6 +15,7 @@ different bytes for a pinned version.
 | `parity.txt` | `pyyaml` | `.github/workflows/ci.yaml` — guardrail ↔ Kyverno parity contract |
 | `build.txt` | `build` | `.github/workflows/release.yaml` — sdist and wheel build |
 | `pip.txt` | `pip` | `.github/workflows/bench.yaml` — pip upgrade inside the bench venv |
+| `sigstore.txt` | `sigstore` | `.github/workflows/release.yaml` — keyless signing of release artifacts |
 
 These are deliberately separate from the top-level `requirements.lock`, which
 locks the *server's own runtime* dependencies for the container image. Tools
@@ -34,7 +35,12 @@ transitive set is resolved fresh:
 echo "pyyaml==6.0.3" | uv pip compile - --generate-hashes --universal -o hack/requirements/parity.txt
 echo "build==1.5.0"  | uv pip compile - --generate-hashes --universal -o hack/requirements/build.txt
 echo "pip==26.2.1"   | uv pip compile - --generate-hashes --universal -o hack/requirements/pip.txt
+echo "sigstore"      | uv pip compile - --generate-hashes --universal -o hack/requirements/sigstore.txt
 ```
+
+`sigstore.txt` is left unpinned at the top level on purpose: it is a signing
+tool whose trust roots move, so it should track upstream rather than sit on a
+frozen version. The compile still pins the whole resolved closure by hash.
 
 `--universal` resolves across platforms rather than just the host, so the same
 file is valid on any runner. Dependabot also proposes version bumps here and

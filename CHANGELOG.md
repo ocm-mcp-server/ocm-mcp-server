@@ -16,9 +16,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   does not. Dependabot watches the new directory separately from the
   server's own runtime closure. Closes OpenSSF Scorecard Pinned-Dependencies
   findings on `ci.yaml`, `release.yaml`, and `bench.yaml`.
+- **GitHub Releases now carry signed artifacts.** A new `sign-release` job
+  signs the sdist and wheel keylessly with Sigstore (GitHub OIDC, no stored
+  key), verifies the bundles it just produced, and attaches the artifacts plus
+  their `.sigstore.json` bundles to the Release. The distributions handed to
+  the signer are the exact bytes published to PyPI, passed between jobs as a
+  build artifact rather than rebuilt. Previously the Releases page carried no
+  downloadable artifact at all — the PEP 740 attestations lived on PyPI and
+  the Cosign signature in the OCI registry, so anyone fetching from GitHub had
+  nothing to verify against. `docs/deployment.md` documents verification.
 - **Branch protection on `main` now requires status checks and forbids force
   pushes.** Previously protection carried no required checks at all, so a PR
-  could merge with CI red, and `main` history was rewritable.
+  could merge with CI red, and `main` history was rewritable. The force-push
+  block came from a repository ruleset that was active but targeting no
+  branch; it now targets the default branch.
 - **The security policy states a disclosure process.** `SECURITY.md` now
   commits to concrete windows — acknowledgement, triage, fix, and a 90-day
   coordinated-disclosure default — plus CVE handling, reporter credit, and
