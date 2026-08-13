@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 image:
   repository: ghcr.io/sandeepbazar/ocm-mcp-server
-  tag: v0.3.0
+  tag: v0.4.0
   # Set an immutable digest for production (takes precedence over tag), e.g.
   # digest: sha256:0123...  -> the image is referenced as repository@sha256:...
   digest: ""
