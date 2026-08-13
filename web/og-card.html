@@ -1,0 +1,133 @@
+<!doctype html>
+<!--
+  SPDX-FileCopyrightText: 2026 Sandeep Bazar
+  SPDX-License-Identifier: Apache-2.0
+
+  Source for web/static/og.png, the social-sharing card. Rendered to PNG
+  rather than referenced directly, because LinkedIn, X, Slack and Facebook
+  all reject SVG for og:image and will show no preview at all.
+
+  Regenerate after editing (from the repo root):
+    python3 -m http.server 8199 &
+    python3 - <<'PY'
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        pg = b.new_page(viewport={"width": 1200, "height": 630})
+        pg.goto("http://localhost:8199/web/og-card.html")
+        pg.wait_for_timeout(400)
+        pg.screenshot(path="web/static/og.png")
+        b.close()
+    PY
+
+  1200x630 is the size LinkedIn and X both crop cleanly (1.91:1).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative;
+    background: #0b1020;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #eef2ff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 74px;
+  }
+  .glow {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(46rem 26rem at 8% -10%, rgba(111,108,246,.42), transparent 62%),
+      radial-gradient(38rem 22rem at 96% 6%, rgba(56,189,248,.30), transparent 64%),
+      radial-gradient(34rem 22rem at 60% 118%, rgba(52,211,153,.20), transparent 62%);
+  }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(148,163,184,.075) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148,163,184,.075) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(80% 76% at 50% 8%, #000 30%, transparent 100%);
+  }
+  .in { position: relative; }
+  .brand { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
+  .brand svg { width: 62px; height: 62px; }
+  .brand b { font-size: 44px; font-weight: 700; letter-spacing: -.028em; }
+  h1 {
+    font-size: 74px;
+    line-height: 1.04;
+    letter-spacing: -.042em;
+    font-weight: 750;
+    max-width: 17ch;
+    background: linear-gradient(104deg, #fff 22%, #8ea2ff 58%, #38bdf8 92%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  p.sub { margin-top: 22px; font-size: 26px; line-height: 1.45; color: #aab6d6; max-width: 44ch; }
+  .chips { display: flex; gap: 12px; margin-top: 34px; }
+  .chip {
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 19px;
+    font-weight: 560;
+    border: 1.5px solid;
+    background: rgba(255,255,255,.035);
+  }
+  .c1 { color: #8ea2ff; border-color: rgba(142,162,255,.5); }
+  .c2 { color: #7dd3fc; border-color: rgba(125,211,252,.5); }
+  .c3 { color: #fdba74; border-color: rgba(253,186,116,.5); }
+  .c4 { color: #6ee7b7; border-color: rgba(110,231,183,.5); }
+  .url {
+    position: absolute;
+    left: 74px;
+    bottom: 46px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 20px;
+    color: #7f8db5;
+  }
+  .rule {
+    position: absolute; left: 0; right: 0; top: 0; height: 7px;
+    background: linear-gradient(90deg, #6f6cf6, #38bdf8 52%, #34d399);
+  }
+</style>
+</head>
+<body>
+  <div class="rule"></div>
+  <div class="glow"></div>
+  <div class="grid"></div>
+
+  <div class="in">
+    <div class="brand">
+      <svg viewBox="0 0 32 32">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#6f6cf6"/><stop offset="1" stop-color="#38bdf8"/>
+        </linearGradient></defs>
+        <path d="M16 2.5 4.5 7v9.2c0 7.1 4.8 11.8 11.5 13.9 6.7-2.1 11.5-6.8 11.5-13.9V7z" fill="url(#g)" opacity=".24"/>
+        <path d="M16 2.5 4.5 7v9.2c0 7.1 4.8 11.8 11.5 13.9 6.7-2.1 11.5-6.8 11.5-13.9V7z" fill="none" stroke="url(#g)" stroke-width="1.8"/>
+        <path d="m10.8 16.2 3.6 3.7 7-7.4" fill="none" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <b>ocm-mcp-server</b>
+    </div>
+
+    <h1>AgentOps for Kubernetes fleets, done safely.</h1>
+    <p class="sub">
+      The agent never holds a kubeconfig. Every write is policy-checked,
+      human-approved, and traced.
+    </p>
+
+    <div class="chips">
+      <span class="chip c1">MCP tools</span>
+      <span class="chip c2">Open Cluster Management</span>
+      <span class="chip c3">Kyverno policy</span>
+      <span class="chip c4">human approval</span>
+    </div>
+  </div>
+
+  <div class="url">sandeepbazar.github.io/ocm-mcp-server</div>
+</body>
+</html>
