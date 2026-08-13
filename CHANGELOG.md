@@ -16,10 +16,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   does not. Dependabot watches the new directory separately from the
   server's own runtime closure. Closes OpenSSF Scorecard Pinned-Dependencies
   findings on `ci.yaml`, `release.yaml`, and `bench.yaml`.
-- **GitHub Releases now carry signed artifacts.** A new `sign-release` job
-  signs the sdist and wheel keylessly with Sigstore (GitHub OIDC, no stored
-  key), verifies the bundles it just produced, and attaches the artifacts plus
-  their `.sigstore.json` bundles to the Release. The distributions handed to
+- **GitHub Releases now carry signed artifacts with build provenance.** A new
+  `sign-release` job generates SLSA build provenance for the sdist and wheel,
+  signs them keylessly with Sigstore (GitHub OIDC, no stored key), verifies
+  the bundles it just produced, and attaches the artifacts plus their
+  `.sigstore.json` bundles and a `provenance.intoto.jsonl` to the Release.
+  Provenance is the stronger claim — a signature attests that this repository
+  signed the bytes, provenance attests which workflow at which commit built
+  them — and it is the same guarantee the container image already ships. The distributions handed to
   the signer are the exact bytes published to PyPI, passed between jobs as a
   build artifact rather than rebuilt. Previously the Releases page carried no
   downloadable artifact at all — the PEP 740 attestations lived on PyPI and

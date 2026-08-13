@@ -118,6 +118,7 @@ jobs:
     permissions:
       contents: write # attach assets to the GitHub Release
       id-token: write # GitHub OIDC identity for keyless Sigstore signing
+      attestations: write # record the SLSA build provenance attestation
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -130,6 +131,20 @@ jobs:
         with:
           name: dist
           path: dist
+      - name: Generate SLSA build provenance for the distributions
+        # A signature says "this repo signed these bytes"; provenance says
+        # "this workflow, at this commit, produced them" - the stronger claim,
+        # and the same guarantee the container image already ships.
+        id: provenance
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: "dist/*.tar.gz,dist/*.whl"
+      - name: Publish the provenance bundle alongside the artifacts
+        # The attestation also lives in GitHub's attestation store, but a
+        # consumer downloading the tarball needs it next to the tarball.
+        env:
+          BUNDLE: ${{ steps.provenance.outputs.bundle-path }}
+        run: cp "$BUNDLE" dist/provenance.intoto.jsonl
       - name: Sign the distributions with Sigstore
         # Writes {artifact}.sigstore.json next to each input.
         run: |
