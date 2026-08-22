@@ -15,6 +15,17 @@ FROM python:3.14-slim@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9
 # it the registry refuses to list the image (as of the 0.3.0 publish).
 LABEL io.modelcontextprotocol.server.name="io.github.sandeepbazar/ocm-mcp-server"
 
+# Apply pending Debian security updates. The pinned slim base is the newest
+# python:3.14-slim upstream publishes, but Debian ships fixes faster than the
+# official images are rebuilt - the util-linux family alone accounted for 36
+# HIGH CVEs that were already fixed in 2.41.5-0+deb13u1. Without this the
+# image is only as current as the last base rebuild, and the Trivy gate
+# (which ignores unfixed CVEs) fails on exactly those.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Install dependencies from the hash-pinned lock first (reproducible, tamper-evident),
