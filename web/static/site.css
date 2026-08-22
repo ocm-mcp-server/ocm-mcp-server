@@ -622,7 +622,10 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 
 /* ------------------------------------------------------------------ home -- */
 
-.hero { position: relative; padding: 78px 0 34px; text-align: center; }
+/* Horizontal padding must match .shell's gutter: this shorthand runs after
+   `.shell { padding: 0 22px }` and a `0` here strips the gutters, leaving
+   the whole hero flush against the viewport edge on a narrow screen. */
+.hero { position: relative; padding: 78px 22px 34px; text-align: center; }
 .hero__eyebrow {
   display: inline-flex;
   align-items: center;
@@ -687,29 +690,132 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 .btn--ghost { background: var(--surface); border-color: var(--line); color: var(--text); }
 .btn--ghost:hover { border-color: var(--violet); }
 
-/* Animated flow diagram */
-.flow { margin: 44px auto 0; max-width: 940px; }
-.flow svg { width: 100%; height: auto; }
-.flow .lane { fill: var(--surface); stroke: var(--line); }
-.flow .lbl { fill: var(--text); font-family: var(--sans); font-size: 13px; font-weight: 600; }
-.flow .sub { fill: var(--text-faint); font-family: var(--mono); font-size: 10.5px; }
-.flow .wire { fill: none; stroke: var(--line); stroke-width: 2; }
-.flow .spark {
-  fill: none;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-dasharray: 26 340;
-  animation: dash 3.4s linear infinite;
+/* ------------------------------------------------------------ hero flow --
+ * Seven stages a write passes through, left to right. A pulse of activation
+ * travels the row - each stage lights in turn, then its connector fills -
+ * so the sequence reads as a journey rather than a static row of boxes.
+ * Timing is driven entirely by --i on each stage, so adding or removing a
+ * stage needs no keyframe changes.
+ */
+.flow { margin: 46px auto 0; max-width: 1100px; }
+
+.flow__track {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  --cycle: 7s;
+  --step: 0.6s;
 }
-@keyframes dash { to { stroke-dashoffset: -366; } }
-/* Never dips far enough to read as "disabled" — it is a pulse, not a state. */
-.flow .gate { animation: gateGlow 3.4s ease-in-out infinite; }
-@keyframes gateGlow {
-  0%, 100% { opacity: 0.72; }
-  50% { opacity: 1; }
+
+.flow__stage {
+  position: relative;
+  flex: 1 1 118px;
+  min-width: 110px;
+  max-width: 168px;
+  padding: 14px 12px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  --c: var(--text-faint);
+  animation: stageOn var(--cycle) ease-in-out infinite;
+  animation-delay: calc(var(--i) * var(--step));
 }
-.flow .gate rect { transition: filter 0.3s; }
-.flow .wire { stroke: color-mix(in srgb, var(--text-faint) 45%, transparent); }
+
+/* The connector. Drawn on the stage itself so the markup stays a clean list. */
+.flow__stage:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 10px;
+  height: 2px;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--c), var(--line));
+  animation: linkOn var(--cycle) ease-in-out infinite;
+  animation-delay: calc(var(--i) * var(--step) + 0.18s);
+}
+
+.flow__kicker {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c);
+  margin-bottom: 3px;
+}
+.flow__name {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.flow__note {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+
+.flow__legend {
+  margin: 18px auto 0;
+  max-width: 52ch;
+  font-size: 13.2px;
+  color: var(--text-faint);
+}
+
+/* Each stage brightens as the pulse reaches it, then settles back. The window
+   is deliberately narrow (about 9% of the cycle) so the eye follows one
+   travelling highlight instead of seeing the whole row breathe at once. */
+@keyframes stageOn {
+  0%, 6% { border-color: var(--line); box-shadow: none; transform: none; }
+  10% {
+    border-color: var(--c);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent),
+                0 10px 26px -16px var(--c);
+    transform: translateY(calc(-3px * var(--move)));
+  }
+  22%, 100% { border-color: var(--line); box-shadow: none; transform: none; }
+}
+
+@keyframes linkOn {
+  0%, 6% { transform: translateY(-50%) scaleX(0); }
+  14%, 26% { transform: translateY(-50%) scaleX(1); }
+  40%, 100% { transform: translateY(-50%) scaleX(0); }
+}
+
+/* Gates carry their accent permanently at low intensity, so the four layers
+   are distinguishable from the endpoints even mid-cycle. */
+.flow__stage--gate { border-color: color-mix(in srgb, var(--c) 24%, var(--line)); }
+
+@media (max-width: 720px) {
+  .flow__track { flex-direction: column; align-items: stretch; gap: 16px; }
+  .flow__stage { max-width: none; padding: 12px; }
+  .flow__stage:not(:last-child)::after {
+    top: 100%;
+    left: 50%;
+    width: 2px;
+    height: 6px;
+    transform: translateX(-50%) scaleY(0);
+    transform-origin: 50% 0;
+    animation-name: linkOnVertical;
+  }
+  @keyframes linkOnVertical {
+    0%, 6% { transform: translateX(-50%) scaleY(0); }
+    14%, 26% { transform: translateX(-50%) scaleY(1); }
+    40%, 100% { transform: translateX(-50%) scaleY(0); }
+  }
+}
 
 /* Stats */
 .stats {
@@ -903,11 +1009,19 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
    selector in one rule. */
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion="full"]) { scroll-behavior: auto; }
-  :root:not([data-motion="full"]) .flow .spark { display: none; }
-  :root:not([data-motion="full"]) .flow .gate { animation: none; opacity: 1; }
   :root:not([data-motion="full"]) .hero__dot { animation: none; }
+  /* The flow keeps its shape and its accents; only the travelling pulse stops,
+     and every connector is left drawn so the sequence still reads. */
+  :root:not([data-motion="full"]) .flow__stage { animation: none; }
+  :root:not([data-motion="full"]) .flow__stage::after {
+    animation: none;
+    transform: translateY(-50%) scaleX(1);
+  }
 }
 :root[data-motion="reduced"] { scroll-behavior: auto; }
-:root[data-motion="reduced"] .flow .spark { display: none; }
-:root[data-motion="reduced"] .flow .gate { animation: none; opacity: 1; }
 :root[data-motion="reduced"] .hero__dot { animation: none; }
+:root[data-motion="reduced"] .flow__stage { animation: none; }
+:root[data-motion="reduced"] .flow__stage::after {
+  animation: none;
+  transform: translateY(-50%) scaleX(1);
+}
