@@ -36,11 +36,6 @@ and audit between the model and your clusters.**
 
 <sub>The whole safe-remediation loop: investigate with free reads, propose a change, get rejected by the guardrails and correct it, wait for a human-signed token, apply, verify, and report from the audit log.</sub>
 
-<br><br>
-
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude.gif" alt="A fleet operator's day with Claude, recorded live: pip install ocm-mcp-server, claude mcp add showing the server connected, a one-question fleet inventory with add-on health, placement reasoning, a privileged latest-tag deploy refused by the guardrails, a compliant proposal signed by a human with an Ed25519 token, applied and verified by Claude, and the day reconstructed from the audit trail" width="100%">
-
-<sub>A fleet operator's day with <b>Claude</b>, live from a cold start: install from PyPI, <code>claude mcp add</code>, inventory the fleet, reason about placement — then ship a new service the gated way: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the whole day is read back <b>from the audit trail</b>. — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
 
 </div>
 
@@ -79,6 +74,14 @@ None of these layers live in the system prompt, so none of them can be talked ou
 
 <div align="center">
 <img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
+</div>
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude.gif" alt="A fleet operator's day with Claude, recorded live: pip install ocm-mcp-server, claude mcp add showing the server connected, a one-question fleet inventory with add-on health, placement reasoning, a privileged latest-tag deploy refused by the guardrails, a compliant proposal signed by a human with an Ed25519 token, applied and verified by Claude, and the day reconstructed from the audit trail" width="100%">
+
+<sub>A fleet operator's day with <b>Claude</b>, live from a cold start: install from PyPI, <code>claude mcp add</code>, inventory the fleet, reason about placement — then ship a new service the gated way: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the whole day is read back <b>from the audit trail</b>. — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
+
 </div>
 
 ## Where to get it, and how it's vetted
