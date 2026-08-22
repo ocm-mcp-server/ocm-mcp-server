@@ -1,12 +1,15 @@
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 
-# Base image pinned by digest (python:3.12-slim). Dependabot's docker ecosystem proposes
-# digest bumps; update the tag comment alongside the digest.
-# NOTE: pin the multi-arch INDEX digest (docker buildx imagetools inspect python:3.12-slim),
-# never a platform manifest digest - an arm64-only pin makes amd64 CI builds fail with
-# "exec format error".
-FROM python@sha256:3a9d2dd3f18e5c7a9d8de7b3659418a4ab848ccd409fb9e91ef9d7a6a3520ba7
+# Base image pinned by TAG *and* digest. The tag is load-bearing, not decoration:
+# a bare `FROM python@sha256:...` gives Dependabot nothing to track, so it falls
+# back to `python:latest` - which silently drifted this image from a ~87-package
+# slim base to the ~469-package full one, dragging in HEIF/AVIF codecs and 64
+# HIGH CVEs that failed the Trivy gate. Keep the tag on the FROM line.
+# NOTE: pin the multi-arch INDEX digest (docker buildx imagetools inspect
+# python:3.14-slim), never a platform manifest digest - an arm64-only pin makes
+# amd64 CI builds fail with "exec format error".
+FROM python:3.14-slim@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4
 
 # The MCP Registry validates OCI-package ownership against this label; without
 # it the registry refuses to list the image (as of the 0.3.0 publish).

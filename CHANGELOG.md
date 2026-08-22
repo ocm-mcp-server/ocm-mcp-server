@@ -6,6 +6,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The container base image had silently drifted off `slim`.** `Dockerfile`
+  pinned the base by digest alone (`FROM python@sha256:...`) with the tag only
+  in a comment. Dependabot's docker ecosystem has no tag to track in that form,
+  so it fell back to `python:latest` — moving the image from an 87-package
+  slim base to the 469-package full one, complete with HEIF/AVIF image codecs
+  (`libheif`, `libde265`, `dav1d`) that a Kubernetes control-plane server has
+  no use for. Those packages carried most of the 64 HIGH CVEs that failed the
+  Trivy gate in the v0.4.0 image publish. The base is now pinned by **tag and
+  digest** (`python:3.14-slim@sha256:…`), so Dependabot tracks the slim tag and
+  the digest still pins exactly. Verified by building the image: it runs, the
+  `ocm-mcp` CLI works, and the OS package count drops 469 → 87.
+
 ### Added
 
 - **A documentation site at
