@@ -28,10 +28,12 @@ jobs:
           python-version: "3.12"
       - name: Install clusteradm
         run: |
-          CLUSTERADM_VERSION=v0.9.2
+          # Upstream deleted the v0.9.x tags when the project renumbered to 1.x,
+          # which 404'd this download and failed the job before any test ran.
+          CLUSTERADM_VERSION=v1.3.1
           curl -fsSL -o /tmp/clusteradm_install.sh \
             "https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/${CLUSTERADM_VERSION}/install.sh"
-          INSTALL_DIR=/usr/local/bin bash /tmp/clusteradm_install.sh
+          INSTALL_DIR=/usr/local/bin bash /tmp/clusteradm_install.sh "$CLUSTERADM_VERSION"
           clusteradm version
       - name: Install kwokctl
         # kind/kubectl/helm/docker ship on the ubuntu-latest runner image already;
