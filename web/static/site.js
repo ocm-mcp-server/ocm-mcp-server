@@ -200,6 +200,67 @@
     sync();
   }
 
+  /* --------------------------------------------------- diagram entrance -- */
+  // Draws a rendered mermaid SVG in: edges trace themselves, then nodes and
+  // labels fade up in sequence. Purely decorative, so it is skipped entirely
+  // when motion is reduced - the diagram is simply present instead.
+  //
+  // Every inline style set here is stripped once the sequence finishes. That
+  // cleanup is not cosmetic: it guarantees a diagram can never be left stuck
+  // at opacity 0 if a transition never fires (background tab, interrupted
+  // render, reduced-motion toggled mid-flight).
+  const EDGE_SEL = [
+    ".edgePath path", ".flowchart-link", ".messageLine0", ".messageLine1",
+    ".relation", "line.actor-line",
+  ].join(",");
+  const NODE_SEL = [
+    ".node", ".cluster", ".actor", ".label", ".edgeLabel", ".labelBkg",
+    ".note", ".loopLine", ".labelText", ".messageText",
+  ].join(",");
+
+  function animateDiagram(svg) {
+    if (!moving || !svg) return;
+    const edges = Array.from(svg.querySelectorAll(EDGE_SEL));
+    const nodes = Array.from(svg.querySelectorAll(NODE_SEL));
+    const touched = [];
+
+    edges.forEach((el, i) => {
+      let len = 0;
+      try {
+        len = typeof el.getTotalLength === "function" ? el.getTotalLength() : 0;
+      } catch {
+        len = 0; // non-renderable geometry; leave it alone
+      }
+      if (!len || !Number.isFinite(len)) return;
+      el.style.strokeDasharray = String(len);
+      el.style.strokeDashoffset = String(len);
+      el.style.transition = `stroke-dashoffset .7s ease ${0.18 + i * 0.05}s`;
+      touched.push(el);
+    });
+
+    nodes.forEach((el, i) => {
+      el.style.opacity = "0";
+      el.style.transition = `opacity .4s ease ${0.1 + i * 0.035}s`;
+      touched.push(el);
+    });
+
+    requestAnimationFrame(() => {
+      edges.forEach((el) => { el.style.strokeDashoffset = "0"; });
+      nodes.forEach((el) => { el.style.opacity = "1"; });
+    });
+
+    // Unconditional cleanup - see the note above.
+    const longest = 900 + Math.max(edges.length * 50, nodes.length * 35);
+    setTimeout(() => {
+      touched.forEach((el) => {
+        el.style.removeProperty("stroke-dasharray");
+        el.style.removeProperty("stroke-dashoffset");
+        el.style.removeProperty("transition");
+        el.style.removeProperty("opacity");
+      });
+    }, longest + 400);
+  }
+
   /* ------------------------------------------------------------ mermaid -- */
   // 2.7 MB of vendored library: loaded only on pages that have a diagram, and
   // only when one is about to enter the viewport.
@@ -281,6 +342,9 @@
         // disables click handlers. Nothing here crosses a trust boundary.
         node.innerHTML = svg;
         wrap.dataset.state = "done";
+        // Re-renders come from a theme switch, where replaying the draw-in
+        // would read as a glitch rather than an entrance.
+        if (!rerender) animateDiagram(node.querySelector("svg"));
       } catch {
         node.textContent = src;
         wrap.dataset.state = "done";
@@ -349,9 +413,24 @@
     const fig = document.createElement("figure");
     img.replaceWith(fig);
     fig.appendChild(img);
-    fig.style.position = "relative";
-    fig.style.margin = "1.6em 0";
+    fig.className = "figure-zoom";
     makeZoomable(fig, () => img);
+    // Same entrance the page sections use, so an architecture SVG arrives the
+    // way the prose around it does instead of just being there.
+    fig.setAttribute("data-reveal", "");
+    if ("IntersectionObserver" in window) {
+      const fio = new IntersectionObserver(
+        (es) => es.forEach((e) => {
+          if (!e.isIntersecting) return;
+          e.target.classList.add("in");
+          fio.unobserve(e.target);
+        }),
+        { rootMargin: "0px 0px -6% 0px", threshold: 0.05 },
+      );
+      fio.observe(fig);
+    } else {
+      fig.classList.add("in");
+    }
   });
 
   if (wraps.length) {
