@@ -41,6 +41,14 @@ RUN pip install --no-cache-dir --no-deps .
 #     -e KUBECONFIG=/kube/config \
 #     -e OCM_MCP_HUB_CONTEXT=... -e OCM_MCP_SPOKE_CONTEXTS=... \
 #     ghcr.io/sandeepbazar/ocm-mcp-server
+# Drop pip from the runtime image. The server never installs anything at
+# run time, and pip's vendored copies of msgpack and setuptools were the
+# last two findings the vulnerability gate reported - dependencies of the
+# installer, not of this server.
+RUN python -m pip uninstall -y pip \
+    && rm -rf /usr/local/lib/python*/site-packages/pip* \
+              /usr/local/bin/pip*
+
 RUN useradd --create-home app
 USER app
 ENV OCM_MCP_HOME=/home/app/.ocm-mcp
