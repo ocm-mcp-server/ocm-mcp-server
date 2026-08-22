@@ -234,6 +234,12 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .iconbtn:hover { color: var(--text); border-color: var(--violet); transform: translateY(-1px); }
 .iconbtn svg { width: 17px; height: 17px; }
+/* The motion button shows the action it will perform, not the current state. */
+.motion-off-only { display: none; }
+#motion[data-state="off"] .motion-on-only { display: none; }
+#motion[data-state="off"] .motion-off-only { display: block; }
+#motion[data-state="off"] { color: var(--text-faint); }
+
 .theme-dark-only { display: none; }
 :root[data-theme="light"] .theme-dark-only { display: block; }
 :root[data-theme="light"] .theme-light-only { display: none; }
@@ -656,7 +662,7 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
   border: 1px solid transparent;
   transition: transform 0.2s var(--ease), box-shadow 0.2s, border-color 0.2s;
 }
-.btn:hover { transform: translateY(-2px); text-decoration: none; }
+.btn:hover { transform: translateY(calc(-2px * var(--move))); text-decoration: none; }
 .btn--primary {
   background: linear-gradient(120deg, var(--violet), var(--cyan));
   color: #fff;
@@ -707,7 +713,7 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
   border-radius: var(--radius);
   transition: transform 0.25s var(--ease), border-color 0.25s;
 }
-.stat:hover { transform: translateY(-3px); border-color: var(--violet); }
+.stat:hover { transform: translateY(calc(-3px * var(--move))); border-color: var(--violet); }
 .stat__n {
   display: block;
   font-size: clamp(1.7rem, 1.3rem + 1.2vw, 2.3rem);
@@ -755,7 +761,7 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
   transform-origin: 0 50%;
   transition: transform 0.5s var(--ease);
 }
-.layer:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--c1) 50%, var(--line)); }
+.layer:hover { transform: translateY(calc(-4px * var(--move))); border-color: color-mix(in srgb, var(--c1) 50%, var(--line)); }
 .layer.in::before { transform: scaleX(1); }
 .layer__n { font-family: var(--mono); font-size: 11.5px; color: var(--c1); letter-spacing: 0.1em; }
 .layer h3 { margin: 8px 0 8px; font-size: 1.08rem; letter-spacing: -0.01em; }
@@ -800,7 +806,7 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 
 [data-reveal] {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(calc(18px * var(--move)));
   transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
   transition-delay: var(--d, 0ms);
 }
@@ -860,14 +866,33 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
   .pager a.next { grid-column: 1; }
 }
 
+/* --------------------------------------------------------- motion policy --
+ * `--move` is 1 when movement is allowed and 0 when it is not. Distances are
+ * multiplied by it, so reducing motion removes *travel* while leaving opacity
+ * and colour fades intact - those carry no vestibular risk and are most of
+ * what makes the page feel finished. A blanket `* { animation: none }` was the
+ * previous behaviour and over-corrected: the whole site went inert.
+ *
+ * Precedence: the OS preference is the default, and the header toggle can
+ * force either direction (data-motion="full" / "reduced") for a visitor whose
+ * OS setting does not match what they want on this page.
+ */
+:root { --move: 1; }
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-  [data-reveal] { opacity: 1; transform: none; }
-  .flow .spark { display: none; }
-  .hero__dot { animation: none; }
+  :root:not([data-motion="full"]) { --move: 0; }
 }
+:root[data-motion="reduced"] { --move: 0; }
+
+/* Looping or travelling motion has no reduced-intensity version; it is simply
+   off. Written twice because a media query cannot be merged with an attribute
+   selector in one rule. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) { scroll-behavior: auto; }
+  :root:not([data-motion="full"]) .flow .spark { display: none; }
+  :root:not([data-motion="full"]) .flow .gate { animation: none; opacity: 1; }
+  :root:not([data-motion="full"]) .hero__dot { animation: none; }
+}
+:root[data-motion="reduced"] { scroll-behavior: auto; }
+:root[data-motion="reduced"] .flow .spark { display: none; }
+:root[data-motion="reduced"] .flow .gate { animation: none; opacity: 1; }
+:root[data-motion="reduced"] .hero__dot { animation: none; }

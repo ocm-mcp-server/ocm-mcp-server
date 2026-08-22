@@ -2,20 +2,41 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // No framework, no CDN. Every behaviour degrades to a working static page if
-// this file fails to load, and every animation yields to prefers-reduced-motion.
+// this file fails to load.
+//
+// Motion policy: the OS preference is the default, and the header toggle lets a
+// visitor override it in either direction. Someone who runs macOS "Reduce
+// motion" system-wide but wants the full design here can have it, and someone
+// on a machine with no such setting can still turn motion off.
 
 (() => {
   "use strict";
 
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const root = document.documentElement;
+
+  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const readPref = () => {
+    try {
+      return localStorage.getItem("motion");
+    } catch {
+      return null; // private mode: fall back to the OS preference
+    }
+  };
+  // Explicit choice wins; otherwise follow the OS.
+  const motionAllowed = () => {
+    const pref = readPref();
+    if (pref === "full") return true;
+    if (pref === "reduced") return false;
+    return !motionQuery.matches;
+  };
+  let moving = motionAllowed();
+  const reduced = !moving;
 
   /* ------------------------------------------------------------- theme -- */
   // Applied inline in <head> before paint to avoid a flash; this only wires
   // the toggle and keeps mermaid in sync.
-  const root = document.documentElement;
-
   function setTheme(next) {
     root.dataset.theme = next;
     try {
@@ -26,6 +47,32 @@
 
   $("#theme")?.addEventListener("click", () => {
     setTheme(root.dataset.theme === "light" ? "dark" : "light");
+  });
+
+  /* ------------------------------------------------------------ motion -- */
+  const motionBtn = $("#motion");
+  function syncMotionBtn() {
+    if (!motionBtn) return;
+    motionBtn.setAttribute("aria-pressed", String(moving));
+    motionBtn.setAttribute(
+      "aria-label",
+      moving ? "Turn animations off" : "Turn animations on",
+    );
+    motionBtn.dataset.state = moving ? "on" : "off";
+  }
+  syncMotionBtn();
+
+  motionBtn?.addEventListener("click", () => {
+    moving = !moving;
+    const next = moving ? "full" : "reduced";
+    root.dataset.motion = next;
+    try {
+      localStorage.setItem("motion", next);
+    } catch { /* private mode: this session only */ }
+    syncMotionBtn();
+    // Anything still waiting to be revealed would otherwise sit at opacity 0
+    // once its transition has been flattened.
+    if (!moving) revealables.forEach((el) => el.classList.add("in"));
   });
 
   /* ---------------------------------------------------------- progress -- */
@@ -42,7 +89,10 @@
 
   /* ------------------------------------------------------------ reveal -- */
   const revealables = $$("[data-reveal]");
-  if (reduced || !("IntersectionObserver" in window)) {
+  // Only a missing IntersectionObserver forces everything visible up front.
+  // Under reduced motion the fade still runs - `--move: 0` has already removed
+  // the travel, and opacity alone is not what triggers motion sensitivity.
+  if (!("IntersectionObserver" in window)) {
     revealables.forEach((el) => el.classList.add("in"));
   } else {
     const io = new IntersectionObserver(
