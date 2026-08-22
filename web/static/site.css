@@ -594,7 +594,20 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
    at their natural size and leaves them unreadably small in a wide column.
    !important is the only way to beat an inline style from a stylesheet. */
 .mermaid-wrap svg { width: 100%; max-width: 100% !important; height: auto; }
-.mermaid-wrap[data-state="pending"]::after {
+/* The readable fallback. Shown whenever the rendered SVG is not what the
+   reader is going to get: no JavaScript at all, or a render that threw. */
+.mermaid-src {
+  margin: 0;
+  text-align: left;
+  font-size: 12.8px;
+  white-space: pre-wrap;
+  color: var(--text-dim);
+}
+.js .mermaid-wrap[data-state="pending"] .mermaid-src,
+.js .mermaid-wrap[data-state="done"] .mermaid-src { display: none; }
+.mermaid-wrap[data-state="failed"] .mermaid-src { display: block; }
+
+.js .mermaid-wrap[data-state="pending"]::after {
   content: "rendering diagram…";
   font-family: var(--mono);
   font-size: 12.5px;
@@ -925,13 +938,21 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 
 /* ------------------------------------------------------------- animation -- */
 
-[data-reveal] {
+/* Reveal is progressive enhancement, not a requirement. Content is visible by
+   default; only a page that has proved JavaScript runs (html.js, set by the
+   inline head script) hides it to animate it in. If site.js never loads, or
+   throws on an older engine, the reader still gets a complete page rather than
+   a blank one. `.reveal-all` is the inline script's own safety net. */
+[data-reveal] { opacity: 1; }
+
+.js [data-reveal] {
   opacity: 0;
   transform: translateY(calc(18px * var(--move)));
   transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
   transition-delay: var(--d, 0ms);
 }
-[data-reveal].in { opacity: 1; transform: none; }
+.js [data-reveal].in,
+.js.reveal-all [data-reveal] { opacity: 1; transform: none; }
 
 .skip {
   position: absolute;

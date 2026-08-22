@@ -165,9 +165,17 @@ def make_markdown(resolve: Any) -> MarkdownIt:
         tok = tokens[idx]
         if tok.info.strip().split()[:1] == ["mermaid"]:
             src = html.escape(tok.content, quote=True)
+            # The source is emitted as real, visible text, not only as an
+            # attribute. Without JavaScript - or if the vendored mermaid fails
+            # to load - a reader still gets the diagram's content instead of a
+            # box that says "rendering" forever. The stylesheet hides it only
+            # once JS has announced itself, and the script puts it back if the
+            # render throws.
             return (
                 '<div class="mermaid-wrap" data-state="pending">'
-                f'<div class="mermaid" data-src="{src}"></div></div>\n'
+                f'<div class="mermaid" data-src="{src}"></div>'
+                f'<pre class="mermaid-src"><code>{src}</code></pre>'
+                "</div>\n"
             )
         assert default_fence is not None
         return default_fence(tokens, idx, options, env)

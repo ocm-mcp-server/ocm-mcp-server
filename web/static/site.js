@@ -34,6 +34,9 @@
   let moving = motionAllowed();
   const reduced = !moving;
 
+  // This script is alive, so the inline safety net is not needed.
+  clearTimeout(window.__revealSafety);
+
   /* ------------------------------------------------------------- theme -- */
   // Applied inline in <head> before paint to avoid a flash; this only wires
   // the toggle and keeps mermaid in sync.
@@ -321,11 +324,9 @@
       mermaid = await loadMermaid();
     } catch {
       // Leave the source visible rather than showing an empty box.
-      wraps.forEach((w) => {
-        w.dataset.state = "done";
-        const n = w.querySelector(".mermaid");
-        if (n) n.textContent = n.dataset.src || n.textContent;
-      });
+      // mermaid itself could not be fetched: fall the whole page back to the
+      // source blocks, which are already in the DOM.
+      wraps.forEach((w) => { w.dataset.state = "failed"; });
       return;
     }
     mermaid.initialize(mermaidTheme());
@@ -346,8 +347,10 @@
         // would read as a glitch rather than an entrance.
         if (!rerender) animateDiagram(node.querySelector("svg"));
       } catch {
-        node.textContent = src;
-        wrap.dataset.state = "done";
+        // Leave the source block visible rather than replacing the render host
+        // with raw text - the stylesheet already has a readable presentation
+        // for exactly this case.
+        wrap.dataset.state = "failed";
       }
     }
   }

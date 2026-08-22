@@ -99,13 +99,28 @@ def test_slugify():
 
 
 def test_mermaid_fences_become_client_rendered_hosts():
-    """Mermaid must not reach the page as a code block: Pages does not render
-    it, so the fence is turned into a host div the browser fills in."""
+    """Mermaid must not reach the page as an ordinary code block: Pages renders
+    no mermaid at all, so the fence becomes a host div the browser fills in."""
     md = build_site.make_markdown(lambda href, env: href)
     out = md.render("```mermaid\nflowchart LR\n  a-->b\n```")
     assert 'class="mermaid-wrap"' in out
     assert "data-src=" in out
-    assert "<code" not in out
+    # Not left as a syntax-highlighted fence, which is what Pages would show.
+    assert 'class="language-mermaid"' not in out
+
+
+def test_mermaid_keeps_a_readable_source_fallback():
+    """The diagram source must exist as real text, not only as an attribute.
+
+    Without JavaScript - or when the vendored mermaid fails to load - the
+    source block is the only thing a reader gets. If it lives solely in
+    data-src, the page shows a permanent "rendering diagram..." placeholder.
+    """
+    md = build_site.make_markdown(lambda href, env: href)
+    out = md.render("```mermaid\nflowchart LR\n  a-->b\n```")
+    assert 'class="mermaid-src"' in out
+    # The actual diagram text, readable without executing anything.
+    assert "flowchart LR" in out.split('class="mermaid-src"')[1]
 
 
 def test_tables_get_a_scroll_container():
