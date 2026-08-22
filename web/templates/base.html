@@ -35,6 +35,11 @@
     let t;
     try { t = localStorage.getItem("theme"); } catch { t = null; }
     document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
+    // Motion: only an explicit choice is stamped here. With no attribute the
+    // stylesheet falls through to the OS preference, which is the default.
+    let m;
+    try { m = localStorage.getItem("motion"); } catch { m = null; }
+    if (m === "full" || m === "reduced") document.documentElement.dataset.motion = m;
   })();
 </script>
 </head>
@@ -62,6 +67,14 @@
     </svg>
     <svg class="theme-dark-only" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8"/>
+    </svg>
+  </button>
+  <button class="iconbtn" id="motion" type="button" aria-pressed="true" aria-label="Turn animations off">
+    <svg class="motion-on-only" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M2 12h3l3-8 4 16 3-8h7"/>
+    </svg>
+    <svg class="motion-off-only" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M2 12h20"/><path d="m4 4 16 16"/>
     </svg>
   </button>
   <a class="ghlink" href="https://github.com/sandeepbazar/ocm-mcp-server">
