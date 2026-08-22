@@ -101,7 +101,7 @@ None of these layers live in the system prompt, so none of them can be talked ou
 ## Connect your agent - any MCP client works
 
 The server speaks standard MCP over stdio; nothing here is specific to one vendor's agent.
-Ready-made configs live in [`examples/`](examples/):
+Ready-made configs live in [`examples/`](examples/) - see the [index](examples/README.md) for where each file goes:
 
 <details>
 <summary><b>Claude Code</b> - <code>.mcp.json</code> in your project (or <code>claude mcp add</code>)</summary>
@@ -119,6 +119,28 @@ Ready-made configs live in [`examples/`](examples/):
   }
 }
 ```
+</details>
+
+<details>
+<summary><b>VS Code</b> (Copilot Chat) - <code>.vscode/mcp.json</code> in your workspace</summary>
+
+```json
+{
+  "servers": {
+    "ocm-fleet": {
+      "type": "stdio",
+      "command": "ocm-mcp-server",
+      "env": {
+        "OCM_MCP_HUB_CONTEXT": "kind-hub",
+        "OCM_MCP_SPOKE_CONTEXTS": "cluster1=kind-cluster1,cluster2=kind-cluster2,cluster3=kind-cluster3"
+      }
+    }
+  }
+}
+```
+
+Note the top-level key is `servers`, not `mcpServers` - VS Code differs from
+Claude Code and Gemini CLI here, and copying one into the other fails silently.
 </details>
 
 <details>
@@ -669,7 +691,7 @@ chaos/                failure-injection scenarios (reversible, diagnosable)
 eval/                 22-scenario evaluation harness + results
 blogs/                long-form posts (canonical drafts; published to Medium)
 docs/                 deployment, examples, architecture, guardrails, demo, upstream
-examples/             MCP client configs + a production-shaped system prompt
+examples/             MCP client configs (Claude, VS Code, Codex, Gemini) + system prompt
 ```
 
 ## Roadmap
