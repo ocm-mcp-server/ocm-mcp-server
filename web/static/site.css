@@ -512,6 +512,21 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 .mermaid-wrap svg .nodeLabel,
 .mermaid-wrap svg .edgeLabel { font-size: 14px !important; }
 
+/* Wrapper the script puts around every prose image so it can carry the zoom
+   affordance and the reveal without touching the markdown. */
+.figure-zoom {
+  position: relative;
+  margin: 1.6em 0;
+}
+.figure-zoom img {
+  display: block;
+  transition: transform 0.45s var(--ease), box-shadow 0.45s var(--ease);
+}
+.figure-zoom:hover img {
+  transform: scale(calc(1 + 0.012 * var(--move)));
+  box-shadow: var(--shadow);
+}
+
 .zoomable { cursor: zoom-in; }
 .zoomhint {
   position: absolute;
