@@ -151,7 +151,7 @@ back via `get_audit_trail` to write an accurate post-incident report.
 
 ## Tests
 
-- `tests/` unit tests (403; 100% statement and branch coverage): the full approval-token lifecycle (roundtrip,
+- `tests/` unit tests (404; 100% statement and branch coverage): the full approval-token lifecycle (roundtrip,
   wrong-proposal, content-change invalidation, expiry, tampering, malformed,
   public-key-only verification, operation binding, keypair rotation) for both
   ManifestWork and lifecycle-action proposals, every static guardrail case

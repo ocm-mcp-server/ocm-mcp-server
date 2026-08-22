@@ -40,6 +40,18 @@
     let m;
     try { m = localStorage.getItem("motion"); } catch { m = null; }
     if (m === "full" || m === "reduced") document.documentElement.dataset.motion = m;
+
+    // Tell the stylesheet JavaScript is running, which is what allows it to
+    // hide content for the reveal animation. Written in ES5 on purpose: if a
+    // browser cannot parse site.js, it must still parse this.
+    var root = document.documentElement;
+    root.className += " js";
+    // Safety net. If site.js never runs - blocked, offline, a parse error on an
+    // older engine - nothing would ever add the .in class and the page would
+    // stay blank. site.js clears this the moment it starts.
+    window.__revealSafety = setTimeout(function () {
+      root.className += " reveal-all";
+    }, 2000);
   })();
 </script>
 </head>
