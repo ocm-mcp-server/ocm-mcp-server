@@ -127,6 +127,26 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   border-bottom: 1px solid var(--line);
 }
 
+.hdr__home {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 5px 11px 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-size: 13px;
+  white-space: nowrap;
+  transition: color .18s ease, border-color .18s ease;
+}
+.hdr__home:hover { color: var(--text); border-color: var(--cyan); text-decoration: none; }
+.hdr__home svg {
+  width: 13px; height: 13px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
 .hdr__brand {
   display: flex;
   align-items: center;
@@ -1004,6 +1024,12 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
     cursor: pointer;
   }
   .hdr__nav { display: none; }
+  /* The way up must survive on mobile, so keep the chip and drop its label.
+     The GitHub link loses its label too: the chip needs the width, and the
+     mark alone is unambiguous. Without this the row is 11px too wide at 375. */
+  .hdr__home { font-size: 0; padding: 6px; gap: 0; }
+  .hdr__home svg { width: 15px; height: 15px; }
+  .ghlink { font-size: 0; gap: 0; padding: 7px; }
   .pager { grid-template-columns: 1fr; }
   .pager a.next { grid-column: 1; }
 }
