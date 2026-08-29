@@ -14,7 +14,7 @@ keywords = ["mcp", "kubernetes", "open-cluster-management", "ai-agents", "multic
 dependencies = [
     # Upper bounds are deliberate: MCP v2 is a major rewrite and the Kubernetes client
     # bumps its major on each K8s minor, so we cap to a tested range and widen on purpose.
-    "mcp>=1.9,<2",
+    "mcp>=1.9,<3",
     "kubernetes>=29.0.0,<37",
     "cryptography>=42",
     "PyYAML>=6.0",
