@@ -26,7 +26,15 @@ say "Preflight"
 git fetch origin --quiet
 [[ "$(git rev-parse main)" == "$(git rev-parse origin/main)" ]] \
   || die "main is not in sync with origin/main (pull or push first)"
-git rev-parse -q --verify "refs/tags/v$v" >/dev/null && die "tag v$v already exists"
+# Published tags are immutable: a failed release rolls forward to the next patch
+# version, it never re-cuts the same tag. Check the REMOTE, not just local refs -
+# a tag can exist on origin while absent here, and that is precisely the case
+# this guard is for. The server enforces this too (the ReleaseTag-Immutability
+# ruleset blocks deletion and non-fast-forward on refs/tags/v*); this check is
+# here so the failure arrives in one second instead of after the full CI gate.
+git rev-parse -q --verify "refs/tags/v$v" >/dev/null && die "tag v$v already exists locally"
+git ls-remote --exit-code --tags origin "refs/tags/v$v" >/dev/null 2>&1 \
+  && die "tag v$v already exists on origin - roll forward to the next version"
 grep -q "^## \[$v\]" CHANGELOG.md \
   || die "CHANGELOG.md has no '## [$v]' section - write the changelog first"
 

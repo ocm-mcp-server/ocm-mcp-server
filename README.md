@@ -746,8 +746,9 @@ contribute to, and trust. The scaffolding is in place:
 - **[CNCF Sandbox readiness](docs/cncf-sandbox-readiness.md)** - a self-check against CNCF Sandbox expectations, used as a quality bar.
 - **[Code of Conduct](CODE_OF_CONDUCT.md)** - the CNCF Community Code of Conduct; report privately via [LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
 
-Every change is signed off under the [DCO](CONTRIBUTING.md), and any change that touches
-a guardrail requires a written safety rationale.
+Contributions are signed off under the [DCO](CONTRIBUTING.md) - enforced by a CI job on
+every pull request, not just asked for in a checklist - published release tags are
+immutable, and any change that touches a guardrail requires a written safety rationale.
 
 ## License
 

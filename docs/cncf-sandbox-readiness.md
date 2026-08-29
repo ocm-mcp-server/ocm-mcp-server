@@ -19,7 +19,7 @@ transparent checklist of what is in place and what remains before applying.
 | Adopters page | Done (open for entries) | [ADOPTERS.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ADOPTERS.md) |
 | Code of Conduct (CNCF CoC) | Done | [CODE_OF_CONDUCT.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CODE_OF_CONDUCT.md) |
 | Contributing guide | Done | [CONTRIBUTING.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CONTRIBUTING.md) |
-| DCO sign-off on commits | Partial | requested in the PR checklist; automated enforcement not yet wired, early history predates the practice |
+| DCO sign-off on commits | Done | enforced by the `dco` job on every pull request; early single-maintainer history predates the practice |
 | Public roadmap | Done | [ROADMAP.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ROADMAP.md) |
 
 ## Security
@@ -47,8 +47,9 @@ transparent checklist of what is in place and what remains before applying.
 
 ## What's left before applying
 
-Sandbox readiness here is mostly a community milestone, not an engineering one.
-Four steps remain, in rough order of leverage.
+Sandbox readiness here is now entirely a community milestone. The engineering
+side is done - DCO is enforced in CI and published tags are immutable - so the
+three steps that remain all need people rather than code.
 
 1. **Three maintainers from at least two employer organizations.** Current CNCF
    lifecycle requirements ask for this, with a Company/Organization column in
@@ -66,10 +67,6 @@ Four steps remain, in rough order of leverage.
    [upstream notes](upstream-notes.md).
    *Needs: those issues filed, and a public statement of support or
    non-objection.*
-4. **Automated DCO enforcement and immutable release tags.** Wire DCO checking
-   into CI, and treat published version tags as immutable - a failed release
-   rolls forward to the next patch version and never re-cuts the same tag.
-   *Needs: nothing external. This one is ours to land.*
 
 ## How to help
 

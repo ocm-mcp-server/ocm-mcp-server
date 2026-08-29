@@ -42,6 +42,10 @@ git commit -s
 
 Do not add any other trailers to commit messages.
 
+This is enforced, not merely requested: the `dco` job in CI fails any pull request
+with a commit missing the trailer. If you have already pushed, `git rebase --signoff`
+over your branch and force-push with lease.
+
 ## Releases are immutable
 
 A published version tag is never deleted, moved, or re-cut. If a release fails
@@ -49,6 +53,9 @@ partway (CI, PyPI, image publish), the fix rolls forward to the **next** patch
 version; the failed tag stays as history. This keeps the Git tag, the PyPI
 artifact, the GHCR image, and the MCP Registry listing traceable to one commit
 per version, forever.
+
+The `ReleaseTag-Immutability` repository ruleset enforces this on the server: deleting
+or force-moving a `v*` tag is rejected, whichever tool is used.
 
 ## Reporting security issues
 
