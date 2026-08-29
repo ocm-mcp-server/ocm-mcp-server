@@ -19,6 +19,7 @@
        are content, the stage order is the argument the page is making, and
        markup reflows on a narrow screen where a fixed-width SVG cannot. -->
   <div class="flow" data-reveal style="--d:280ms">
+    <div class="flow__viz">
     <ol class="flow__track" aria-label="What a write passes through, in order">
       <li class="flow__stage" style="--i:0">
         <span class="flow__name">AI agent</span>
@@ -53,10 +54,13 @@
         <span class="flow__note">OCM hub</span>
       </li>
     </ol>
-    <p class="flow__legend">
-      Each gate can refuse on its own. A change reaches the fleet only by
-      satisfying all four.
-    </p>
+    <!-- The bracket under the four gates. Decorative on purpose: it restates
+         what the legend below already says in text, so hiding it on a narrow
+         screen (where the row wraps and a bracket would span nothing) and
+         hiding it from assistive tech both lose nothing. -->
+    <div class="flow__bracket" aria-hidden="true"><span>all four must pass</span></div>
+    </div>
+    <p class="flow__legend">Each gate can refuse on its own. A change reaches the fleet only by satisfying all four.</p>
   </div>
 
   <ul class="stats" data-reveal style="--d:340ms">
