@@ -724,25 +724,38 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 .btn--ghost:hover { border-color: var(--violet); }
 
 /* ------------------------------------------------------------ hero flow --
- * Seven stages a write passes through, left to right. A pulse of activation
- * travels the row - each stage lights in turn, then its connector fills -
- * so the sequence reads as a journey rather than a static row of boxes.
+ * Seven stages a write passes through, left to right. Two things carry the
+ * idea: the connectors are drawn AT REST, so the row reads as one pipeline
+ * before any animation runs, and a pulse of activation then travels it - a
+ * band of light sweeps each card, the card flares, and the light hands off
+ * into the next connector.
+ *
  * Timing is driven entirely by --i on each stage, so adding or removing a
- * stage needs no keyframe changes.
+ * stage still needs no keyframe changes.
+ *
+ * The sweep is a background-image on the card itself rather than an extra
+ * element: the card's own box clips it for free, and it leaves ::after for
+ * the connector and ::before for the gate's accent bar.
  */
-.flow { margin: 46px auto 0; max-width: 1100px; }
+.flow {
+  margin: 46px auto 0;
+  max-width: 1100px;
+  --cycle: 7s;
+  --step: 0.6s;
+  --gap: 16px;
+}
+
+.flow__viz { position: relative; }
 
 .flow__track {
   display: flex;
   align-items: stretch;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--gap);
   margin: 0;
   padding: 0;
   list-style: none;
-  --cycle: 7s;
-  --step: 0.6s;
 }
 
 .flow__stage {
@@ -752,27 +765,67 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
   max-width: 168px;
   padding: 14px 12px;
   text-align: center;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--rest-border);
   border-radius: var(--radius-sm);
   --c: var(--text-faint);
-  animation: stageOn var(--cycle) ease-in-out infinite;
+  /* The colour a stage returns to between pulses. Gates keep a tint of their
+     own accent so the four layers stay distinguishable from the endpoints
+     even when nothing is animating - including under reduced motion, where
+     the keyframes never run at all. */
+  --rest-border: var(--line);
+  background-color: var(--surface);
+  background-image: linear-gradient(
+    100deg,
+    transparent 42%,
+    color-mix(in srgb, var(--c) 26%, transparent) 50%,
+    transparent 58%
+  );
+  background-size: 280% 100%;
+  background-position: 135% 0;
+  background-repeat: no-repeat;
+  transition: scale 0.28s var(--ease), border-color 0.28s, box-shadow 0.28s;
+  animation:
+    stageOn var(--cycle) ease-in-out infinite,
+    stageSweep var(--cycle) ease-in-out infinite;
   animation-delay: calc(var(--i) * var(--step));
 }
 
-/* The connector. Drawn on the stage itself so the markup stays a clean list. */
+/* The connector. Drawn on the stage so the markup stays a clean list, and
+   present at rest so the pipeline reads with the animation stopped. A band of
+   light runs through it as the pulse hands off to the next stage. */
 .flow__stage:not(:last-child)::after {
   content: "";
   position: absolute;
   top: 50%;
   left: 100%;
-  width: 10px;
+  width: var(--gap);
   height: 2px;
-  transform: translateY(-50%) scaleX(0);
-  transform-origin: 0 50%;
-  background: linear-gradient(90deg, var(--c), var(--line));
-  animation: linkOn var(--cycle) ease-in-out infinite;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background-color: color-mix(in srgb, var(--text-faint) 50%, transparent);
+  background-image: linear-gradient(90deg, transparent, var(--c), transparent);
+  background-size: 300% 100%;
+  background-position: 160% 0;
+  background-repeat: no-repeat;
+  animation: linkFlow var(--cycle) ease-in-out infinite;
   animation-delay: calc(var(--i) * var(--step) + 0.18s);
+}
+
+/* A gate's accent bar. Dim at rest - which is what groups the four gates
+   visually - and full strength for the moment the pulse is inside the gate,
+   so a gate reads as *checking* rather than merely lit. */
+.flow__stage--gate::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--c);
+  opacity: 0.28;
+  animation: gateBar var(--cycle) ease-in-out infinite;
+  animation-delay: calc(var(--i) * var(--step));
 }
 
 .flow__kicker {
@@ -800,53 +853,137 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
   color: var(--text-faint);
 }
 
+/* One line on any viewport wide enough to hold it; it wraps only on a phone,
+   where two lines is the right shape anyway. */
 .flow__legend {
-  margin: 18px auto 0;
-  max-width: 52ch;
+  margin: 20px auto 0;
   font-size: 13.2px;
   color: var(--text-faint);
+  text-wrap: balance;
 }
 
 /* Each stage brightens as the pulse reaches it, then settles back. The window
    is deliberately narrow (about 9% of the cycle) so the eye follows one
    travelling highlight instead of seeing the whole row breathe at once. */
 @keyframes stageOn {
-  0%, 6% { border-color: var(--line); box-shadow: none; transform: none; }
+  0%, 6% { border-color: var(--rest-border); box-shadow: none; transform: none; }
   10% {
     border-color: var(--c);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent),
-                0 10px 26px -16px var(--c);
-    transform: translateY(calc(-3px * var(--move)));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 55%, transparent),
+                0 14px 34px -18px var(--c);
+    transform: translateY(calc(-4px * var(--move)));
   }
-  22%, 100% { border-color: var(--line); box-shadow: none; transform: none; }
+  22%, 100% { border-color: var(--rest-border); box-shadow: none; transform: none; }
 }
 
-@keyframes linkOn {
-  0%, 6% { transform: translateY(-50%) scaleX(0); }
-  14%, 26% { transform: translateY(-50%) scaleX(1); }
-  40%, 100% { transform: translateY(-50%) scaleX(0); }
+/* The band of light crossing the card. It is parked off the right edge for
+   most of the cycle and snaps back there instantly (24% -> 24.01%) rather
+   than travelling backwards. */
+@keyframes stageSweep {
+  0%, 6% { background-position: 135% 0; }
+  24% { background-position: -35% 0; }
+  24.01%, 100% { background-position: 135% 0; }
 }
 
-/* Gates carry their accent permanently at low intensity, so the four layers
-   are distinguishable from the endpoints even mid-cycle. */
-.flow__stage--gate { border-color: color-mix(in srgb, var(--c) 24%, var(--line)); }
+@keyframes linkFlow {
+  0%, 6% { background-position: 160% 0; box-shadow: none; }
+  20% { background-position: -60% 0; box-shadow: 0 0 10px -1px var(--c); }
+  20.01%, 100% { background-position: 160% 0; box-shadow: none; }
+}
+
+@keyframes gateBar {
+  0%, 6% { opacity: 0.28; }
+  10%, 18% { opacity: 1; }
+  30%, 100% { opacity: 0.28; }
+}
+
+.flow__stage--gate { --rest-border: color-mix(in srgb, var(--c) 30%, var(--line)); }
+
+/* Hovering (or tabbing into) the row stops the loop so a visitor can read a
+   stage without it moving under them. Pausing rather than cancelling leaves
+   every card exactly where the pulse left it, so nothing jumps.
+   The lift uses the `scale` property, not `transform`, because `transform` is
+   owned by the running keyframe and an animation always beats a normal rule. */
+.flow__viz:hover .flow__stage,
+.flow__viz:hover .flow__stage::after,
+.flow__viz:hover .flow__stage--gate::before,
+.flow__viz:focus-within .flow__stage,
+.flow__viz:focus-within .flow__stage::after,
+.flow__viz:focus-within .flow__stage--gate::before {
+  animation-play-state: paused;
+}
+
+.flow__stage:hover {
+  scale: calc(1 + 0.04 * var(--move));
+  border-color: var(--c);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent),
+              0 16px 38px -20px var(--c);
+  z-index: 1;
+}
+
+/* The bracket under the four gates. Hidden until the row is wide enough to sit
+   on a single line - below that it would bracket a wrapped or stacked list,
+   which means nothing. It is a sibling grid with the same column definition as
+   the track, so the two align without subgrid or measurement in JS. */
+.flow__bracket { display: none; }
+
+@media (min-width: 1040px) {
+  .flow__track {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .flow__stage { max-width: none; }
+  .flow__bracket {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--gap);
+    margin-top: 9px;
+  }
+  .flow__bracket > span {
+    position: relative;
+    grid-column: 3 / 7;
+    padding-top: 13px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .flow__bracket > span::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 7px;
+    border: 1px solid var(--line);
+    border-top: 0;
+    border-radius: 0 0 7px 7px;
+  }
+}
 
 @media (max-width: 720px) {
   .flow__track { flex-direction: column; align-items: stretch; gap: 16px; }
-  .flow__stage { max-width: none; padding: 12px; }
+  /* flex-basis resolves against the MAIN axis, so the 118px that is a sensible
+     card WIDTH in the row layout becomes a 118px minimum HEIGHT the moment the
+     direction flips to column - about 55px of dead space per card, and ~385px
+     of pointless scrolling down the stack. Reset it and let content size the
+     card. */
+  .flow__stage { flex: 0 0 auto; max-width: none; padding: 12px; }
   .flow__stage:not(:last-child)::after {
     top: 100%;
     left: 50%;
     width: 2px;
-    height: 6px;
-    transform: translateX(-50%) scaleY(0);
-    transform-origin: 50% 0;
-    animation-name: linkOnVertical;
+    height: 16px;
+    transform: translateX(-50%);
+    background-image: linear-gradient(180deg, transparent, var(--c), transparent);
+    background-size: 100% 300%;
+    background-position: 0 160%;
+    animation-name: linkFlowVertical;
   }
-  @keyframes linkOnVertical {
-    0%, 6% { transform: translateX(-50%) scaleY(0); }
-    14%, 26% { transform: translateX(-50%) scaleY(1); }
-    40%, 100% { transform: translateX(-50%) scaleY(0); }
+  @keyframes linkFlowVertical {
+    0%, 6% { background-position: 0 160%; box-shadow: none; }
+    20% { background-position: 0 -60%; box-shadow: 0 0 10px -1px var(--c); }
+    20.01%, 100% { background-position: 0 160%; box-shadow: none; }
   }
 }
 
@@ -1057,18 +1194,17 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion="full"]) { scroll-behavior: auto; }
   :root:not([data-motion="full"]) .hero__dot { animation: none; }
-  /* The flow keeps its shape and its accents; only the travelling pulse stops,
-     and every connector is left drawn so the sequence still reads. */
-  :root:not([data-motion="full"]) .flow__stage { animation: none; }
-  :root:not([data-motion="full"]) .flow__stage::after {
-    animation: none;
-    transform: translateY(-50%) scaleX(1);
-  }
+  /* The flow keeps its shape and its accents; only the travelling pulse stops.
+     Connectors are drawn at rest now, so stopping the animation is all that is
+     needed - the sequence still reads as a pipeline. */
+  :root:not([data-motion="full"]) .flow__stage,
+  :root:not([data-motion="full"]) .flow__stage::after,
+  :root:not([data-motion="full"]) .flow__stage--gate::before { animation: none; }
+  :root:not([data-motion="full"]) .flow__stage--gate::before { opacity: 0.55; }
 }
 :root[data-motion="reduced"] { scroll-behavior: auto; }
 :root[data-motion="reduced"] .hero__dot { animation: none; }
-:root[data-motion="reduced"] .flow__stage { animation: none; }
-:root[data-motion="reduced"] .flow__stage::after {
-  animation: none;
-  transform: translateY(-50%) scaleX(1);
-}
+:root[data-motion="reduced"] .flow__stage,
+:root[data-motion="reduced"] .flow__stage::after,
+:root[data-motion="reduced"] .flow__stage--gate::before { animation: none; }
+:root[data-motion="reduced"] .flow__stage--gate::before { opacity: 0.55; }

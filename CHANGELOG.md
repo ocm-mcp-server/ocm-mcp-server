@@ -4,6 +4,33 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **The hero's four-layer flow now reads as a pipeline instead of a row of
+  boxes.** Its connectors are drawn at rest rather than only while the pulse
+  passes, so the sequence is legible with the animation stopped; a band of light
+  sweeps each card and hands off into the next connector; the four gates carry a
+  dim accent bar that goes to full strength as the pulse reaches them, and on
+  wide screens a bracket labelled "all four must pass" spans exactly those four.
+  Hovering or tabbing into the row pauses the loop so a stage can be read
+  without moving under the pointer. The legend now sits on one line.
+
+### Fixed
+
+- **The gate tint was dead CSS.** `.flow__stage--gate` set a border colour that
+  the `stageOn` keyframes overrode at every point in the cycle — an animation
+  outranks a normal declaration — so the four layers were never actually
+  distinguishable from the endpoints. Both now route through a `--rest-border`
+  custom property that the keyframes read, which additionally makes the gates
+  readable under reduced motion, where the keyframes never run at all.
+- **Flow cards on a phone were 118px tall to hold 63px of content.**
+  `flex: 1 1 118px` is a sensible card *width* in the row layout, but
+  `flex-basis` resolves against the main axis, so the 720px breakpoint's
+  `flex-direction: column` silently reinterpreted it as a minimum *height* —
+  roughly 385px of dead scrolling across the seven stages.
+
 ## [0.5.0] - 2026-08-29
 
 ### Added
