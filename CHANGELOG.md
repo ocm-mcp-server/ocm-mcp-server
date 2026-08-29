@@ -35,6 +35,33 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   published run, policy cases to the Kyverno pack — so the row is an entry point
   to the evidence rather than six unfalsifiable numbers.
 
+## [Unreleased]
+
+### Added
+
+- **DCO is enforced instead of merely documented.** The Developer Certificate of
+  Origin was described in eight files - CONTRIBUTING, GOVERNANCE, the README, the
+  PR template, the wiki and both self-assessments - and checked in none. On a
+  sample of the last twenty commits the only ones carrying a `Signed-off-by`
+  trailer were Dependabot's. A new `dco` job fails any pull request whose commits
+  lack a well-formed trailer, and prints the `git rebase --signoff` incantation to
+  fix an already-pushed branch. It is written inline rather than pulled from the
+  marketplace, for the same reason `secret-scan` runs the gitleaks binary: one
+  fewer third-party action in the supply chain.
+- **Published release tags are immutable on the server.** `CONTRIBUTING.md` has
+  always said a `v*` tag is never deleted, moved or re-cut, and `hack/release.sh`
+  refused to re-cut one - but only by checking local refs, and only if you went
+  through that script. Nothing stopped `git push --force` or a deletion through
+  the API. The `ReleaseTag-Immutability` ruleset now blocks deletion and
+  non-fast-forward pushes on `refs/tags/v*`, verified by an actual rejected
+  delete rather than by reading the settings page.
+
+### Changed
+
+- `hack/release.sh` now checks the **remote** for an existing tag, not just local
+  refs - a tag can exist on origin while absent locally, which is exactly the
+  case the guard is for.
+
 ## [0.6.0] - 2026-08-29
 
 ### Added

@@ -76,6 +76,49 @@ jobs:
           python3 -m pip install --require-hashes -r hack/requirements/parity.txt
           python3 hack/parity_contract.py
 
+  dco:
+    # Enforces the Developer Certificate of Origin that CONTRIBUTING.md, the PR
+    # template and GOVERNANCE.md all already promise. Until this job existed the
+    # policy was documented in eight files and checked in none - the only
+    # commits on main that carried a sign-off were Dependabot's.
+    #
+    # Written inline rather than pulled from the marketplace, for the same
+    # reason secret-scan runs the gitleaks binary: one less third-party action
+    # in the supply chain, and nothing to license.
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Every commit must carry a Signed-off-by
+        # The two SHAs are passed through env, never interpolated into the
+        # script: ${{ }} inside a run block is a workflow-injection footgun even
+        # when the value looks like a hex string.
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          missing=0
+          # --no-merges: GitHub generates merge commits, and a contributor
+          # cannot sign one they did not write.
+          for c in $(git rev-list --no-merges "${BASE_SHA}".."${HEAD_SHA}"); do
+            if git log -1 --format=%B "$c" \
+                 | grep -qiE '^Signed-off-by: .+ <[^@]+@[^>]+>[[:space:]]*$'; then
+              continue
+            fi
+            subject="$(git log -1 --format=%s "$c")"
+            echo "::error::${c} is missing a Signed-off-by trailer: ${subject}"
+            missing=1
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            echo "::error::Sign your commits with 'git commit -s'. To fix a branch you have already pushed: git rebase --signoff ${BASE_SHA}..HEAD && git push --force-with-lease"
+            exit 1
+          fi
+          echo "every commit in this pull request is signed off"
+
   dependency-review:
     # Flags known-vulnerable or disallowed-license dependencies added in a PR.
     runs-on: ubuntu-latest

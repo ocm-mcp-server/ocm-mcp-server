@@ -175,9 +175,14 @@ documented threat model.
   (42 cases, including a
   requester-identity bypass test), a dependency review, and a secret scan (gitleaks). A
   CodeQL workflow scans the code.
-- **Commits**: new contributions are asked to sign off under the Developer Certificate
-  of Origin via the pull-request checklist; automated DCO enforcement is not yet wired
-  up, and part of the early single-maintainer history predates the sign-off practice.
+- **Commits**: contributions must sign off under the Developer Certificate of Origin.
+  The `dco` job in CI fails a pull request whose commits lack a well-formed
+  `Signed-off-by` trailer, so this is enforced rather than requested. Part of the early
+  single-maintainer history predates the practice and is not retroactively signed.
+- **Release tags are immutable**: the `ReleaseTag-Immutability` ruleset blocks deletion
+  and non-fast-forward pushes on `refs/tags/v*`, and `hack/release.sh` refuses a version
+  that already exists locally or on the remote. A failed release rolls forward to the
+  next patch version.
 - **Dependencies** are bounded above and below in `pyproject.toml` and pinned with hashes
   in `requirements.lock`; Dependabot proposes updates for pip and GitHub Actions.
 - **Container image** is built from a minimal base and published to GHCR on a release with
