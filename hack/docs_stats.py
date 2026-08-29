@@ -64,7 +64,10 @@ QUOTES: list[tuple[str, str, str]] = [
     ("README.md", r"The surface is \*\*(\d+) tools", "tools"),
     ("README.md", r"\*\*(\d+) MCP resources\*\*", "resources"),
     ("docs/deployment.md", r"# (\d+) policies, all READY", "policies"),
-    ("docs/upstream-notes.md", r"Contribute the (\d+) policies", "policies"),
+    # The wording changed when the contribution was actually filed; the numbers
+    # are still quoted there, so they stay guarded.
+    ("docs/upstream-notes.md", r"The (\d+) policies in `deploy/policies/`", "policies"),
+    ("docs/upstream-notes.md", r"offline\n?suite of (\d+) cases", "policy_cases"),
     ("wiki/Guardrails-Deep-Dive.md", r"The (\d+) policies in `deploy/policies/`", "policies"),
     ("wiki/Guardrails-Deep-Dive.md", r"`make policy-test`, (\d+) cases", "policy_cases"),
     ("wiki/Implementation.md", r"unit tests \((\d+);", "unit_tests"),
