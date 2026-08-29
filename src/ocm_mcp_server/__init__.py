@@ -7,4 +7,4 @@ The agent never holds a kubeconfig. Every write is policy-checked, human-approve
 and traced.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
