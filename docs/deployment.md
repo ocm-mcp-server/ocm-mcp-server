@@ -18,7 +18,7 @@ actually serializing. Run this server under WSL2 on Windows instead.
 
 | Tool | Install (macOS) | Install (Linux) |
 |---|---|---|
-| docker | Docker Desktop / colima | distro package |
+| podman | `brew install podman` then `podman machine init --now` | distro package |
 | kind | `brew install kind` | [kind releases](https://kind.sigs.k8s.io/docs/user/quick-start/) |
 | kubectl | `brew install kubectl` | distro package |
 | clusteradm | `curl -L https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh \| bash` | same |
@@ -136,13 +136,14 @@ exactly; the context names on the right come from your kubeconfig. If that
 left-vs-right distinction is unfamiliar, read the
 [context names guide](kubeconfig-contexts.md) first, it walks through both.
 
-## Path C: Docker
+## Path C: container image
 
 Use the signed image published on every release (or build your own with
-`docker build -t ocm-mcp-server .`):
+`podman build -t ocm-mcp-server .`). The commands below use `podman`; `docker`
+takes exactly the same arguments if that is what you run:
 
 ```bash
-docker run -i --rm \
+podman run -i --rm \
   -v ~/.kube/config:/kube/config:ro \
   -e KUBECONFIG=/kube/config \
   -e OCM_MCP_HUB_CONTEXT=<hub-context> \
@@ -150,7 +151,7 @@ docker run -i --rm \
   ghcr.io/ocm-mcp-server/ocm-mcp-server
 ```
 
-Point your MCP client's `command` at `docker` with those args (stdio passes
+Point your MCP client's `command` at `podman` (or `docker`) with those args (stdio passes
 through `-i`). Mount a dedicated volume for `OCM_MCP_HOME` if you want the
 audit log and proposals to survive container restarts.
 
@@ -272,7 +273,7 @@ so any OTel-compatible backend works - Jaeger, an OpenTelemetry Collector, Grafa
 Tempo, or a vendor endpoint. For a local Jaeger:
 
 ```bash
-docker run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one:1.60
+podman run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one:1.60
 # then open http://localhost:16686 and pick the "ocm-mcp-server" service
 ```
 

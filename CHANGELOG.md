@@ -58,6 +58,22 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Podman is now the preferred container engine, not the fallback.**
+  `bootstrap.sh`, `e2e-local.sh`, and `teardown.sh` all probed for a working
+  Docker first and only then considered Podman — so on a machine with both, the
+  engine the developer actually uses was silently ignored, and on a machine where
+  Docker is disallowed the scripts could report "no working container engine"
+  while Podman sat there stopped. They now try Podman first (starting its VM if it
+  is not running) and fall back to Docker, which keeps CI runners — Docker, no
+  Podman — working unchanged. `e2e-local.sh` already advertised "macOS (Homebrew +
+  Podman)" in its header; the detection now matches that.
+- **The quickstart contradicted itself about Docker.** The README listed `docker`
+  as a hard requirement roughly a hundred lines before stating "Docker is not
+  required". The requirement is a container engine, so it now reads
+  `podman (or docker)`, the deployment guide's tool table lists Podman, and the
+  container-image path and the Jaeger one-liner use `podman` with a note that
+  `docker` takes identical arguments.
+
 - **The gate tint was dead CSS.** `.flow__stage--gate` set a border colour that
   the `stageOn` keyframes overrode at every point in the cycle — an animation
   outranks a normal declaration — so the four layers were never actually

@@ -10,9 +10,9 @@ SPOKES="${SPOKES:-3}"
 # Pick the container engine the same way bootstrap.sh does.
 ENGINE="${CONTAINER_ENGINE:-}"
 if [[ -z "$ENGINE" ]]; then
-  if command -v docker >/dev/null && docker info >/dev/null 2>&1; then ENGINE=docker
-  elif command -v podman >/dev/null && podman info >/dev/null 2>&1; then ENGINE=podman
-  else ENGINE=docker; fi
+  if command -v podman >/dev/null && podman info >/dev/null 2>&1; then ENGINE=podman
+  elif command -v docker >/dev/null && docker info >/dev/null 2>&1; then ENGINE=docker
+  else ENGINE=podman; fi
 fi
 [[ "$ENGINE" == "podman" ]] && export KIND_EXPERIMENTAL_PROVIDER=podman
 

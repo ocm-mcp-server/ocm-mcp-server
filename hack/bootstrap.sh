@@ -29,15 +29,25 @@ for bin in kind kubectl clusteradm helm; do
   command -v "$bin" >/dev/null || die "'$bin' is required. See header of this script."
 done
 
-# Pick a container engine: honor CONTAINER_ENGINE, else prefer a working docker, else podman.
+# Pick a container engine: honor CONTAINER_ENGINE, else prefer PODMAN, else docker.
+# Podman is preferred deliberately. Docker is disallowed on some developer machines
+# entirely, and on a machine with both, picking docker first silently ignores the
+# engine the developer actually uses. Docker remains the fallback so CI runners,
+# which have docker and no podman, are unaffected.
+# Podman on macOS runs in a VM that is often stopped; start it rather than
+# reporting "no engine".
 ENGINE="${CONTAINER_ENGINE:-}"
+if [[ -z "$ENGINE" ]]; then
+  if command -v podman >/dev/null; then
+    podman info >/dev/null 2>&1 || podman machine start >/dev/null 2>&1 || true
+    podman info >/dev/null 2>&1 && ENGINE=podman
+  fi
+fi
 if [[ -z "$ENGINE" ]]; then
   if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
     ENGINE=docker
-  elif command -v podman >/dev/null && podman info >/dev/null 2>&1; then
-    ENGINE=podman
   else
-    die "no working container engine found (need docker or podman running)."
+    die "no working container engine found (need podman or docker running)."
   fi
 fi
 command -v "$ENGINE" >/dev/null || die "container engine '$ENGINE' is not installed."
