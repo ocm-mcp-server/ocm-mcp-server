@@ -42,8 +42,14 @@ ask() {
   printf '\033[0;90m$ %s -p "%s"\033[0m\n' "$AGENT" "${prompt:0:96}..."
   [[ "$DRY_RUN" == "1" ]] && return 0
   case "$AGENT" in
-    claude) claude -p "$prompt" ;;
-    codex)  codex exec "$prompt" ;;
+    # The prompt goes on STDIN, not as an argument: --allowedTools is variadic, so
+    # a trailing prompt is swallowed as another tool name and claude then reports
+    # "Input must be provided...". --allowedTools itself is required because a
+    # non-interactive session cannot answer the tool-permission prompt - without
+    # it every ocm tool is refused and the model answers from whatever it can read
+    # instead, which looks like a working demo and proves nothing.
+    claude) printf '%s' "$prompt" | claude -p --allowedTools "mcp__ocm" ;;
+    codex)  printf '%s' "$prompt" | codex exec --dangerously-bypass-approvals-and-sandbox - ;;
     *) echo "unknown AGENT: $AGENT" >&2; return 1 ;;
   esac
 }
@@ -70,8 +76,14 @@ run "export OCM_MCP_HOME=\$PWD/state"
 # ------------------------------------------------------------ 3. connect it
 b "3. add it to $AGENT - guardrailed tools in, kubeconfig stays out"
 if [[ "$AGENT" == "claude" ]]; then
-  run "claude mcp remove ocm >/dev/null 2>&1 || true"
-  run "claude mcp add ocm --env OCM_MCP_HUB_CONTEXT=\$OCM_MCP_HUB_CONTEXT --env OCM_MCP_SPOKE_CONTEXTS=\$OCM_MCP_SPOKE_CONTEXTS --env OCM_MCP_HOME=\$OCM_MCP_HOME -- ocm-mcp-server"
+  # Register the ABSOLUTE path. A bare "ocm-mcp-server" resolves only if the venv
+  # is active in the shell that spawns claude, which is true when a human types it
+  # and false for a scripted subprocess - it fails with
+  # "ENOENT: Executable not found in $PATH".
+  SERVER_BIN="$WORK/ocm/bin/ocm-mcp-server"
+  run "claude mcp remove ocm -s local >/dev/null 2>&1 || true"
+  run "claude mcp remove ocm -s project >/dev/null 2>&1 || true"
+  run "claude mcp add ocm --env OCM_MCP_HUB_CONTEXT=\$OCM_MCP_HUB_CONTEXT --env OCM_MCP_SPOKE_CONTEXTS=\$OCM_MCP_SPOKE_CONTEXTS --env OCM_MCP_HOME=\$OCM_MCP_HOME -- $SERVER_BIN"
   run "claude mcp list 2>/dev/null | grep ocm"
 else
   echo "  (codex reads examples/codex-config.toml - see examples/README.md)"
