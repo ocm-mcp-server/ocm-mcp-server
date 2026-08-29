@@ -27,7 +27,7 @@ ManifestWork → work agent on each managed cluster
 
 | Component | Role |
 |---|---|
-| `server.py` | FastMCP server; the only surface the agent sees |
+| `server.py` | MCPServer (MCP Python SDK 2.x); the only surface the agent sees |
 | `ocm.py` | ManagedCluster / ManifestWork operations, summarized for agents |
 | `guardrails.py` | layer-1 static checks (exact GVK allow-list, namespaces, Restricted Pod Security, volume/service allow-lists, image pinning, per-proposal limits) |
 | `approvals.py` | proposal store + one-time Ed25519 approval tokens binding the content hash, operation, issuer/audience, and TTL (server holds only the public key) |
@@ -58,7 +58,7 @@ flowchart TD
     A -- "MCP JSON-RPC 2.0<br/>over stdio" --> B
 
     subgraph SERVER["SERVER PROCESS - ocm-mcp-server"]
-        B["FastMCP dispatch<br/>server.py<br/>argument schema validation<br/>readOnlyHint and<br/>destructiveHint per tool"]
+        B["MCPServer dispatch<br/>server.py<br/>argument schema validation<br/>readOnlyHint and<br/>destructiveHint per tool"]
         B --> C["traced_tool wrapper<br/>tracing.py<br/>1. optional OTel span<br/>2. classify outcome<br/>3. hash-chained audit line<br/>4. metrics.record"]
         C --> D{"toolset?"}
         D -- "reads: 29 tools,<br/>6 resources" --> E["_read wrapper<br/>server.py<br/>missing API -> UNAVAILABLE<br/>ApiException -> clear<br/>message, no stack trace"]
@@ -114,7 +114,7 @@ What actually happens, function by function, for the simplest tool:
 sequenceDiagram
     autonumber
     participant AG as Agent (MCP client)
-    participant FM as FastMCP (server.py)
+    participant FM as MCPServer (server.py)
     participant TR as traced_tool (tracing.py)
     participant OC as ocm.py
     participant K8 as k8s.py

@@ -58,7 +58,7 @@ def test_resources_are_registered() -> None:
 
     async def collect() -> set[str]:
         static = {str(r.uri) for r in await server.mcp.list_resources()}
-        templates = {t.uriTemplate for t in await server.mcp.list_resource_templates()}
+        templates = {t.uri_template for t in await server.mcp.list_resource_templates()}
         return static | templates
 
     uris = anyio.run(collect)

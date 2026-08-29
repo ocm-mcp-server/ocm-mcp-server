@@ -29,6 +29,24 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **BREAKING: the MCP Python SDK dependency moves to 2.x** (`mcp>=2,<3`, was
+  `mcp>=1.9,<2`). In SDK 2.x `FastMCP` was renamed to `MCPServer`
+  (`mcp.server.mcpserver`) and `ToolAnnotations` fields became snake_case, so this
+  is a source-incompatible upgrade: an environment pinned to `mcp<2` can no longer
+  import this package, and the two cannot be satisfied by one code path.
+
+  Dependabot proposed `>=1.9,<3` (#36, and #20 before it), which is why both were
+  refused — that range claims support for 1.x *and* 2.x, and the ported code raises
+  `ModuleNotFoundError` on 1.29.1. Taking 2.x deliberately, with a real pin, is the
+  honest version of that change.
+
+  The port itself is small — the SDK surface this server uses (`tool`, `prompt`,
+  `resource`, `run`, and the `name`/`instructions` constructor arguments) is
+  unchanged in 2.x. No tool, prompt, resource, or wire-level annotation changed:
+  `ToolAnnotations` keeps its camelCase JSON aliases, so `readOnlyHint` and
+  `destructiveHint` still appear on the wire exactly as before. Verified on mcp
+  2.1.1: 404 tests, 100% branch coverage, mypy clean.
+
 - **The hero's four-layer flow now reads as a pipeline instead of a row of
   boxes.** Its connectors are drawn at rest rather than only while the pulse
   passes, so the sequence is legible with the animation stopped; a band of light
