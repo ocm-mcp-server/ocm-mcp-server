@@ -519,7 +519,7 @@ pip install "ocm-mcp-server[tracing]"                    # OTel SDK + OTLP/HTTP 
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 # your collector
 
 # a local Jaeger to look at traces (make bootstrap starts this for you):
-docker run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one:1.60
+podman run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one:1.60
 # open http://localhost:16686 and select the "ocm-mcp-server" service
 ```
 
@@ -537,7 +537,7 @@ and [architecture - observability](docs/architecture.md#6-observability---three-
 <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/deploy-paths.svg" alt="Three deployment paths: laptop, real fleet, production" width="100%">
 </div>
 
-Requirements: docker, [kind](https://kind.sigs.k8s.io/), kubectl,
+Requirements: podman (or docker), [kind](https://kind.sigs.k8s.io/), kubectl,
 [clusteradm](https://github.com/open-cluster-management-io/clusteradm), helm, Python 3.11+,
 Linux or macOS (Windows unsupported - use WSL2).
 The [deployment guide](docs/deployment.md) has install commands and the real-fleet path.
@@ -674,7 +674,7 @@ comes up, every step passes, and the fleet is torn down again -
 |---|---|
 | [Tools and Prompts reference](docs/tools.md) | every tool by toolset, its class (read / propose / apply), arguments, and the OCM API it touches; the ten MCP prompts |
 | [Context names guide](docs/kubeconfig-contexts.md) | zero-background: what a kubeconfig context is and the exact commands to find yours (kind, EKS, GKE, AKS, OpenShift) |
-| [Deployment guide](docs/deployment.md) | laptop quickstart in depth, real OCM fleets, Docker, production hardening, troubleshooting |
+| [Deployment guide](docs/deployment.md) | laptop quickstart in depth, real OCM fleets, container images, production hardening, troubleshooting |
 | [Worked examples](docs/examples.md) | full incident transcripts, approval sessions, adversarial rejections, audit output |
 | [Architecture](docs/architecture.md) (root pointer: [ARCHITECTURE.md](ARCHITECTURE.md)) | the choke-point idea, components, the full low-level design (vertical diagrams: stack, call anatomy, write gates, rollback, audit machinery), design decisions worth arguing about |
 | [Guardrails](docs/guardrails.md) | the four layers, deliberate absences, threat model, what we refuse to automate |

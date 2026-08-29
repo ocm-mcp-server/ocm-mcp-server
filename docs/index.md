@@ -16,7 +16,7 @@ kubeconfig; every write is policy-checked, human-approved, and traced.
   design decisions worth arguing about
 - [Guardrails](guardrails.md) - the four layers, deliberate absences, what we
   refuse to automate, and the threat model
-- [Deployment guide](deployment.md) - laptop kind, an existing fleet, Docker, and
+- [Deployment guide](deployment.md) - laptop kind, an existing fleet, container images, and
   in-cluster via Helm; plus the production hardening checklist
 - [Tools and Prompts reference](tools.md) - every tool by toolset, its class, and
   the OCM API it touches; the ten prompts

@@ -134,7 +134,8 @@ rec "2. Python package" "pip install -e ." "Install the MCP server and its ocm-m
 b "3. Container engine - start Podman (Docker not required)"
 ENGINE="${CONTAINER_ENGINE:-}"
 if [[ -z "$ENGINE" ]]; then
-  if command -v docker >/dev/null && docker info >/dev/null 2>&1; then ENGINE=docker
+  if command -v podman >/dev/null; then ENGINE=podman
+  elif command -v docker >/dev/null && docker info >/dev/null 2>&1; then ENGINE=docker
   else ENGINE=podman; fi
 fi
 if [[ "$ENGINE" == "podman" ]]; then
