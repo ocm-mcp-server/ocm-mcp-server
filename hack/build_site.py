@@ -42,8 +42,8 @@ DOCS = REPO / "docs"
 WEB = REPO / "web"
 OUT = REPO / "_site"
 
-SITE_URL = "https://sandeepbazar.github.io/ocm-mcp-server/"
-GH = "https://github.com/sandeepbazar/ocm-mcp-server"
+SITE_URL = "https://ocm-mcp-server.github.io/"
+GH = "https://github.com/ocm-mcp-server/ocm-mcp-server"
 
 # Reading order is explicit. Alphabetical sorting would destroy the wiki's
 # deliberate 1..11 sequence, which is most of what makes it readable.
@@ -522,7 +522,7 @@ def build(base: str) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--base", default="/ocm-mcp-server/", help="URL prefix the site is served from")
+    ap.add_argument("--base", default="/", help="URL prefix the site is served from")
     ap.add_argument("--serve", action="store_true", help="serve _site/ on localhost:8000")
     args = ap.parse_args()
 

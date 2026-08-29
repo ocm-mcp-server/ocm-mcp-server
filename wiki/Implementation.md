@@ -64,7 +64,7 @@ disables both write toolsets.
 
 The full list - every tool, its class, its arguments, and the OCM API it touches -
 is in the
-[Tools and Prompts reference](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/tools.md).
+[Tools and Prompts reference](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/tools.md).
 The server also ships **ten MCP prompts** (from `diagnose_fleet` and
 `remediate_with_approval` to `onboard_cluster`, `hosted_cluster_health`, and
 `policy_compliance_report`) that encode the safe workflow as reusable templates. Run

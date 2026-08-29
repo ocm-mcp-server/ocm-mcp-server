@@ -18,6 +18,6 @@
 - [11. FAQ](FAQ)
 
 **Links**
-- [Code](https://github.com/sandeepbazar/ocm-mcp-server)
-- [Deployment guide](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/deployment.md)
-- [Worked examples](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/examples.md)
+- [Code](https://github.com/ocm-mcp-server/ocm-mcp-server)
+- [Deployment guide](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/deployment.md)
+- [Worked examples](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/examples.md)

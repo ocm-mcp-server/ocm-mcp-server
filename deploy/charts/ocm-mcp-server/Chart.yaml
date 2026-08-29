@@ -6,8 +6,8 @@ description: Guardrailed MCP server for operating an Open Cluster Management fle
 type: application
 version: 0.4.0
 appVersion: "0.4.0"
-home: https://github.com/sandeepbazar/ocm-mcp-server
+home: https://github.com/ocm-mcp-server/ocm-mcp-server
 sources:
-  - https://github.com/sandeepbazar/ocm-mcp-server
+  - https://github.com/ocm-mcp-server/ocm-mcp-server
 maintainers:
   - name: Sandeep Bazar

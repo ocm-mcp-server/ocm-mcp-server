@@ -12,24 +12,24 @@ transparent checklist of what is in place and where the project can go further.
 
 | Expectation | Status | Where |
 |---|---|---|
-| OSI-approved open source license | Done | [LICENSE](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/LICENSE) (Apache-2.0) |
+| OSI-approved open source license | Done | [LICENSE](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/LICENSE) (Apache-2.0) |
 | Public repository and issue tracker | Done | GitHub |
-| Governance model | Done | [GOVERNANCE.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/GOVERNANCE.md) |
-| Maintainers listed | Done | [MAINTAINERS.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/MAINTAINERS.md) |
-| Adopters page | Done (open for entries) | [ADOPTERS.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/ADOPTERS.md) |
-| Code of Conduct (CNCF CoC) | Done | [CODE_OF_CONDUCT.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/CODE_OF_CONDUCT.md) |
-| Contributing guide | Done | [CONTRIBUTING.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/CONTRIBUTING.md) |
+| Governance model | Done | [GOVERNANCE.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/GOVERNANCE.md) |
+| Maintainers listed | Done | [MAINTAINERS.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/MAINTAINERS.md) |
+| Adopters page | Done (open for entries) | [ADOPTERS.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ADOPTERS.md) |
+| Code of Conduct (CNCF CoC) | Done | [CODE_OF_CONDUCT.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CODE_OF_CONDUCT.md) |
+| Contributing guide | Done | [CONTRIBUTING.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CONTRIBUTING.md) |
 | DCO sign-off on commits | Partial | requested in the PR checklist; automated enforcement not yet wired, early history predates the practice |
-| Public roadmap | Done | [ROADMAP.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/ROADMAP.md) |
+| Public roadmap | Done | [ROADMAP.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ROADMAP.md) |
 
 ## Security
 
 | Expectation | Status | Where |
 |---|---|---|
-| Security disclosure policy | Done | [SECURITY.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SECURITY.md) |
+| Security disclosure policy | Done | [SECURITY.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/SECURITY.md) |
 | Documented threat model | Done | [docs/guardrails.md](guardrails.md) |
 | Security self-assessment | Done | [docs/security-self-assessment.md](security-self-assessment.md) |
-| Least-privilege deployment identity | Done | [deploy/rbac.yaml](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/deploy/rbac.yaml) |
+| Least-privilege deployment identity | Done | [deploy/rbac.yaml](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/deploy/rbac.yaml) |
 | Static analysis in CI | Done | ruff + CodeQL workflows |
 | OpenSSF Best Practices badge | In progress | self-assessment underway |
 
@@ -42,8 +42,8 @@ transparent checklist of what is in place and where the project can go further.
 | Reproducible local environment | Done | `make bootstrap` (kind-based fleet) |
 | Release automation | Done | tag-driven release + GHCR image publish |
 | Documentation for new users | Done | README, wiki, deployment and context guides |
-| In-cluster deployment artifacts | Done | [Helm chart](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/deploy/charts/ocm-mcp-server) + [Deployment manifest](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/deploy/deployment.yaml) |
-| Evaluation evidence | Done | [published multi-model results](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/eval/results/README.md): claude-sonnet-5 and gpt-5.6-sol, 22 scenarios each, safety 44/44, failures analyzed |
+| In-cluster deployment artifacts | Done | [Helm chart](https://github.com/ocm-mcp-server/ocm-mcp-server/tree/main/deploy/charts/ocm-mcp-server) + [Deployment manifest](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/deploy/deployment.yaml) |
+| Evaluation evidence | Done | [published multi-model results](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/README.md): claude-sonnet-5 and gpt-5.6-sol, 22 scenarios each, safety 44/44, failures analyzed |
 
 ## Where the project can go further
 
@@ -55,7 +55,7 @@ today:
   Company/Organization column in MAINTAINERS.md). The project is single-maintainer
   today; applications missing this are normally closed before TOC review. This is the
   single most important step, and it cannot be engineered - it takes community.
-- **Demonstrable adoption.** [ADOPTERS.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/ADOPTERS.md) is open; even one or two
+- **Demonstrable adoption.** [ADOPTERS.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ADOPTERS.md) is open; even one or two
   public evaluators strengthen it.
 - **Upstream OCM engagement.** The name builds on Open Cluster Management's acronym;
   CNCF naming guidance asks for documented agreement from that project's leadership.
@@ -67,6 +67,6 @@ today:
 
 ## How to help
 
-The highest-leverage contributions are: add yourself to [ADOPTERS.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/ADOPTERS.md),
+The highest-leverage contributions are: add yourself to [ADOPTERS.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ADOPTERS.md),
 publish evaluation results, or step up as a maintainer per
-[GOVERNANCE.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/GOVERNANCE.md).
+[GOVERNANCE.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/GOVERNANCE.md).

@@ -1,11 +1,11 @@
-<!-- mcp-name: io.github.sandeepbazar/ocm-mcp-server -->
+<!-- mcp-name: io.github.ocm-mcp-server/ocm-mcp-server -->
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/banner.svg" alt="ocm-mcp-server - AgentOps for Kubernetes fleets, done safely" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/banner.svg" alt="ocm-mcp-server - AgentOps for Kubernetes fleets, done safely" width="100%">
 
 # 🛡️ ocm-mcp-server
 
-### **[📖 Read the docs site → sandeepbazar.github.io/ocm-mcp-server](https://sandeepbazar.github.io/ocm-mcp-server/)**
+### **[📖 Read the docs site → ocm-mcp-server.github.io](https://ocm-mcp-server.github.io/)**
 
 ### AgentOps for Kubernetes fleets, done safely.
 
@@ -20,19 +20,19 @@ and audit between the model and your clusters.**
 [![MCP](https://img.shields.io/badge/protocol-MCP-6f42c1)](https://modelcontextprotocol.io/)
 [![OCM](https://img.shields.io/badge/multicluster-Open%20Cluster%20Management-326CE5?logo=kubernetes&logoColor=white)](https://open-cluster-management.io/)
 [![Kyverno](https://img.shields.io/badge/policy-Kyverno-ff6f00)](https://kyverno.io/)
-[![CI](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/ci.yaml/badge.svg)](https://github.com/sandeepbazar/ocm-mcp-server/actions)
-[![e2e](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/e2e.yaml/badge.svg)](https://github.com/sandeepbazar/ocm-mcp-server/actions/workflows/e2e.yaml)
-[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwiki%2Fsandeepbazar%2Focm-mcp-server%2Fcoverage-badge.json)](https://github.com/sandeepbazar/ocm-mcp-server/wiki/Unit-Test-Results)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/sandeepbazar/ocm-mcp-server/badge)](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)
+[![CI](https://github.com/ocm-mcp-server/ocm-mcp-server/actions/workflows/ci.yaml/badge.svg)](https://github.com/ocm-mcp-server/ocm-mcp-server/actions)
+[![e2e](https://github.com/ocm-mcp-server/ocm-mcp-server/actions/workflows/e2e.yaml/badge.svg)](https://github.com/ocm-mcp-server/ocm-mcp-server/actions/workflows/e2e.yaml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwiki%2Fsandeepbazar%2Focm-mcp-server%2Fcoverage-badge.json)](https://github.com/ocm-mcp-server/ocm-mcp-server/wiki/Unit-Test-Results)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ocm-mcp-server/ocm-mcp-server/badge)](https://scorecard.dev/viewer/?uri=github.com/ocm-mcp-server/ocm-mcp-server)
 [![PyPI](https://img.shields.io/pypi/v/ocm-mcp-server?label=PyPI)](https://pypi.org/project/ocm-mcp-server/)
-[![Release](https://img.shields.io/github/v/tag/sandeepbazar/ocm-mcp-server?label=release)](https://github.com/sandeepbazar/ocm-mcp-server/releases)
+[![Release](https://img.shields.io/github/v/tag/ocm-mcp-server/ocm-mcp-server?label=release)](https://github.com/ocm-mcp-server/ocm-mcp-server/releases)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
-**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🔭 Observability](#observability---audit-tracing-opentelemetryjaeger-metrics) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/sandeepbazar/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
+**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🔭 Observability](#observability---audit-tracing-opentelemetryjaeger-metrics) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/ocm-mcp-server/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
 <sub>The whole safe-remediation loop: investigate with free reads, propose a change, get rejected by the guardrails and correct it, wait for a human-signed token, apply, verify, and report from the audit log.</sub>
 
@@ -73,12 +73,12 @@ between the model and your clusters:
 None of these layers live in the system prompt, so none of them can be talked out of.
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
 </div>
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/connect-claude.gif" alt="A fleet operator's day with Claude, recorded live: pip install ocm-mcp-server, claude mcp add showing the server connected, a one-question fleet inventory with add-on health, placement reasoning, a privileged latest-tag deploy refused by the guardrails, a compliant proposal signed by a human with an Ed25519 token, applied and verified by Claude, and the day reconstructed from the audit trail" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-claude.gif" alt="A fleet operator's day with Claude, recorded live: pip install ocm-mcp-server, claude mcp add showing the server connected, a one-question fleet inventory with add-on health, placement reasoning, a privileged latest-tag deploy refused by the guardrails, a compliant proposal signed by a human with an Ed25519 token, applied and verified by Claude, and the day reconstructed from the audit trail" width="100%">
 
 <sub>A fleet operator's day with <b>Claude</b>, live from a cold start: install from PyPI, <code>claude mcp add</code>, inventory the fleet, reason about placement — then ship a new service the gated way: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the whole day is read back <b>from the audit trail</b>. — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
 
@@ -90,14 +90,14 @@ None of these layers live in the system prompt, so none of them can be talked ou
   (or run directly with `uvx ocm-mcp-server`). Every release is published straight from CI via
   [OIDC trusted publishing](https://docs.pypi.org/trusted-publishers/) - no long-lived tokens anywhere.
 - 🗂️ **[Official MCP Registry](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)** - listed as
-  `io.github.sandeepbazar/ocm-mcp-server`, so any MCP client or platform that browses the registry can
+  `io.github.ocm-mcp-server/ocm-mcp-server`, so any MCP client or platform that browses the registry can
   discover and auto-configure this server (package, transport, and required env vars are all in the
   listing); the registry validates the listing against this repo and the PyPI package.
-- 🐳 **[Container image on GHCR](https://github.com/sandeepbazar/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
-  `docker run ghcr.io/sandeepbazar/ocm-mcp-server` (kubeconfig mount shown in the
+- 🐳 **[Container image on GHCR](https://github.com/ocm-mcp-server/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
+  `docker run ghcr.io/ocm-mcp-server/ocm-mcp-server` (kubeconfig mount shown in the
   [deployment guide](docs/deployment.md)); built in CI with an SBOM and SLSA provenance attached,
   vulnerability-gated with Trivy, and signed keyless with Cosign so you can verify what you run.
-- 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/sandeepbazar/ocm-mcp-server)** -
+- 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/ocm-mcp-server/ocm-mcp-server)** -
   the repo's supply-chain security posture (pinned dependencies, branch protection, signed releases, ...)
   is scored automatically every week and published for anyone to inspect.
 
@@ -224,7 +224,7 @@ message tells the agent exactly why. [More worked examples →](docs/examples.md
 ## Architecture
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/architecture-flow.gif" alt="ocm-mcp-server sits between an AI agent and the fleet: dangerous actions such as reading Secrets, exec into pods, or arbitrary delete do not exist and are blocked; every allowed change flows out only through Kyverno policy, human approval, and audit" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/architecture-flow.gif" alt="ocm-mcp-server sits between an AI agent and the fleet: dangerous actions such as reading Secrets, exec into pods, or arbitrary delete do not exist and are blocked; every allowed change flows out only through Kyverno policy, human approval, and audit" width="100%">
 <br><sub>Dangerous capabilities do not exist. Reads flow freely; every change is proposed, policy-checked, human-approved, and audited.</sub>
 </div>
 
@@ -312,7 +312,7 @@ the two writing toolsets entirely, for a strictly-inspection deployment.
 > nothing), so you can confirm exactly what the server sees before wiring up an agent.
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
 </div>
 
 There is deliberately no tool that reads Secrets, execs into pods, or deletes
@@ -531,7 +531,7 @@ and [architecture - observability](docs/architecture.md#6-observability---three-
 ## Quickstart (laptop, ~15 minutes)
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/deploy-paths.svg" alt="Three deployment paths: laptop, real fleet, production" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/deploy-paths.svg" alt="Three deployment paths: laptop, real fleet, production" width="100%">
 </div>
 
 Requirements: docker, [kind](https://kind.sigs.k8s.io/), kubectl,
@@ -540,7 +540,7 @@ Linux or macOS (Windows unsupported - use WSL2).
 The [deployment guide](docs/deployment.md) has install commands and the real-fleet path.
 
 ```bash
-git clone https://github.com/sandeepbazar/ocm-mcp-server.git
+git clone https://github.com/ocm-mcp-server/ocm-mcp-server.git
 cd ocm-mcp-server
 
 make bootstrap      # 1 hub + 3 managed kind clusters, OCM, Kyverno, policies, demo app
@@ -663,7 +663,7 @@ Here is a real, unedited run (recorded with asciinema, long waits compressed): t
 comes up, every step passes, and the fleet is torn down again -
 [MP4 version](demo/e2e-local.mp4) · [terminal cast](demo/e2e-local.cast):
 
-<img src="https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/demo/e2e-local.gif" alt="A real ./hack/e2e-local.sh run: dependencies verified, a kind-based OCM fleet bootstrapped with Kyverno and policies, every tool and prompt exercised including the gated approve-and-apply flow and a break-then-fix scenario, all steps passing, and the fleet deleted again" width="100%">
+<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/e2e-local.gif" alt="A real ./hack/e2e-local.sh run: dependencies verified, a kind-based OCM fleet bootstrapped with Kyverno and policies, every tool and prompt exercised including the gated approve-and-apply flow and a break-then-fix scenario, all steps passing, and the fleet deleted again" width="100%">
 
 ## Documentation
 

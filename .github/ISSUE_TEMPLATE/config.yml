@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/sandeepbazar/ocm-mcp-server/security/advisories/new
+    url: https://github.com/ocm-mcp-server/ocm-mcp-server/security/advisories/new
     about: Report privately via a security advisory - never in a public issue.
   - name: Commercial support / sponsorship
-    url: https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SUPPORT.md
+    url: https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/SUPPORT.md
     about: See SUPPORT.md - enquiries via LinkedIn

@@ -87,4 +87,4 @@ git tag -a "v$v" -m "v$v"
 git push origin main "v$v"
 
 say "Done - the tag pipeline now publishes: GitHub Release, PyPI, MCP Registry, signed image"
-echo "watch: https://github.com/sandeepbazar/ocm-mcp-server/actions"
+echo "watch: https://github.com/ocm-mcp-server/ocm-mcp-server/actions"

@@ -42,10 +42,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/sandeepbazar/ocm-mcp-server"
-Documentation = "https://github.com/sandeepbazar/ocm-mcp-server/wiki"
-Changelog = "https://github.com/sandeepbazar/ocm-mcp-server/blob/main/CHANGELOG.md"
-Issues = "https://github.com/sandeepbazar/ocm-mcp-server/issues"
+Homepage = "https://github.com/ocm-mcp-server/ocm-mcp-server"
+Documentation = "https://github.com/ocm-mcp-server/ocm-mcp-server/wiki"
+Changelog = "https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CHANGELOG.md"
+Issues = "https://github.com/ocm-mcp-server/ocm-mcp-server/issues"
 "MCP Registry" = "https://registry.modelcontextprotocol.io/?q=ocm-mcp-server"
 
 [project.scripts]

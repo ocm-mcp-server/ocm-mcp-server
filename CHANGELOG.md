@@ -9,7 +9,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **A documentation site at
-  [sandeepbazar.github.io/ocm-mcp-server](https://sandeepbazar.github.io/ocm-mcp-server/)**,
+  [ocm-mcp-server.github.io](https://ocm-mcp-server.github.io/)**,
   built by `hack/build_site.py` from `wiki/` and `docs/` — the same markdown
   those trees already hold, so nothing is duplicated and `hack/publish-wiki.sh`
   keeps feeding the GitHub wiki from the same files. Dark-first with a light
@@ -257,7 +257,7 @@ release automation: PyPI trusted publishing and an official MCP Registry listing
 
 - **PyPI publishing** via OIDC trusted publishing on release tags: install with
   `pip install ocm-mcp-server`, or run directly with `uvx ocm-mcp-server`.
-- **Official MCP Registry listing** as `io.github.sandeepbazar/ocm-mcp-server`:
+- **Official MCP Registry listing** as `io.github.ocm-mcp-server/ocm-mcp-server`:
   `server.json` metadata, ownership markers in the README (PyPI) and image
   annotations (OCI), and automated registry publish on every release tag.
 - **OpenSSF Scorecard** workflow (weekly + on push to main) with published results,
@@ -520,4 +520,4 @@ First public release: the complete guardrailed-AgentOps pattern, end to end.
   project wiki covering the full journey from problem to roadmap.
 - Unit tests (26), ruff lint, CI, and Dockerfile.
 
-[0.1.0]: https://github.com/sandeepbazar/ocm-mcp-server/releases/tag/v0.1.0
+[0.1.0]: https://github.com/ocm-mcp-server/ocm-mcp-server/releases/tag/v0.1.0

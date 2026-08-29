@@ -6,7 +6,7 @@ security reports get first-class attention.
 ## Reporting
 
 Please report vulnerabilities privately via GitHub Security Advisories at
-https://github.com/sandeepbazar/ocm-mcp-server/security/advisories/new
+https://github.com/ocm-mcp-server/ocm-mcp-server/security/advisories/new
 
 Please do **not** open a public issue, pull request, or discussion for a
 suspected vulnerability — filing one is itself a disclosure, and it starts the
@@ -57,7 +57,7 @@ already fixed on the current release.
 
 ## Threat model
 
-See https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/guardrails.md
+See https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/guardrails.md
 for the layer model and abridged threat table. The standing assumptions: the
 agent is untrusted, the model provider is semi-trusted, the human approval
 terminal and the hub's RBAC are the trust anchors.

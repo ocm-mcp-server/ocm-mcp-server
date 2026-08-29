@@ -1,12 +1,12 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.sandeepbazar/ocm-mcp-server",
+  "name": "io.github.ocm-mcp-server/ocm-mcp-server",
   "description": "Guardrailed fleet ops for AI agents: multi-cluster Kubernetes via OCM with policy, approval, audit.",
   "repository": {
-    "url": "https://github.com/sandeepbazar/ocm-mcp-server",
+    "url": "https://github.com/ocm-mcp-server/ocm-mcp-server",
     "source": "github"
   },
-  "websiteUrl": "https://github.com/sandeepbazar/ocm-mcp-server/wiki",
+  "websiteUrl": "https://github.com/ocm-mcp-server/ocm-mcp-server/wiki",
   "version": "0.4.0",
   "packages": [
     {
@@ -43,7 +43,7 @@
     },
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/sandeepbazar/ocm-mcp-server:0.4.0",
+      "identifier": "ghcr.io/ocm-mcp-server/ocm-mcp-server:0.4.0",
       "runtimeHint": "docker",
       "transport": {
         "type": "stdio"

@@ -4,7 +4,7 @@
 
 1. Read the [README](README.md) and [docs/](docs/) first - architecture,
    guardrail rationale, and the demo script cover most questions.
-2. Search [existing issues](https://github.com/sandeepbazar/ocm-mcp-server/issues).
+2. Search [existing issues](https://github.com/ocm-mcp-server/ocm-mcp-server/issues).
 3. Open a new issue using the templates - bug reports and feature requests
    each have one.
 

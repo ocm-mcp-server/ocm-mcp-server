@@ -4,7 +4,7 @@
 whole Open Cluster Management API is safe to inspect. Only two toolsets can change
 anything, and only through the propose -> approve -> apply gate.
 
-![Reads are free; writes are gated](https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/read-write-paths.svg)
+![Reads are free; writes are gated](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/read-write-paths.svg)
 
 Every hub-level tool works for any managed spoke - a standalone OpenShift cluster, a
 HyperShift hosted cluster, or a cloud cluster - because on the hub they are all
@@ -120,6 +120,6 @@ the agent through the safe workflow with the real tool names.
 | **`rollout_status`** | `name`, `namespace` | track a ManifestWorkReplicaSet rollout across selected clusters. |
 
 The full argument-by-argument reference lives in
-[docs/tools.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/tools.md).
+[docs/tools.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/tools.md).
 
 Next: [Guardrails Deep Dive](Guardrails-Deep-Dive).

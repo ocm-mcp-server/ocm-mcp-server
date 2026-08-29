@@ -6,7 +6,7 @@
 The server exposes **35 tools across ten toolsets** plus **ten prompts**. This page is
 the canonical reference: every tool, its class, its arguments, and the Open Cluster
 Management API it reads or writes. The short version lives in the
-[README](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/README.md#toolsets); the safety model behind the classes is in
+[README](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/README.md#toolsets); the safety model behind the classes is in
 [guardrails.md](guardrails.md).
 
 ## Works with any managed cluster
