@@ -3,7 +3,7 @@
 
 # Tools and Prompts reference
 
-The server exposes **35 tools across ten toolsets** plus **ten prompts**. This page is
+The server exposes **37 tools across ten toolsets** plus **ten prompts**. This page is
 the canonical reference: every tool, its class, its arguments, and the Open Cluster
 Management API it reads or writes. The short version lives in the
 [README](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/README.md#toolsets); the safety model behind the classes is in
@@ -90,6 +90,8 @@ prompt can call them.
 | `list_manifestworks` | read | `cluster` | `ManifestWork` v1 (Applied/Available) |
 | `get_manifestwork` | read | `cluster`, `name` | `ManifestWork` conditions + per-resource `statusFeedback` |
 | `list_manifestworkreplicasets` | read | `namespace?` | `ManifestWorkReplicaSet` v1alpha1 rollout summary |
+| `list_applied_manifestworks` | read | `cluster` | `AppliedManifestWork` v1 read from the **spoke**: what the agent actually materialised there |
+| `list_cluster_permissions` | read | `cluster` | `ClusterPermission` v1alpha1 (`rbac.open-cluster-management.io`) — the RBAC distributed to that cluster |
 | `propose_manifestwork` | propose | `cluster`, `name`, `summary`, `manifests_json` | validates, stores pending |
 | `apply_manifestwork` | apply | `proposal_id`, `approval_token` | verifies an apply-scoped token, creates the `ManifestWork` |
 | `propose_rollback` | propose | `proposal_id` | creates a rollback proposal bound to the applied work's UID |

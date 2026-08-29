@@ -52,7 +52,7 @@ Every box is a real component; every arrow is a real call path or protocol.
 ```mermaid
 flowchart TD
     subgraph CLIENT["AGENT SIDE - any MCP client"]
-        A["AI agent<br/>sees ONLY:<br/>35 tools, 10 prompts,<br/>6 resources<br/>never: kubeconfig,<br/>Secrets, exec, kubectl"]
+        A["AI agent<br/>sees ONLY:<br/>37 tools, 10 prompts,<br/>6 resources<br/>never: kubeconfig,<br/>Secrets, exec, kubectl"]
     end
 
     A -- "MCP JSON-RPC 2.0<br/>over stdio" --> B

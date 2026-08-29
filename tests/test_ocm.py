@@ -4,6 +4,7 @@
 """OCM shaping/read functions driven with a fake hub custom-objects client (no cluster)."""
 
 import pytest
+from kubernetes.client import ApiException
 
 from ocm_mcp_server import ocm
 
@@ -470,3 +471,79 @@ def test_get_manifestwork_with_feedback(monkeypatch):
     patch_hub(monkeypatch, obj=obj)
     out = ocm.get_manifestwork("cluster1", "w")
     assert isinstance(out, dict)
+
+
+# --------------------------------------------------------------- AppliedManifestWork
+# The spoke's own record of what it materialised. Read from the managed cluster, not
+# the hub, which is the whole reason it is worth having alongside ManifestWork status.
+def test_list_applied_manifestworks(monkeypatch):
+    amw = {
+        "metadata": {"name": "a1b2c3-payments-fix"},
+        "spec": {"manifestWorkName": "payments-fix", "hubHostname": "a1b2c3"},
+        "status": {
+            "appliedResources": [
+                {"resource": "deployments", "name": "payments", "namespace": "prod"},
+                {"resource": "services", "name": "payments", "namespace": None},
+            ]
+        },
+    }
+    monkeypatch.setattr(ocm, "spoke_custom", lambda _c: FakeCustom(items=[amw]))
+    out = ocm.list_applied_manifestworks("cluster1")
+    assert len(out) == 1
+    row = out[0]
+    # The readable name comes from spec, not from the hashed metadata.name.
+    assert row["manifestwork"] == "payments-fix"
+    assert row["applied_count"] == 2
+    # A resource with no namespace renders as "-" rather than "None".
+    assert "services/payments (-)" in row["applied_resources"]
+
+
+def test_list_applied_manifestworks_empty(monkeypatch):
+    monkeypatch.setattr(ocm, "spoke_custom", lambda _c: FakeCustom(items=[]))
+    assert ocm.list_applied_manifestworks("cluster1") == []
+
+
+# --------------------------------------------------------------- ClusterPermission
+def test_list_cluster_permissions(monkeypatch):
+    cp = {
+        "metadata": {"name": "reader"},
+        "spec": {
+            "roles": [{"namespace": "prod"}],
+            "clusterRole": {"rules": []},
+            "roleBindings": [{"namespace": "prod"}],
+        },
+        "status": {"conditions": [{"type": "AppliedRBACManifestWork", "status": "True"}]},
+    }
+    patch_hub(monkeypatch, items=[cp])
+    out = ocm.list_cluster_permissions("cluster1")
+    assert out[0]["name"] == "reader"
+    assert out[0]["roles"] == 1
+    assert out[0]["cluster_role"] is True
+    assert out[0]["cluster_role_binding"] is False
+
+
+def test_list_cluster_permissions_crd_absent(monkeypatch):
+    """The CRD ships from a separate repo, so a hub may simply not have it.
+
+    That must read as an explanation, not a stack trace.
+    """
+
+    class Missing:
+        def list_namespaced_custom_object(self, *a, **k):
+            raise ApiException(status=404, reason="Not Found")
+
+    monkeypatch.setattr(ocm, "hub_custom", lambda: Missing())
+    with pytest.raises(LookupError, match="cluster-permission"):
+        ocm.list_cluster_permissions("cluster1")
+
+
+def test_list_cluster_permissions_other_error_propagates(monkeypatch):
+    """A 403 is not a missing CRD and must not be disguised as one."""
+
+    class Forbidden:
+        def list_namespaced_custom_object(self, *a, **k):
+            raise ApiException(status=403, reason="Forbidden")
+
+    monkeypatch.setattr(ocm, "hub_custom", lambda: Forbidden())
+    with pytest.raises(ApiException):
+        ocm.list_cluster_permissions("cluster1")

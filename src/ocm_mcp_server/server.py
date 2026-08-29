@@ -325,6 +325,35 @@ def get_manifestwork(cluster: str, name: str) -> str:
 
 @mcp.tool(annotations=READ)
 @traced_tool
+def list_applied_manifestworks(cluster: str) -> str:
+    """What a managed cluster actually applied, read from the spoke itself.
+
+    The hub's ManifestWork status reports what the hub believes; AppliedManifestWork is
+    the agent's own record on the cluster of the resources it created. Use it to verify
+    a fix really landed, and is still present, rather than trusting hub status alone.
+
+    Args:
+        cluster: managed cluster name (needs a configured spoke read context).
+    """
+    return _read(ocm.list_applied_manifestworks, cluster)
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
+def list_cluster_permissions(cluster: str) -> str:
+    """ClusterPermission objects distributing RBAC to a managed cluster.
+
+    This is what grants or withholds permission on the spoke, so it is where to look
+    when an apply is refused by RBAC rather than by policy or guardrails.
+
+    Args:
+        cluster: managed cluster name (its hub namespace).
+    """
+    return _read(ocm.list_cluster_permissions, cluster)
+
+
+@mcp.tool(annotations=READ)
+@traced_tool
 def list_manifestworkreplicasets(namespace: str = "") -> str:
     """List ManifestWorkReplicaSets (a template fanned across a Placement) with rollout summary.
 

@@ -31,10 +31,16 @@ from .k8s import (
     hub_custom,
     spoke_apps,
     spoke_core,
+    spoke_custom,
 )
 
 # ACM compliance states that mean "not healthy" for a violations rollup.
 NONCOMPLIANT_STATES = ("NonCompliant", "Pending")
+
+# ClusterPermission is not part of the core OCM API repo - it ships from
+# open-cluster-management-io/cluster-permission - so the CRD may simply be absent
+# on a hub. Every read of it degrades to a clear message rather than a stack trace.
+OCM_RBAC_GROUP = "rbac.open-cluster-management.io"
 
 # Spoke reads are bounded and time-limited so one very large managed cluster cannot
 # hang a tool call or pull an unbounded object set into memory.
@@ -1256,3 +1262,76 @@ def _approve_pending_csrs(cluster: str, allowed: list[dict[str, str]]) -> list[s
         certs.replace_certificate_signing_request_approval(c.metadata.name, c)
         approved.append(c.metadata.name)
     return approved
+
+
+def list_applied_manifestworks(cluster: str) -> list[dict[str, Any]]:
+    """AppliedManifestWork on a managed cluster: what the agent actually materialised.
+
+    The hub's ManifestWork status says what the hub believes. This is the spoke's own
+    record of the resources it created, which is the honest answer to "did the fix
+    land, and is it still there?" after an apply. Cluster-scoped on the spoke.
+    """
+    res = paged_list(
+        spoke_custom(cluster).list_cluster_custom_object,
+        OCM_WORK_GROUP,
+        "v1",
+        "appliedmanifestworks",
+    )
+    out = []
+    for item in res.get("items", []):
+        spec = item.get("spec", {})
+        applied = item.get("status", {}).get("appliedResources", [])
+        out.append(
+            {
+                "name": item["metadata"]["name"],
+                # The name is "{hash of hub url}-{manifestwork name}"; the spec field
+                # is the readable one, so surface that rather than make callers parse.
+                "manifestwork": spec.get("manifestWorkName", "?"),
+                "hub_host_hash": spec.get("hubHostname", ""),
+                "applied_resources": [
+                    f"{r.get('resource', '?')}/{r.get('name', '?')} ({r.get('namespace') or '-'})"
+                    for r in applied
+                ],
+                "applied_count": len(applied),
+            }
+        )
+    return out
+
+
+def list_cluster_permissions(cluster: str) -> list[dict[str, Any]]:
+    """ClusterPermission objects in a managed cluster's hub namespace.
+
+    This is how RBAC is distributed to a spoke, so it is the answer to "why was that
+    refused?" when layer 4 denies an apply. Read-only, on the hub.
+    """
+    api = hub_custom()
+    try:
+        res = paged_list(
+            api.list_namespaced_custom_object,
+            OCM_RBAC_GROUP,
+            "v1alpha1",
+            cluster,
+            "clusterpermissions",
+        )
+    except ApiException as exc:
+        if exc.status == 404:
+            raise LookupError(
+                "ClusterPermission CRD is not installed on this hub. It ships from "
+                "open-cluster-management-io/cluster-permission, separately from core OCM."
+            ) from exc
+        raise
+    out = []
+    for item in res.get("items", []):
+        spec = item.get("spec", {})
+        conds = _condition_map(item)
+        out.append(
+            {
+                "name": item["metadata"]["name"],
+                "applied": conds.get("AppliedRBACManifestWork", "Unknown"),
+                "roles": len(spec.get("roles", []) or []),
+                "cluster_role": bool(spec.get("clusterRole")),
+                "role_bindings": len(spec.get("roleBindings", []) or []),
+                "cluster_role_binding": bool(spec.get("clusterRoleBinding")),
+            }
+        )
+    return out

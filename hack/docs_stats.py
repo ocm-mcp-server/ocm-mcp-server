@@ -62,6 +62,12 @@ QUOTES: list[tuple[str, str, str]] = [
     ("README.md", r"runs a \*\*(\d+)-case offline suite\*\*", "policy_cases"),
     ("README.md", r"`make policy-test` runs (\d+) CLI", "policy_cases"),
     ("README.md", r"The surface is \*\*(\d+) tools", "tools"),
+    # These four phrasings were NOT guarded and had drifted to a stale count while
+    # the guarded ones stayed correct - the exact rot this table exists to stop.
+    ("docs/tools.md", r"The server exposes \*\*(\d+) tools across ten toolsets\*\*", "tools"),
+    ("wiki/Tools-and-Prompts.md", r"\*\*(\d+) tools across ten toolsets, plus ten prompts\.\*\*", "tools"),
+    ("wiki/Implementation.md", r"The surface is \*\*(\d+) tools across ten toolsets\*\*", "tools"),
+    ("docs/architecture.md", r"sees ONLY:<br/>(\d+) tools, 10 prompts,", "tools"),
     ("README.md", r"\*\*(\d+) MCP resources\*\*", "resources"),
     ("docs/deployment.md", r"# (\d+) policies, all READY", "policies"),
     # The wording changed when the contribution was actually filed; the numbers

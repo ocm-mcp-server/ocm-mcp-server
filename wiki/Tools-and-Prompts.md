@@ -1,6 +1,6 @@
 # Tools and Prompts
 
-**35 tools across ten toolsets, plus ten prompts.** Almost all of it is read: the
+**37 tools across ten toolsets, plus ten prompts.** Almost all of it is read: the
 whole Open Cluster Management API is safe to inspect. Only two toolsets can change
 anything, and only through the propose -> approve -> apply gate.
 
@@ -48,7 +48,10 @@ deployment, backstopping the token gate.
 - **placement:** `list_placements`, `get_placement_decision`,
   `list_addon_placement_scores`.
 - **work:** `list_manifestworks`, `get_manifestwork` (per-resource status feedback,
-  the "why not Applied"), `list_manifestworkreplicasets`.
+  the "why not Applied"), `list_manifestworkreplicasets`, `list_applied_manifestworks`
+  (read from the spoke itself — what it actually materialised, rather than what the hub
+  believes), `list_cluster_permissions` (the RBAC distributed to that cluster, which is
+  where to look when layer 4 refuses an apply).
 - **addons:** `list_cluster_management_addons`, `get_addon_health`,
   `list_addons_for_cluster`.
 - **registration:** `list_pending_csrs`.

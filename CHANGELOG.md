@@ -39,6 +39,26 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Two read tools closing the last gaps against OCM's own API surface**, taking the
+  tool count from 35 to 37.
+  - `list_applied_manifestworks` reads `AppliedManifestWork` (`work.open-cluster-management.io/v1`)
+    **from the managed cluster itself**. It was the only core OCM kind with no path
+    at all. The hub's ManifestWork status reports what the hub believes; this is the
+    spoke's own record of the resources it materialised, which is the honest answer to
+    "did the fix land, and is it still there?" after an apply. Cluster-scoped on the
+    spoke, so it needed a new `spoke_custom` client — the third spoke factory, which is
+    why the context lookup they all duplicated is now shared.
+  - `list_cluster_permissions` reads `ClusterPermission`
+    (`rbac.open-cluster-management.io/v1alpha1`), the CRD that distributes RBAC to a
+    managed cluster — where to look when layer 4 refuses an apply rather than policy or
+    the static guardrails. It ships from a separate repository, so a hub may simply not
+    have the CRD; that case raises a message naming the repository instead of a stack
+    trace, and the end-to-end suite records it as UNAVAILABLE rather than a failure.
+
+  Both are read-only, so neither adds guardrail, policy or approval surface. Coverage
+  stays at 100% statement and branch (411 tests, up from 404), and the guardrail-to-Kyverno
+  parity contract is unaffected.
+
 - **[Repository setup](docs/repository-setup.md), documenting everything that is not
   in the code.** Branch protection, both rulesets, the site publishing deploy key, the
   organization setting that permits it, and the three release services keyed to the
