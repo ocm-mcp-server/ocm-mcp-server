@@ -98,8 +98,11 @@ jobs:
           git add -A
           # Two -m flags rather than an indented heredoc, so the body does not
           # carry the YAML block's leading whitespace into the commit message.
-          # GITHUB_SHA is a shell variable here, not a ${{ }} expansion: nothing
-          # attacker-controlled is ever interpolated into this script.
+          # GITHUB_SHA below is a plain shell variable, not a GitHub expression:
+          # nothing attacker-controlled is ever interpolated into this script.
+          # (Do not write GitHub's expression syntax in here even inside a shell
+          # comment - the whole run block is evaluated for expressions before
+          # the shell sees it, and an empty one fails the workflow to parse.)
           git commit -m "Publish the documentation site" \
                      -m "Built from ocm-mcp-server@${GITHUB_SHA}."
           git push
