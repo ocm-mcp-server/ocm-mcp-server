@@ -1,0 +1,105 @@
+# SPDX-FileCopyrightText: 2026 Sandeep Bazar
+# SPDX-License-Identifier: Apache-2.0
+#
+# Publish the built site to ocm-mcp-server.github.io, the ROOT site.
+#
+# Why this exists rather than another deploy-pages job: GitHub serves
+# <org>.github.io only from the repository literally named
+# ocm-mcp-server.github.io. No workflow in this repository can publish to that
+# URL directly, so the build happens here - next to the markdown it is built
+# from - and the result is pushed there.
+#
+# Until this ran, that repository was updated by hand, which meant the site was
+# only ever as fresh as the last person who remembered to rsync it. The hero's
+# version badge is generated from src/ocm_mcp_server/__init__.py, so a release
+# would silently leave the published site advertising the previous version.
+#
+# Requires one repository secret:
+#   SITE_PUBLISH_TOKEN - a fine-grained PAT scoped to
+#   ocm-mcp-server/ocm-mcp-server.github.io ONLY, with Contents: write.
+#   Nothing else. It cannot touch this repository.
+name: publish-root-site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wiki/**"
+      - "docs/**"
+      - "web/**"
+      - "hack/build_site.py"
+      - "hack/requirements/site.txt"
+      - "src/ocm_mcp_server/__init__.py" # the version shown in the hero
+      - ".github/workflows/publish-root-site.yaml"
+  # A release bumps __init__.py, so the path filter above already covers it -
+  # this is here for re-publishing without an intervening commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never race two publishes into the same repository.
+concurrency:
+  group: publish-root-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install the builder
+        run: |
+          python3 -m pip install --require-hashes -r hack/requirements/site.txt
+          # The hero's counts come from docs_stats.compute(), which collects the
+          # test suite, so the package and its dev extra have to be importable.
+          python3 -m pip install -e ".[dev]"
+      - name: Build the site
+        # Fails on an unnavigated page or a dead internal link, exactly as the
+        # Pages build does - a broken site must not be publishable.
+        run: python3 hack/build_site.py
+
+      - name: Check out the root site repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ocm-mcp-server/ocm-mcp-server.github.io
+          token: ${{ secrets.SITE_PUBLISH_TOKEN }}
+          path: .root-site
+          persist-credentials: true
+
+      - name: Sync the build into it
+        run: |
+          set -euo pipefail
+          # --delete so a page removed from the nav actually disappears from the
+          # published site. .git is excluded for obvious reasons; .nojekyll must
+          # survive or GitHub runs the output through Jekyll and drops every
+          # directory whose name begins with an underscore.
+          rsync -a --delete \
+            --exclude '.git' \
+            --exclude '.nojekyll' \
+            _site/ .root-site/
+          touch .root-site/.nojekyll
+
+      - name: Commit and push
+        working-directory: .root-site
+        run: |
+          set -euo pipefail
+          git config user.name  "sandeepbazar"
+          git config user.email "5602033+sandeepbazar@users.noreply.github.com"
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "root site already matches this build - nothing to publish"
+            exit 0
+          fi
+          git add -A
+          # Two -m flags rather than an indented heredoc, so the body does not
+          # carry the YAML block's leading whitespace into the commit message.
+          # GITHUB_SHA is a shell variable here, not a ${{ }} expansion: nothing
+          # attacker-controlled is ever interpolated into this script.
+          git commit -m "Publish the documentation site" \
+                     -m "Built from ocm-mcp-server@${GITHUB_SHA}."
+          git push

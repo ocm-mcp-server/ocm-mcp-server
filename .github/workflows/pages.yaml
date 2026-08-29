@@ -6,6 +6,13 @@
 #
 # Pages is served from this workflow rather than from a branch: a branch deploy
 # can only publish one folder, and the site is built from two source trees.
+#
+# SUPERSEDED, pending one manual step. This publishes the PROJECT site at
+# ocm-mcp-server.github.io/ocm-mcp-server/, which is a second copy of the same
+# content as the canonical root site. Once SITE_PUBLISH_TOKEN exists and
+# publish-root-site.yaml has run green, delete this file and disable Pages on
+# this repository, so exactly one site remains. It is kept until then so the
+# project URL does not 404 in the gap.
 name: pages
 
 on:
