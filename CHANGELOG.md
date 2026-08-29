@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.5.0] - 2026-08-29
 
 ### Added
 
@@ -29,8 +29,43 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   copying a neighbouring config fails silently — the difference is called out
   rather than left to be rediscovered.
 
+### Changed
+
+- **The project moved to the `ocm-mcp-server` organization.** The repository,
+  the container image and the MCP Registry listing all move with it:
+  `ghcr.io/ocm-mcp-server/ocm-mcp-server` and
+  `io.github.ocm-mcp-server/ocm-mcp-server`. The documentation site is served
+  from the organization root at https://ocm-mcp-server.github.io/ rather than a
+  repository sub-path.
+
+  A repository transfer carries almost everything with it, and the exceptions
+  are the interesting part: **GitHub Pages URLs do not redirect**, container
+  packages stay behind at the old owner, PyPI's trusted publisher is keyed to
+  `owner/repo`, and the MCP Registry namespace is `io.github.<owner>`. Each had
+  to be re-pointed by hand.
+
 ### Fixed
 
+- **Supply-chain identifiers left pointing at the previous owner.** The URL
+  sweep after the move matched `https://` patterns and missed identifiers that
+  are not URLs: the Helm chart and deployment manifest still pulled
+  `ghcr.io/<old-owner>/ocm-mcp-server`, and the MCP server name in the
+  `Dockerfile` label and the publish workflow disagreed with `server.json`.
+  The registry validates a listing against the repository and the published
+  package, so that mismatch fails the publish. `hack/release.sh` now refuses to
+  cut a release when any of these disagree with the repository's actual owner.
+- **Secret scanning broke on the move to an organization.**
+  `gitleaks/gitleaks-action` is free for repositories owned by a personal
+  account and requires a paid `GITLEAKS_LICENSE` once the owner is an
+  organization, failing closed without one. gitleaks itself is MIT-licensed, so
+  CI now runs the binary directly — same scan, no licence, and one fewer
+  third-party action in the supply chain. Pinned by version and sha256, with
+  the checksum verified before the archive is unpacked.
+- **A dispatched image build published only `:latest`.** `publish-image`
+  derived its version with `type=semver`, which reads the git ref and produces
+  nothing on a manual run. `server.json` pins an exact image, so the registry
+  publish would then fail for a reason that looked unrelated. The version is now
+  resolved explicitly and validated.
 - **The container base image had silently drifted off `slim`.** `Dockerfile`
   pinned the base by digest alone (`FROM python@sha256:...`) with the tag only
   in a comment. Dependabot's docker ecosystem has no tag to track in that form,
