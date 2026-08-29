@@ -2,11 +2,11 @@
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 #
-# Re-record demo/connect-claude.* — "a fleet operator's day with Claude".
+# Re-record demo/connect-<agent>.* — "a fleet operator's day", driven by a real agent.
 #
-#   ./hack/demo-connect-claude.sh            # record + render gif and mp4
-#   DRY_RUN=1 ./hack/demo-connect-claude.sh  # print the chapters, call nothing
-#   AGENT=codex ./hack/demo-connect-claude.sh
+#   ./hack/demo-connect.sh                # drive Claude
+#   AGENT=codex ./hack/demo-connect.sh    # drive Codex through the same ten chapters
+#   DRY_RUN=1 ./hack/demo-connect.sh      # print the chapters, call no model
 #
 # This drives a REAL agent over the REAL MCP protocol against a REAL fleet. It is
 # a different demo from demo/e2e-local.*, which records the test suite: this one
@@ -75,6 +75,29 @@ if [[ "$AGENT" == "claude" ]]; then
   run "claude mcp list 2>/dev/null | grep ocm"
 else
   echo "  (codex reads examples/codex-config.toml - see examples/README.md)"
+fi
+
+# ------------------------------------------------- 3b. preconditions the demo needs
+# bootstrap.sh brings up the fleet but not these: the Placement chapter 5 asks
+# about, and the namespace chapters 7-9 deploy into. Created here so the demo is
+# self-contained rather than depending on having run the test suite first.
+b "3b. fixtures: a cluster-set binding, a Placement, and the target namespace"
+if [[ "$DRY_RUN" != "1" ]]; then
+  kubectl --context kind-hub apply -f - >/dev/null 2>&1 <<'YAML' || true
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata: {name: global, namespace: default}
+spec: {clusterSet: global}
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata: {name: demo-all, namespace: default}
+spec: {clusterSets: [global]}
+YAML
+  kubectl --context kind-cluster2 create namespace shop >/dev/null 2>&1 || true
+  echo "  placement demo-all + namespace shop ready"
+else
+  echo "  (dry run: would create ManagedClusterSetBinding, Placement demo-all, namespace shop)"
 fi
 
 # --------------------------------------------------------------- 4. know it

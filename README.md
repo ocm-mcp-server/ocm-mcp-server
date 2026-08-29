@@ -99,6 +99,12 @@ None of these layers live in the system prompt, so none of them can be talked ou
 
 <sub>A fleet operator's day with <b>Claude</b>, live from a cold start: install from PyPI, <code>claude mcp add</code>, inventory the fleet, reason about placement — then ship a new service the gated way: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the whole day is read back <b>from the audit trail</b>. — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
 
+<sub><b>Same day, driven by Codex.</b> The ten chapters are identical and the server is
+the same: what changes is only which agent is asking. That is the point of speaking MCP
+rather than shipping a client — <a href="demo/connect-codex.gif">GIF</a> ·
+<a href="demo/connect-codex.mp4">MP4</a> · <a href="demo/connect-codex.cast">cast</a>.
+Both are re-recorded by <a href="hack/demo-record.sh"><code>hack/demo-record.sh both</code></a>.</sub>
+
 </div>
 
 ## Connect your agent - any MCP client works
