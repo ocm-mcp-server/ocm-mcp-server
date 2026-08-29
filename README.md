@@ -30,7 +30,7 @@ and audit between the model and your clusters.**
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-sandeepbazar-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)
 [![YouTube](https://img.shields.io/badge/YouTube-Tech%20Horizon%20Hub-FF0000?logo=youtube)](https://www.youtube.com/@techhorizonhub)
 
-**[✨ Why](#why-this-exists) &nbsp;·&nbsp; [📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🔭 Observability](#observability---audit-tracing-opentelemetryjaeger-metrics) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/ocm-mcp-server/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
+**[📦 Get it](#where-to-get-it-and-how-its-vetted) &nbsp;·&nbsp; [✨ Why](#why-this-exists) &nbsp;·&nbsp; [🔌 Connect your agent](#connect-your-agent---any-mcp-client-works) &nbsp;·&nbsp; [🧭 Architecture](#architecture) &nbsp;·&nbsp; [🧰 Toolsets](#toolsets) &nbsp;·&nbsp; [🛠️ Tools](#tools) &nbsp;·&nbsp; [💬 Prompts](#prompts) &nbsp;·&nbsp; [🔭 Observability](#observability---audit-tracing-opentelemetryjaeger-metrics) &nbsp;·&nbsp; [🚀 Quickstart](#quickstart-laptop-15-minutes) &nbsp;·&nbsp; [📖 Wiki](https://github.com/ocm-mcp-server/ocm-mcp-server/wiki) &nbsp;·&nbsp; [📚 Docs](#documentation)**
 
 <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/demo.gif" alt="An agent diagnoses a degraded workload across the fleet, proposes a fix as a ManifestWork, is rejected once by the guardrails, corrects it, waits for a human approval token, applies the fix, verifies recovery, and writes the incident report from the audit log" width="100%">
 
@@ -40,6 +40,23 @@ and audit between the model and your clusters.**
 </div>
 
 ---
+
+## Where to get it, and how it's vetted
+
+- 📦 **[PyPI - `ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/)** - `pip install ocm-mcp-server`
+  (or run directly with `uvx ocm-mcp-server`). Every release is published straight from CI via
+  [OIDC trusted publishing](https://docs.pypi.org/trusted-publishers/) - no long-lived tokens anywhere.
+- 🗂️ **[Official MCP Registry](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)** - listed as
+  `io.github.ocm-mcp-server/ocm-mcp-server`, so any MCP client or platform that browses the registry can
+  discover and auto-configure this server (package, transport, and required env vars are all in the
+  listing); the registry validates the listing against this repo and the PyPI package.
+- 🐳 **[Container image on GHCR](https://github.com/ocm-mcp-server/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
+  `docker run ghcr.io/ocm-mcp-server/ocm-mcp-server` (kubeconfig mount shown in the
+  [deployment guide](docs/deployment.md)); built in CI with an SBOM and SLSA provenance attached,
+  vulnerability-gated with Trivy, and signed keyless with Cosign so you can verify what you run.
+- 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/ocm-mcp-server/ocm-mcp-server)** -
+  the repo's supply-chain security posture (pinned dependencies, branch protection, signed releases, ...)
+  is scored automatically every week and published for anyone to inspect.
 
 ## Why this exists
 
@@ -83,23 +100,6 @@ None of these layers live in the system prompt, so none of them can be talked ou
 <sub>A fleet operator's day with <b>Claude</b>, live from a cold start: install from PyPI, <code>claude mcp add</code>, inventory the fleet, reason about placement — then ship a new service the gated way: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the whole day is read back <b>from the audit trail</b>. — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
 
 </div>
-
-## Where to get it, and how it's vetted
-
-- 📦 **[PyPI - `ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/)** - `pip install ocm-mcp-server`
-  (or run directly with `uvx ocm-mcp-server`). Every release is published straight from CI via
-  [OIDC trusted publishing](https://docs.pypi.org/trusted-publishers/) - no long-lived tokens anywhere.
-- 🗂️ **[Official MCP Registry](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)** - listed as
-  `io.github.ocm-mcp-server/ocm-mcp-server`, so any MCP client or platform that browses the registry can
-  discover and auto-configure this server (package, transport, and required env vars are all in the
-  listing); the registry validates the listing against this repo and the PyPI package.
-- 🐳 **[Container image on GHCR](https://github.com/ocm-mcp-server/ocm-mcp-server/pkgs/container/ocm-mcp-server)** -
-  `docker run ghcr.io/ocm-mcp-server/ocm-mcp-server` (kubeconfig mount shown in the
-  [deployment guide](docs/deployment.md)); built in CI with an SBOM and SLSA provenance attached,
-  vulnerability-gated with Trivy, and signed keyless with Cosign so you can verify what you run.
-- 🛡️ **[OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/ocm-mcp-server/ocm-mcp-server)** -
-  the repo's supply-chain security posture (pinned dependencies, branch protection, signed releases, ...)
-  is scored automatically every week and published for anyone to inspect.
 
 ## Connect your agent - any MCP client works
 
