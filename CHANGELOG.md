@@ -39,6 +39,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **[Repository setup](docs/repository-setup.md), documenting everything that is not
+  in the code.** Branch protection, both rulesets, the site publishing deploy key, the
+  organization setting that permits it, and the three release services keyed to the
+  repository owner are settings rather than files, so cloning does not reproduce them.
+  They were previously discoverable only by breaking a workflow — which is precisely how
+  the account-to-organization transfer broke releases, since the PyPI publisher, the
+  registry namespace and the container path do not follow a transfer.
+
 - **DCO is enforced instead of merely documented.** The Developer Certificate of
   Origin was described in eight files - CONTRIBUTING, GOVERNANCE, the README, the
   PR template, the wiki and both self-assessments - and checked in none. On a

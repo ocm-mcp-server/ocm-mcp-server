@@ -67,6 +67,7 @@ REFERENCE: list[tuple[str, str]] = [
     ("guardrails", "Guardrails"),
     ("policy-pack", "Policy pack"),
     ("deployment", "Deployment"),
+    ("repository-setup", "Repository setup"),
     ("tools", "Tools and prompts"),
     ("examples", "Worked examples"),
     ("kubeconfig-contexts", "Kubeconfig contexts"),

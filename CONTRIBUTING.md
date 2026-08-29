@@ -79,6 +79,14 @@ per version, forever.
 The `ReleaseTag-Immutability` repository ruleset enforces this on the server: deleting
 or force-moving a `v*` tag is rejected, whichever tool is used.
 
+## What lives outside the repository
+
+Branch protection, the tag-immutability ruleset, the site publishing deploy key, and the
+three release services keyed to the repository owner (PyPI, the MCP Registry, GHCR) are
+settings rather than files, so cloning does not reproduce them. They are listed in
+[docs/repository-setup.md](docs/repository-setup.md) - read that before forking or
+transferring the repository, not after the first workflow breaks.
+
 ## Reporting security issues
 
 Please do not open public issues for security reports - see [SECURITY.md](SECURITY.md).
