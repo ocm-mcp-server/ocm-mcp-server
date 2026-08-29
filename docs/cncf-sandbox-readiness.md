@@ -6,7 +6,7 @@
 This document is a self-check of how ocm-mcp-server measures up against the community,
 governance, and security practices expected of a
 [CNCF Sandbox](https://github.com/cncf/sandbox) project. It is used as a quality bar: a
-transparent checklist of what is in place and where the project can go further.
+transparent checklist of what is in place and what remains before applying.
 
 ## Project health and governance
 
@@ -45,25 +45,31 @@ transparent checklist of what is in place and where the project can go further.
 | In-cluster deployment artifacts | Done | [Helm chart](https://github.com/ocm-mcp-server/ocm-mcp-server/tree/main/deploy/charts/ocm-mcp-server) + [Deployment manifest](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/deploy/deployment.yaml) |
 | Evaluation evidence | Done | [published multi-model results](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/README.md): claude-sonnet-5 and gpt-5.6-sol, 22 scenarios each, safety 44/44, failures analyzed |
 
-## Where the project can go further
+## What's left before applying
 
-The practices above are strongest when a community forms around the code. The honest gaps
-today:
+Sandbox readiness here is mostly a community milestone, not an engineering one.
+Four steps remain, in rough order of leverage.
 
-- **Maintainer diversity - the hard gate.** Current CNCF lifecycle requirements ask
-  for at least **three maintainers from at least two employer organizations** (with a
-  Company/Organization column in MAINTAINERS.md). The project is single-maintainer
-  today; applications missing this are normally closed before TOC review. This is the
-  single most important step, and it cannot be engineered - it takes community.
-- **Demonstrable adoption.** [ADOPTERS.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ADOPTERS.md) is open; even one or two
-  public evaluators strengthen it.
-- **Upstream OCM engagement.** The name builds on Open Cluster Management's acronym;
-  CNCF naming guidance asks for documented agreement from that project's leadership.
-  File the drafted upstream issues ([upstream-notes](upstream-notes.md)) and obtain a
-  public statement of support or non-objection before applying.
-- **DCO enforcement and release immutability.** Wire automated DCO checking, and treat
-  published version tags as immutable (a failed release rolls forward to the next
-  patch version, never re-cuts the same tag).
+1. **Three maintainers from at least two employer organizations.** Current CNCF
+   lifecycle requirements ask for this, with a Company/Organization column in
+   MAINTAINERS.md. The project is single-maintainer today, and applications
+   missing this are normally closed before TOC review - so this is the step that
+   gates the rest.
+   *Needs: people. This one cannot be engineered.*
+2. **Public adopters.** [ADOPTERS.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/ADOPTERS.md)
+   is open, and even one or two named evaluators materially strengthen an
+   application.
+   *Needs: one or two users willing to be named.*
+3. **Documented OCM support.** The name builds on Open Cluster Management's
+   acronym, and CNCF naming guidance asks for documented agreement from that
+   project's leadership. The upstream issues are already drafted in
+   [upstream notes](upstream-notes.md).
+   *Needs: those issues filed, and a public statement of support or
+   non-objection.*
+4. **Automated DCO enforcement and immutable release tags.** Wire DCO checking
+   into CI, and treat published version tags as immutable - a failed release
+   rolls forward to the next patch version and never re-cuts the same tag.
+   *Needs: nothing external. This one is ours to land.*
 
 ## How to help
 
