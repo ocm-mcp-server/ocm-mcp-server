@@ -1,71 +1,79 @@
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
 #
-# Build the documentation site from wiki/ and docs/ and publish it to GitHub
-# Pages. The source of truth stays in markdown; hack/build_site.py renders it.
+# Redirect the PROJECT site to the canonical ROOT site.
 #
-# Pages is served from this workflow rather than from a branch: a branch deploy
-# can only publish one folder, and the site is built from two source trees.
+# This repository's Pages site is ocm-mcp-server.github.io/ocm-mcp-server/. The
+# canonical site is the root, ocm-mcp-server.github.io/, which GitHub serves only
+# from the repository named ocm-mcp-server.github.io - so the two cannot be the
+# same deployment. They used to be two full copies of the same content, and only
+# one of them was automated.
 #
-# SUPERSEDED, pending one manual step. This publishes the PROJECT site at
-# ocm-mcp-server.github.io/ocm-mcp-server/, which is a second copy of the same
-# content as the canonical root site. Once SITE_PUBLISH_TOKEN exists and
-# publish-root-site.yaml has run green, delete this file and disable Pages on
-# this repository, so exactly one site remains. It is kept until then so the
-# project URL does not 404 in the gap.
+# Rather than unpublish this one, it now serves a redirect. Unpublishing would
+# 404 every inbound link that already exists: the MCP Registry listing, the old
+# repository homepage, anything anyone has bookmarked or written about. A
+# redirect keeps all of them working and sends both people and crawlers to the
+# canonical URL.
+#
+# The real site is built and published by publish-root-site.yaml.
 name: pages
 
 on:
   push:
     branches: [main]
     paths:
-      - "wiki/**"
-      - "docs/**"
-      - "web/**"
-      - "hack/build_site.py"
-      - "hack/requirements/site.txt"
-      - "src/ocm_mcp_server/__init__.py" # the version shown in the hero
       - ".github/workflows/pages.yaml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Never cancel a half-finished deploy; queue behind it instead.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  redirect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version: "3.12"
-      - name: Install the builder
+      - name: Build the redirect page
+        env:
+          CANONICAL: https://ocm-mcp-server.github.io/
         run: |
-          python3 -m pip install --require-hashes -r hack/requirements/site.txt
-          # The hero's counts come from docs_stats.compute(), which collects the
-          # test suite, so the package and its dev extra have to be importable.
-          python3 -m pip install -e ".[dev]"
-      - name: Build the site
-        # Fails the job on an unnavigated page or an internal link that
-        # resolves to nothing - neither is visible once deployed.
-        run: python3 hack/build_site.py
+          set -euo pipefail
+          mkdir -p _redirect
+          # rel=canonical for crawlers, http-equiv for browsers with JS off, and
+          # a visible link so the page is not a dead end if both are ignored.
+          cat > _redirect/index.html <<HTML
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>ocm-mcp-server - moved</title>
+            <link rel="canonical" href="${CANONICAL}">
+            <meta http-equiv="refresh" content="0; url=${CANONICAL}">
+            <meta name="robots" content="noindex">
+          </head>
+          <body>
+            <p>This documentation now lives at
+               <a href="${CANONICAL}">${CANONICAL}</a>.</p>
+          </body>
+          </html>
+          HTML
+          # Pages serves 404.html for any unmatched path, so deep links into the
+          # old site land on the canonical root too instead of a bare 404.
+          cp _redirect/index.html _redirect/404.html
+          touch _redirect/.nojekyll
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: _site
+          path: _redirect
 
   deploy:
-    needs: build
+    needs: redirect
     runs-on: ubuntu-latest
     permissions:
-      pages: write # publish to Pages
-      id-token: write # OIDC verification of the deployment origin
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
