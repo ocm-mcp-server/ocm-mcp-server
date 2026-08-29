@@ -1101,6 +1101,11 @@ figure { margin: 1.8em 0; }
    `margin: 96px 0 0` shorthand here would reset .shell's `margin: 0 auto`
    and left-align every section on viewports wider than --maxw. */
 .sec { margin: 96px auto 0; }
+/* The demo section follows straight on from the stats, which already act as its
+   lead-in, so it does not need a full section gap. Defined AFTER .sec on purpose:
+   same specificity, so source order is what decides. margin-top only, never the
+   shorthand - .sec's `auto` is what centres it. */
+.sec--tight { margin-top: 22px; }
 .sec__head { text-align: center; margin-bottom: 34px; }
 .sec__head h2 {
   font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.2rem);
