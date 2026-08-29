@@ -512,7 +512,12 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
      which left every diagram at its intrinsic ~300px instead of filling. */
   text-align: center;
 }
-.mermaid-wrap > .mermaid { width: 100%; }
+/* Diagrams render at their natural size now (useMaxWidth: false) and this box
+   scrolls, rather than every SVG being squeezed to the container width - which
+   is what left the wider diagrams with labels too small to read. A narrow
+   diagram still centres, because the wrapper is text-align: center. */
+.mermaid-wrap > .mermaid { display: inline-block; max-width: none; }
+.mermaid-wrap svg { max-width: none !important; height: auto; }
 
 /* Mermaid's default 1px edges disappear against both themes at this size.
    Thicken every connector and arrowhead, and mark the box as zoomable. */
@@ -530,7 +535,17 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 .mermaid-wrap svg .cluster rect { stroke-width: 1.8px !important; }
 .mermaid-wrap svg .messageText,
 .mermaid-wrap svg .nodeLabel,
-.mermaid-wrap svg .edgeLabel { font-size: 14px !important; }
+.mermaid-wrap svg .edgeLabel { font-size: 15px !important; }
+/* Subgraph and actor titles were a size smaller than the nodes they contain,
+   which reads as an afterthought rather than a heading. */
+.mermaid-wrap svg .cluster-label,
+.mermaid-wrap svg .cluster text,
+.mermaid-wrap svg text.actor { font-size: 14.5px !important; font-weight: 600; }
+/* Loop/alt frame labels in sequence diagrams default to a mid-grey that is
+   unreadable on the dark ground. */
+.mermaid-wrap svg .loopText,
+.mermaid-wrap svg .loopText tspan,
+.mermaid-wrap svg .labelText { font-size: 13px !important; }
 
 /* Wrapper the script puts around every prose image so it can carry the zoom
    affordance and the reveal without touching the markdown. */
@@ -658,7 +673,9 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 /* Horizontal padding must match .shell's gutter: this shorthand runs after
    `.shell { padding: 0 22px }` and a `0` here strips the gutters, leaving
    the whole hero flush against the viewport edge on a narrow screen. */
-.hero { position: relative; padding: 78px 22px 34px; text-align: center; }
+/* The 22px inline padding is load-bearing: it is the mobile gutter, and a
+   shorthand that omits it puts the whole hero flush against the viewport. */
+.hero { position: relative; padding: 46px 22px 26px; text-align: center; }
 .hero__eyebrow {
   display: inline-flex;
   align-items: center;
@@ -856,7 +873,7 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 /* One line on any viewport wide enough to hold it; it wraps only on a phone,
    where two lines is the right shape anyway. */
 .flow__legend {
-  margin: 20px auto 0;
+  margin: 12px auto 0;
   font-size: 13.2px;
   color: var(--text-faint);
   text-wrap: balance;
@@ -991,23 +1008,58 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 14px;
-  margin: 72px 0 0;
+  gap: 12px;
+  /* Tight enough that the row clears the fold on a laptop: these six numbers
+     are the page's evidence, and evidence below the fold is evidence nobody
+     reads. */
+  margin: 24px 0 0;
   padding: 0;
   list-style: none;
 }
 .stat {
-  padding: 22px 18px;
-  text-align: center;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  transition: transform 0.25s var(--ease), border-color 0.25s;
+  transition: transform 0.25s var(--ease), border-color 0.25s, background 0.25s;
 }
-.stat:hover { transform: translateY(calc(-3px * var(--move))); border-color: var(--violet); }
+/* The whole card is the hit target, not just the text inside it. */
+.stat__link {
+  display: block;
+  padding: 12px 14px 11px;
+  text-align: center;
+  color: inherit;
+  text-decoration: none;
+}
+.stat__link:hover { text-decoration: none; }
+.stat:hover,
+.stat:focus-within {
+  transform: translateY(calc(-3px * var(--move)));
+  border-color: var(--violet);
+  background: color-mix(in srgb, var(--violet) 7%, var(--surface));
+}
+.stat:focus-within { outline: 2px solid var(--violet); outline-offset: 2px; }
+
+/* Every number is a claim, so every card names the page that backs it. The
+   label holds its own height whether or not this line is showing, so the row
+   does not reflow on hover. */
+.stat__proof {
+  display: block;
+  margin-top: 2px;
+  height: 0.95em;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--violet);
+  opacity: 0;
+  transform: translateY(calc(2px * var(--move)));
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+}
+.stat:hover .stat__proof,
+.stat:focus-within .stat__proof { opacity: 1; transform: none; }
 .stat__n {
   display: block;
-  font-size: clamp(1.7rem, 1.3rem + 1.2vw, 2.3rem);
+  font-size: clamp(1.55rem, 1.2rem + 1vw, 2rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;

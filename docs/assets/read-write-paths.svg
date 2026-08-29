@@ -3,6 +3,41 @@
     <style>
       .t{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;}
       .h{font-weight:800;} .s{font-weight:600;}
+    
+      /* Dark-mode pass. These drawings were made for a light page, but they are
+         embedded in three places now - the GitHub README, the GitHub wiki, and a
+         docs site that is dark by default - so on most surfaces they were a lit
+         panel punched into a dark page, with slate text nobody could read.
+         CSS beats presentation attributes, so the palette is remapped here
+         rather than by rewriting every element. Saturated accents (emerald,
+         rose, amber, blue) are deliberately left alone: they carry the meaning
+         and they read on either ground. */
+      @media (prefers-color-scheme: dark) {
+        rect[width="1280"][height="300"] { fill: transparent; }
+        /* dark slate body text -> legible on a dark ground */
+        [fill="#334155"] { fill: #c3cfe8; }
+        [fill="#0f172a"] { fill: #eef2ff; }
+        [fill="#64748b"] { fill: #93a3c4; }
+        [fill="#94a3b8"] { fill: #8f9dbe; }
+        [stroke="#94a3b8"] { stroke: #6f7da4; }
+        [stroke="#64748b"] { stroke: #6f7da4; }
+        /* pale tint panels -> the same hue at low alpha over the dark page */
+        [fill="#ecfdf5"] { fill: #10b98120; }
+        [fill="#fff1f2"] { fill: #f43f5e20; }
+        [fill="#fff7ed"] { fill: #f9731620; }
+        [fill="#eff6ff"] { fill: #3b82f620; }
+        [fill="#fefce8"] { fill: #ca8a0420; }
+        [fill="#e2e8f0"] { fill: #24305c; }
+        [fill="#cbd5e1"] { fill: #2c3a6e; }
+        /* dark-on-tint labels -> light-on-tint */
+        [fill="#065f46"] { fill: #5eead4; }
+        [fill="#047857"] { fill: #5eead4; }
+        [fill="#9f1239"] { fill: #fda4af; }
+        [fill="#be123c"] { fill: #fda4af; }
+        [fill="#9a3412"] { fill: #fdba74; }
+        [fill="#854d0e"] { fill: #fde047; }
+        [fill="#1e3a8a"] { fill: #93c5fd; }
+      }
     </style>
     <marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
       <path d="M0 0 L6 3 L0 6 Z" fill="#94a3b8"/>

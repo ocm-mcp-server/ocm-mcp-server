@@ -272,35 +272,97 @@
 
   function mermaidTheme() {
     const light = root.dataset.theme === "light";
+    // One place styles every diagram on the site. Per-diagram `style X fill:`
+    // used to be how emphasis was done, but a fill picked for the light GitHub
+    // wiki renders near-white-on-pastel here - so colour now lives in strokes,
+    // set by the classDefs in the markdown, and this object carries everything
+    // that is genuinely global.
+    const dark = {
+      background: "#101736",
+      primaryColor: "#1c2547",
+      primaryTextColor: "#eef2ff",
+      primaryBorderColor: "#8ea2ff",
+      lineColor: "#b8c6ee",
+      textColor: "#eef2ff",
+      secondaryColor: "#1e2a52",
+      tertiaryColor: "#141a33",
+      // Subgraph/cluster boxes defaulted to a near-black that swallowed their
+      // own titles.
+      clusterBkg: "#151d3d",
+      clusterBorder: "#2c3a6e",
+      titleColor: "#eef2ff",
+      nodeBorder: "#8ea2ff",
+      // Edge labels sat on a transparent strip and collided with the line
+      // underneath; give them the page ground to sit on.
+      edgeLabelBackground: "#101736",
+      // Sequence diagrams: mermaid's stock actor/note colours are a light-mode
+      // palette (bright yellow notes, near-white actors) that glare on dark.
+      actorBkg: "#1c2547",
+      actorBorder: "#8ea2ff",
+      actorTextColor: "#eef2ff",
+      actorLineColor: "#6b7bb5",
+      signalColor: "#c8d4f5",
+      signalTextColor: "#eef2ff",
+      labelBoxBkgColor: "#1e2a52",
+      labelBoxBorderColor: "#8ea2ff",
+      labelTextColor: "#eef2ff",
+      loopTextColor: "#eef2ff",
+      noteBkgColor: "#2a2416",
+      noteTextColor: "#ffe9b0",
+      noteBorderColor: "#d29922",
+      activationBkgColor: "#243059",
+      activationBorderColor: "#8ea2ff",
+      sequenceNumberColor: "#0b1020",
+      altBackground: "#141a33",
+    };
+    const lightVars = {
+      background: "#ffffff",
+      primaryColor: "#eef2f9",
+      primaryTextColor: "#0d1428",
+      primaryBorderColor: "#4f46e5",
+      lineColor: "#334155",
+      textColor: "#0d1428",
+      secondaryColor: "#e0e7ff",
+      tertiaryColor: "#f1f5f9",
+      clusterBkg: "#f6f8fc",
+      clusterBorder: "#c7d2e5",
+      titleColor: "#0d1428",
+      nodeBorder: "#4f46e5",
+      edgeLabelBackground: "#ffffff",
+      actorBkg: "#eef2f9",
+      actorBorder: "#4f46e5",
+      actorTextColor: "#0d1428",
+      actorLineColor: "#94a3b8",
+      signalColor: "#334155",
+      signalTextColor: "#0d1428",
+      labelBoxBkgColor: "#e0e7ff",
+      labelBoxBorderColor: "#4f46e5",
+      labelTextColor: "#0d1428",
+      loopTextColor: "#0d1428",
+      noteBkgColor: "#fff7e0",
+      noteTextColor: "#4a3708",
+      noteBorderColor: "#d29922",
+      activationBkgColor: "#e0e7ff",
+      activationBorderColor: "#4f46e5",
+      sequenceNumberColor: "#ffffff",
+      altBackground: "#f8fafc",
+    };
     return {
       startOnLoad: false,
       securityLevel: "strict",
       theme: "base",
       fontFamily:
         'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-      // lineColor is deliberately high-contrast in both themes: mermaid's
-      // defaults are mid-greys that vanish against these backgrounds.
-      themeVariables: light
-        ? {
-            background: "#ffffff",
-            primaryColor: "#eef2f9",
-            primaryTextColor: "#0d1428",
-            primaryBorderColor: "#4f46e5",
-            lineColor: "#334155",
-            textColor: "#0d1428",
-            secondaryColor: "#e0e7ff",
-            tertiaryColor: "#f1f5f9",
-          }
-        : {
-            background: "#101736",
-            primaryColor: "#1c2547",
-            primaryTextColor: "#eef2ff",
-            primaryBorderColor: "#8ea2ff",
-            lineColor: "#b8c6ee",
-            textColor: "#eef2ff",
-            secondaryColor: "#1e2a52",
-            tertiaryColor: "#141a33",
-          },
+      // Diagrams keep their natural size and the wrapper scrolls. Mermaid's
+      // default is to shrink an SVG to the container, which on a wide diagram
+      // means 8px labels nobody can read - the wrapper is already
+      // `overflow-x: auto`, so scrolling is the better trade.
+      flowchart: { useMaxWidth: false, nodeSpacing: 46, rankSpacing: 56, padding: 14, curve: "basis", htmlLabels: true },
+      sequence: { useMaxWidth: false, boxMargin: 12, noteMargin: 12, messageMargin: 38, mirrorActors: true, actorMargin: 60 },
+      mindmap: { useMaxWidth: false, padding: 14 },
+      gantt: { useMaxWidth: false },
+      er: { useMaxWidth: false },
+      themeVariables: light ? lightVars : dark,
     };
   }
 

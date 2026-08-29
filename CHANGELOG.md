@@ -4,6 +4,37 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **Every diagram on the site is legible on a dark page now.** Emphasis in the
+  mermaid diagrams was done with pale fills (`fill:#e6f7e6`, `#ffe6e6`,
+  `#fff3e0`) chosen when the only target was the light GitHub wiki. The docs
+  site sets a near-white `primaryTextColor`, so those boxes rendered white text
+  on pastel — around 1.2:1 contrast. Colour now lives in the **stroke** via
+  semantic classes (`readFree` / `writeGated`, `allowed` / `refused` /
+  `waiting`), which survives every surface the same markdown reaches: the dark
+  site, the light site, and the GitHub wiki.
+- **The shared mermaid theme now covers what it was leaving to chance** —
+  cluster/subgraph backgrounds and titles, edge-label backgrounds, and the whole
+  sequence-diagram palette (actors, signals, activation bars, and notes, whose
+  stock bright-yellow glared on dark). Diagrams also render at their natural
+  size and scroll, instead of being shrunk to the container until the labels
+  were too small to read.
+- **The three static SVGs no longer punch a lit panel into a dark page.**
+  `read-write-paths`, `deploy-paths`, and `guardrails-flow` hardcoded a white or
+  near-white canvas and slate body text. Each now carries a
+  `prefers-color-scheme: dark` pass that drops the canvas and remaps text and
+  tint panels, leaving the saturated accents alone because they carry the
+  meaning and read on either ground.
+- **The hero fits above the fold, and its six numbers now prove themselves.**
+  The stats row was pushed below the fold on a 1440x900 laptop; tightening the
+  hero brings it fully into view. Each stat is also a link to the page that
+  backs it — tools to the tool reference, unit tests and coverage to the
+  published run, policy cases to the Kyverno pack — so the row is an entry point
+  to the evidence rather than six unfalsifiable numbers.
+
 ## [0.6.0] - 2026-08-29
 
 ### Added

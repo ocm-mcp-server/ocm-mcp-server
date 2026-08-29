@@ -17,11 +17,12 @@ flowchart TD
     L3 -->|valid token| L4
     L4{4. RBAC<br/>on apply} -->|denied| R4[Blocked by Kubernetes]
     L4 -->|allowed| OK[Applied, traced, logged]
-    style OK fill:#e6f7e6
-    style R1 fill:#ffe6e6
-    style R2 fill:#ffe6e6
-    style R3 fill:#fff3e0
-    style R4 fill:#ffe6e6
+    classDef allowed stroke:#3fb950,stroke-width:2.5px,fill:#3fb95022
+    classDef refused stroke:#f85149,stroke-width:2.5px,fill:#f8514922
+    classDef waiting stroke:#d29922,stroke-width:2.5px,fill:#d2992222
+    class OK allowed
+    class R1,R2,R4 refused
+    class R3 waiting
 ```
 
 ## Layer 1: static checks (fast, local)
