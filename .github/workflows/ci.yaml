@@ -93,7 +93,28 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: gitleaks
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+      # Runs the gitleaks BINARY, not gitleaks/gitleaks-action.
+      #
+      # gitleaks itself is MIT-licensed and free. The marketplace Action wrapper
+      # is not: it requires a paid GITLEAKS_LICENSE for repositories owned by an
+      # organization, and fails closed without one. Transferring this repo from a
+      # personal account to an organization therefore broke this job with
+      # "[ocm-mcp-server] is an organization. License key is required." — a
+      # licensing change, not a security finding.
+      #
+      # Invoking the binary keeps exactly the same scan with no licence and no
+      # third-party Action in the supply chain. Pinned by version AND sha256,
+      # consistent with how every other dependency here is pinned.
+      - name: gitleaks (pinned binary, no marketplace action)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+        run: |
+          set -euo pipefail
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$tarball" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$tarball"
+          echo "${GITLEAKS_SHA256}  $tarball" | sha256sum -c -
+          tar -xzf "$tarball" gitleaks
+          # Scan the full history; the checkout above already sets fetch-depth: 0.
+          ./gitleaks detect --source . --redact --verbose --exit-code 1
