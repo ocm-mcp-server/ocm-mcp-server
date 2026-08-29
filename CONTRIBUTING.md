@@ -46,6 +46,28 @@ This is enforced, not merely requested: the `dco` job in CI fails any pull reque
 with a commit missing the trailer. If you have already pushed, `git rebase --signoff`
 over your branch and force-push with lease.
 
+### Sign-off and signing are different things
+
+`Signed-off-by` is a text trailer asserting you have the right to submit the change -
+that is the DCO, and it is what CI checks. GitHub's green **Verified** badge is
+something else: a cryptographic signature proving the commit came from a key you hold.
+Neither implies the other, and this project wants both.
+
+SSH signing is the least ceremonious way to get the badge:
+
+```bash
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --global commit.gpgsign true
+git config --global tag.gpgsign true
+```
+
+Then add that **public** key to GitHub a second time, at
+Settings -> SSH and GPG keys -> New SSH key, with **Key type: Signing key**. An
+authentication key and a signing key are separate entries even when the key is
+identical; a commit signed with a key GitHub does not know as a signing key shows
+`Unverified` rather than `Verified`.
+
 ## Releases are immutable
 
 A published version tag is never deleted, moved, or re-cut. If a release fails
