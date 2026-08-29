@@ -13,6 +13,11 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (default: pyproject.toml version)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -42,13 +47,36 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
+      # A tag push carries the version in the ref; a manual dispatch does not.
+      # type=semver silently produces NO tag without one, so a dispatched run
+      # used to publish only :latest -- and server.json pins an exact version,
+      # which the MCP Registry validates against the published package. That
+      # combination fails the registry publish for a reason that looks unrelated.
+      - name: Resolve the version to publish
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            v="$INPUT_VERSION"
+            [ -n "$v" ] || v="$(python3 -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
+          else
+            v="${REF_NAME#v}"
+          fi
+          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "refusing to publish an invalid version: '$v'"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          echo "publishing ghcr.io/${GITHUB_REPOSITORY}:$v and :latest"
+
       - name: Image metadata (tags + labels)
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}}
+            type=raw,value=${{ env.VERSION }}
             type=raw,value=latest
 
       - name: Build and push (with SBOM + provenance)
