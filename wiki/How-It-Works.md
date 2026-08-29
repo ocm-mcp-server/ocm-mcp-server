@@ -83,6 +83,16 @@ Read the four checks as defense in depth: each fails differently, so a gap in
 one is covered by the others. Details in
 [Guardrails Deep Dive](Guardrails-Deep-Dive).
 
+
+<figure>
+  <video controls preload="none" playsinline width="100%"
+         poster="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/poster-connect-claude.jpg">
+    <source src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-claude.mp4" type="video/mp4">
+    <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-claude.gif">Watch the recording</a>
+  </video>
+  <figcaption>A fleet operator's day, recorded live: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the day read back from the audit trail.</figcaption>
+</figure>
+
 ## Why approval is a token, not a chat "yes"
 
 A "yes" in chat approves a conversation. The token approves *content*. It is an
