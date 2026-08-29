@@ -64,31 +64,36 @@ jobs:
         # Pages build does - a broken site must not be publishable.
         run: python3 hack/build_site.py
 
-      - name: Check out the root site repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: ocm-mcp-server/ocm-mcp-server.github.io
-          token: ${{ secrets.SITE_PUBLISH_TOKEN }}
-          path: .root-site
-          persist-credentials: true
-
-      - name: Sync the build into it
+      - name: Publish to the root site repository
+        # A deploy key rather than a PAT: it is bound to that one repository by
+        # construction, cannot touch anything else in the account, and does not
+        # expire. The public half is a write deploy key on
+        # ocm-mcp-server.github.io; only the private half lives here, as a secret.
+        env:
+          DEPLOY_KEY: ${{ secrets.SITE_PUBLISH_SSH_KEY }}
+          SITE_REPO: git@github.com:ocm-mcp-server/ocm-mcp-server.github.io.git
         run: |
           set -euo pipefail
-          # --delete so a page removed from the nav actually disappears from the
-          # published site. .git is excluded for obvious reasons; .nojekyll must
-          # survive or GitHub runs the output through Jekyll and drops every
-          # directory whose name begins with an underscore.
-          rsync -a --delete \
-            --exclude '.git' \
-            --exclude '.nojekyll' \
-            _site/ .root-site/
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/site_deploy
+          chmod 600 ~/.ssh/site_deploy
+
+          # GitHub's host key, pinned from its /meta API rather than accepted on
+          # first use, so a substituted host cannot be trusted silently.
+          printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' \
+            > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/site_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+
+          git clone --depth 1 "$SITE_REPO" .root-site
+
+          # --delete so a page dropped from the nav actually disappears. .git is
+          # excluded for obvious reasons; .nojekyll must survive or GitHub runs
+          # the output through Jekyll and discards every _underscore directory.
+          rsync -a --delete --exclude '.git' --exclude '.nojekyll' _site/ .root-site/
           touch .root-site/.nojekyll
 
-      - name: Commit and push
-        working-directory: .root-site
-        run: |
-          set -euo pipefail
+          cd .root-site
           git config user.name  "sandeepbazar"
           git config user.email "5602033+sandeepbazar@users.noreply.github.com"
           if [[ -z "$(git status --porcelain)" ]]; then
@@ -96,13 +101,10 @@ jobs:
             exit 0
           fi
           git add -A
-          # Two -m flags rather than an indented heredoc, so the body does not
-          # carry the YAML block's leading whitespace into the commit message.
-          # GITHUB_SHA below is a plain shell variable, not a GitHub expression:
-          # nothing attacker-controlled is ever interpolated into this script.
-          # (Do not write GitHub's expression syntax in here even inside a shell
-          # comment - the whole run block is evaluated for expressions before
-          # the shell sees it, and an empty one fails the workflow to parse.)
+          # GITHUB_SHA is a plain shell variable. Do not write GitHub expression
+          # syntax anywhere in this block, not even in a comment: the whole
+          # script is scanned for expressions before the shell sees it, and an
+          # empty one makes the workflow fail to parse.
           git commit -m "Publish the documentation site" \
                      -m "Built from ocm-mcp-server@${GITHUB_SHA}."
           git push
