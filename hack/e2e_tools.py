@@ -469,15 +469,15 @@ def _mcp_protocol():
         out = {}
         async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
                 init = await session.initialize()
-                out["server"] = init.serverInfo.name
+                out["server"] = init.server_info.name
                 tools = (await session.list_tools()).tools
                 out["tools"] = len(tools)
                 by_name = {t.name: t for t in tools}
-                out["read_annotation_ok"] = bool(by_name["list_clusters"].annotations.readOnlyHint)
-                out["apply_annotation_ok"] = bool(by_name["apply_manifestwork"].annotations.destructiveHint)
+                out["read_annotation_ok"] = bool(by_name["list_clusters"].annotations.read_only_hint)
+                out["apply_annotation_ok"] = bool(by_name["apply_manifestwork"].annotations.destructive_hint)
                 out["prompts"] = len((await session.list_prompts()).prompts)
                 res = {str(r.uri) for r in (await session.list_resources()).resources}
-                tpl = {t.uriTemplate for t in (await session.list_resource_templates()).resourceTemplates}
+                tpl = {t.uri_template for t in (await session.list_resource_templates()).resource_templates}
                 out["resources"] = len(res) + len(tpl)
                 out["guardrails_resource_ok"] = "allowed_gvk" in (
                     (await session.read_resource("ocm://guardrails")).contents[0].text)
@@ -498,8 +498,24 @@ def _mcp_protocol():
             "6 resources) plus a tool call, a resource read, and a prompt over the wire.",
             "PASS" if checks_ok else "FAIL", "mcp.client.stdio -> ocm-mcp-server", short(out))
     except Exception as e:  # noqa: BLE001
+        # anyio wraps everything the session raises in an ExceptionGroup, whose
+        # str() is only "unhandled errors in a TaskGroup (1 sub-exception)" - the
+        # actual cause is one or more levels down. Reporting just the wrapper
+        # turns a one-line AttributeError into an afternoon, so unwrap it.
+        def _causes(exc, depth=0):
+            if depth > 4:
+                return []
+            subs = getattr(exc, "exceptions", None)
+            if not subs:
+                return [f"{type(exc).__name__}: {exc}"]
+            out = []
+            for sub in subs:
+                out.extend(_causes(sub, depth + 1))
+            return out
+
+        detail = "; ".join(_causes(e)) or f"{type(e).__name__}: {e}"
         rec(P, "stdio JSON-RPC session", "Drive the server over the real MCP protocol.", "FAIL", "",
-            f"{type(e).__name__}: {e}")
+            detail)
 
 
 # ------------------------------------------------------------------ negative sweep
