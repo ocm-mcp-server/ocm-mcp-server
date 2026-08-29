@@ -496,15 +496,38 @@ def _mcp_protocol():
                 out["prompt_over_wire_ok"] = len(prompt.messages) > 0
         return out
 
+    async def registered():
+        """What the server registered in-process, asked of the server itself.
+
+        The point of this phase is that the protocol layer advertises everything the
+        server actually has - so the expected numbers must come FROM the server, not
+        from literals in this file. A hardcoded 35 here silently failed the whole
+        phase the moment two tools were added, while every check inside it passed.
+        """
+        # Imported here rather than at module top, for the same reason main() does:
+        # OCM_MCP_* must be set before config loads.
+        from ocm_mcp_server import server as srv
+
+        return {
+            "tools": len(await srv.mcp.list_tools()),
+            "prompts": len(await srv.mcp.list_prompts()),
+            "resources": len(await srv.mcp.list_resources())
+            + len(await srv.mcp.list_resource_templates()),
+        }
+
     try:
         out = asyncio.run(run())
-        checks_ok = (out["tools"] == 35 and out["prompts"] == 10 and out["resources"] == 6
+        want = asyncio.run(registered())
+        out["expected"] = want
+        surface_ok = all(out[k] == want[k] for k in ("tools", "prompts", "resources"))
+        checks_ok = (surface_ok
                      and out["read_annotation_ok"] and out["apply_annotation_ok"]
                      and out["guardrails_resource_ok"] and out["list_clusters_over_wire"]
                      and out["prompt_over_wire_ok"])
         rec(P, "stdio JSON-RPC session", "Spawn the real server binary, complete the MCP handshake, and "
-            "verify the full advertised surface (35 tools with safety annotations, 10 prompts, "
-            "6 resources) plus a tool call, a resource read, and a prompt over the wire.",
+            "verify the wire advertises exactly what the server registered - every tool with its "
+            "safety annotations, every prompt and every resource - plus a tool call, a resource "
+            "read, and a prompt over the wire.",
             "PASS" if checks_ok else "FAIL", "mcp.client.stdio -> ocm-mcp-server", short(out))
     except Exception as e:  # noqa: BLE001
         # anyio wraps everything the session raises in an ExceptionGroup, whose
