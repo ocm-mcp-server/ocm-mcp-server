@@ -201,6 +201,33 @@ jobs:
                 (del(.version) | .identifier |= ((split(":")[0]) + ":" + $v))
           ' server.json > server.json.tmp
           mv server.json.tmp server.json
+      - name: Require every OCI package to be anonymously pullable
+        run: |
+          # The registry rejects a listing whose image needs authentication, but
+          # only after a 2.5-minute retry loop and with an error that reads like
+          # a publishing fault rather than a settings one. Org-owned GHCR
+          # packages are created PRIVATE by default, so the very first push of a
+          # NEW package name always lands private. Visibility is per package and
+          # persists, so this bites once per name, never on later versions.
+          # Fail here instead, immediately, saying exactly what to click.
+          fail=0
+          for ref in $(jq -r '.packages[] | select(.registryType == "oci") | .identifier' server.json); do
+            image="${ref%:*}"; tag="${ref##*:}"
+            host="${image%%/*}"; repo="${image#*/}"
+            token=$(curl -fsSL "https://${host}/token?scope=repository:${repo}:pull" | jq -r '.token // empty')
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${token}" \
+              -H 'Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json' \
+              "https://${host}/v2/${repo}/manifests/${tag}")
+            if [ "$code" = "200" ]; then
+              echo "ok: ${ref} is public"
+            else
+              fail=1
+              echo "::error::${ref} is not anonymously pullable (HTTP ${code}). The MCP Registry only accepts public images."
+              echo "::error::Fix: https://github.com/orgs/${repo%%/*}/packages/container/${repo##*/}/settings -> Danger Zone -> Change visibility -> Public. The confirmation box wants the package name '${repo##*/}', not the word 'confirm'. Then re-run this job."
+            fi
+          done
+          exit "$fail"
       - name: Publish to the MCP Registry
         run: |
           ./mcp-publisher login github-oidc
