@@ -12,26 +12,26 @@ single place.
 | `connect-claude.gif` | "A fleet operator's day with Claude" — real recorded terminal session, deliberately a different use case from `demo.gif`'s incident remediation. Ten commented chapters: PyPI install, kubeconfig contexts + state dir, `claude mcp add` + `✔ Connected`, one-question fleet inventory (versions/capacity/add-ons), placement reasoning, a privileged `nginx:latest` deploy refused by the guardrails, a pinned compliant proposal, human `ocm-mcp approve` (Ed25519), apply-with-token + verification, and an operations log read back from the audit trail. Shown in the README below the safe-remediation demo. Re-record: run the flow under `asciinema rec` (idle capped at 4s), then `agg --idle-time-limit 4` → gif, `ffmpeg` → mp4. |
 | `connect-claude.mp4` | The same recording as MP4 with a narrated voice track (macOS `say`, 12 segments aligned to the chapter markers), linked from the README caption; GitHub's blob page plays it with sound. |
 | `connect-claude.cast` | The raw asciinema cast for the connect demo. |
+| `connect-codex.gif` | The same ten chapters driven by **Codex** instead of Claude, against the same server and the same fleet. Two agents, one protocol - which is the argument for speaking MCP rather than shipping a client. |
+| `connect-codex.mp4` | The Codex recording as MP4. |
+| `connect-codex.cast` | The raw asciinema cast for the Codex run. |
 | `e2e-local.gif` | A real, unedited `./hack/e2e-local.sh` run (asciinema recording, long waits compressed): fleet up, every tool/prompt exercised, break-then-fix, all steps passing, fleet deleted. Shown under "Try it end to end". |
 | `e2e-local.mp4` | The same recording as MP4, for embedding outside GitHub. |
 | `e2e-local.cast` | The raw asciinema cast the GIF/MP4 are rendered from (`agg e2e-local.cast out.gif` to re-render). |
 
 ## Re-recording
 
-`connect-claude.*` is produced by
-[`hack/demo-connect-claude.sh`](../hack/demo-connect-claude.sh), which drives a real
-agent over the real MCP protocol against a real fleet:
+`connect-claude.*` and `connect-codex.*` are produced by
+[`hack/demo-connect.sh`](../hack/demo-connect.sh), which drives a real agent over the
+real MCP protocol against a real fleet, and recorded by
+[`hack/demo-record.sh`](../hack/demo-record.sh):
 
 ```bash
-SPOKES=3 ./hack/bootstrap.sh                 # 1 hub + 3 spokes
-DRY_RUN=1 ./hack/demo-connect-claude.sh      # print the ten chapters, call nothing
+SPOKES=3 ./hack/bootstrap.sh          # 1 hub + 3 spokes, once
+DRY_RUN=1 ./hack/demo-connect.sh      # print the ten chapters, call no model
 
-asciinema rec demo/connect-claude.cast --overwrite --idle-time-limit 4 \
-  --title "ocm-mcp-server - a fleet operator's day with Claude" \
-  --command "./hack/demo-connect-claude.sh"
-agg --idle-time-limit 4 demo/connect-claude.cast demo/connect-claude.gif
-ffmpeg -y -i demo/connect-claude.gif -movflags faststart -pix_fmt yuv420p \
-  -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" demo/connect-claude.mp4
+./hack/demo-record.sh both            # claude then codex, same fleet
+./hack/demo-record.sh claude          # or just one
 ```
 
 `AGENT=codex` runs the same ten chapters through `codex exec` instead. Each chapter is
