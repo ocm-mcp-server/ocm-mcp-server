@@ -64,12 +64,18 @@
   </div>
 
   <ul class="stats" data-reveal style="--d:340ms">
-    <li class="stat"><span class="stat__n" data-count="{{stat_tools}}">{{stat_tools}}</span><span class="stat__l">MCP tools</span></li>
-    <li class="stat"><span class="stat__n" data-count="{{stat_prompts}}">{{stat_prompts}}</span><span class="stat__l">prompts</span></li>
-    <li class="stat"><span class="stat__n" data-count="{{stat_resources}}">{{stat_resources}}</span><span class="stat__l">resources</span></li>
-    <li class="stat"><span class="stat__n" data-count="{{stat_tests}}">{{stat_tests}}</span><span class="stat__l">unit tests</span></li>
-    <li class="stat"><span class="stat__n" data-count="100" data-suffix="%">100%</span><span class="stat__l">coverage</span></li>
-    <li class="stat"><span class="stat__n" data-count="{{stat_cases}}">{{stat_cases}}</span><span class="stat__l">policy cases</span></li>
+    <li class="stat"><a class="stat__link" href="{{base}}reference/tools/">
+      <span class="stat__n" data-count="{{stat_tools}}">{{stat_tools}}</span><span class="stat__l">MCP tools</span><span class="stat__proof">see them</span></a></li>
+    <li class="stat"><a class="stat__link" href="{{base}}journey/tools-and-prompts/">
+      <span class="stat__n" data-count="{{stat_prompts}}">{{stat_prompts}}</span><span class="stat__l">prompts</span><span class="stat__proof">see them</span></a></li>
+    <li class="stat"><a class="stat__link" href="{{base}}reference/tools/">
+      <span class="stat__n" data-count="{{stat_resources}}">{{stat_resources}}</span><span class="stat__l">resources</span><span class="stat__proof">see them</span></a></li>
+    <li class="stat"><a class="stat__link" href="{{base}}results/unit-test-results/">
+      <span class="stat__n" data-count="{{stat_tests}}">{{stat_tests}}</span><span class="stat__l">unit tests</span><span class="stat__proof">read the run</span></a></li>
+    <li class="stat"><a class="stat__link" href="{{base}}results/unit-test-results/">
+      <span class="stat__n" data-count="100" data-suffix="%">100%</span><span class="stat__l">coverage</span><span class="stat__proof">read the run</span></a></li>
+    <li class="stat"><a class="stat__link" href="{{base}}reference/policy-pack/">
+      <span class="stat__n" data-count="{{stat_cases}}">{{stat_cases}}</span><span class="stat__l">policy cases</span><span class="stat__proof">see the pack</span></a></li>
   </ul>
 </section>
 

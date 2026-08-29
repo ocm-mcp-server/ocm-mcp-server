@@ -32,8 +32,10 @@ flowchart LR
     T1 --> H[OCM hub]
     T2 --> H
     H --> F[(fleet of clusters)]
-    style T2 fill:#ffe6e6
-    style T1 fill:#e6f7e6
+    classDef readFree  stroke:#3fb950,stroke-width:2.5px,fill:#3fb95022
+    classDef writeGated stroke:#f85149,stroke-width:2.5px,fill:#f8514922
+    class T1 readFree
+    class T2 writeGated
 ```
 
 Reads are free. Writes are a three-step, gated path. The agent never touches a
