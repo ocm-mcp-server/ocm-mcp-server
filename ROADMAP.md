@@ -52,8 +52,12 @@ be auditable.
       credentials live beside the server.
 - [ ] **Structured audit sink**: export the hash-chained audit log to a SIEM or object
       store, with retention/legal-hold, in addition to the local file.
-- [ ] **Policy pack**: a small library of reusable Kyverno policies for common fleet
-      guardrails, contributable upstream to kyverno/policies.
+- [x] **Policy pack**: the 9 policies in [`deploy/policies/`](deploy/policies/) are a
+      standalone, documented pack - `policies.kyverno.io/minversion` on every policy, a
+      README covering the `foreach`-over-embedded-manifests pattern and the two
+      identifiers an adopter changes, and a version floor established by running the set
+      against real Kyverno binaries rather than reading release notes. Offered upstream
+      to kyverno/policies as a Multi-Cluster Guardrails example set.
 - [ ] Additional chaos classes: node pressure, network partitions, noisy neighbors.
 
 ## Later (0.3+)

@@ -10,6 +10,7 @@ metadata:
     policies.kyverno.io/title: Restrict Kinds and Images in Agent ManifestWorks
     policies.kyverno.io/category: Multi-Cluster Guardrails
     policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.15.0
     policies.kyverno.io/subject: ManifestWork
     policies.kyverno.io/description: >-
       Agent-proposed ManifestWorks may only contain a small allowlist of
