@@ -5,7 +5,7 @@ Thanks for your interest - issues, discussion, and PRs are all welcome.
 ## Development setup
 
 ```bash
-git clone https://github.com/sandeepbazar/ocm-mcp-server.git
+git clone https://github.com/ocm-mcp-server/ocm-mcp-server.git
 cd ocm-mcp-server
 make install     # editable install with dev + tracing extras
 make test        # unit tests (no cluster required)

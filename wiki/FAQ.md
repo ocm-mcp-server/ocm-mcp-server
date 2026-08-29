@@ -53,7 +53,7 @@ ServiceAccount. There is no paid dependency.
 
 ## How do I get support?
 
-Community help through [GitHub issues](https://github.com/sandeepbazar/ocm-mcp-server/issues).
+Community help through [GitHub issues](https://github.com/ocm-mcp-server/ocm-mcp-server/issues).
 Commercial support, deployment reviews, sponsored features, and talks:
 [LinkedIn](https://www.linkedin.com/in/sandeepbazar/).
 

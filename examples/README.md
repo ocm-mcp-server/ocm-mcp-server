@@ -32,7 +32,7 @@ freely, propose rather than apply, and never try to route around a rejection.
 The name on the **left** of each `=` must match a cluster as the hub knows it
 (`kubectl --context <hub> get managedclusters`); the name on the **right** is a
 context in your kubeconfig. Getting these the wrong way round is the single
-most common setup mistake — [kubeconfig contexts](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/kubeconfig-contexts.md)
+most common setup mistake — [kubeconfig contexts](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/kubeconfig-contexts.md)
 walks through both.
 
 Spoke contexts are optional. Without them the hub-side tools all work; the ones
@@ -54,4 +54,4 @@ ocm-mcp doctor
 
 Runs the read path against your live hub and reports per-check status, so you
 find a misconfigured context here rather than mid-incident. Full setup guide:
-[deployment](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/deployment.md).
+[deployment](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/deployment.md).

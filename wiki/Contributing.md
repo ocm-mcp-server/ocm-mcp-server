@@ -54,17 +54,17 @@ make bootstrap     # full local fleet, for end-to-end work
   rationale.
 
 Full detail:
-[CONTRIBUTING.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/CONTRIBUTING.md)
-and the [Code of Conduct](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/CODE_OF_CONDUCT.md).
+[CONTRIBUTING.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CONTRIBUTING.md)
+and the [Code of Conduct](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CODE_OF_CONDUCT.md).
 
 ## Security and sponsorship
 
 - Security issues go through
-  [private advisories](https://github.com/sandeepbazar/ocm-mcp-server/security/advisories/new),
+  [private advisories](https://github.com/ocm-mcp-server/ocm-mcp-server/security/advisories/new),
   never public issues. See
-  [SECURITY.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SECURITY.md).
+  [SECURITY.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/SECURITY.md).
 - For commercial support, a hardened deployment review, sponsored features, or
   talks and workshops, connect on [LinkedIn](https://www.linkedin.com/in/sandeepbazar/)
-  ([SUPPORT.md](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/SUPPORT.md)).
+  ([SUPPORT.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/SUPPORT.md)).
 
 Next: [FAQ](FAQ).

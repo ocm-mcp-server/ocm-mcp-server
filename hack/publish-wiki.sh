@@ -11,7 +11,7 @@
 # Usage: ./hack/publish-wiki.sh
 set -euo pipefail
 
-REPO_SSH="git@github.com:sandeepbazar/ocm-mcp-server.wiki.git"
+REPO_SSH="git@github.com:ocm-mcp-server/ocm-mcp-server.wiki.git"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 TMP="$(mktemp -d)"
 
@@ -36,5 +36,5 @@ if git diff --cached --quiet; then
 fi
 git commit -s -m "docs: sync wiki from repo wiki/ pages"
 git push origin HEAD
-echo "Wiki published: https://github.com/sandeepbazar/ocm-mcp-server/wiki"
+echo "Wiki published: https://github.com/ocm-mcp-server/ocm-mcp-server/wiki"
 rm -rf "$TMP"

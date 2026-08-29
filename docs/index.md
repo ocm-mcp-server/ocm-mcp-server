@@ -8,7 +8,7 @@ multi-cluster Kubernetes fleet through an
 guardrail layers between the model and your clusters. The agent never holds a
 kubeconfig; every write is policy-checked, human-approved, and traced.
 
-**[→ Get started on GitHub](https://github.com/sandeepbazar/ocm-mcp-server)**
+**[→ Get started on GitHub](https://github.com/ocm-mcp-server/ocm-mcp-server)**
 
 ## Documentation
 

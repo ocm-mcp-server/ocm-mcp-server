@@ -1,17 +1,17 @@
 # ocm-mcp-server Wiki
 
-![ocm-mcp-server](https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/banner.svg)
+![ocm-mcp-server](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/banner.svg)
 
 **AgentOps for Kubernetes fleets, done safely.**
 
 This wiki is the guided tour: the whole journey from the problem, through the
 idea and the design, to running it, improving it, and helping build it. If you
-just want to install and go, the [README](https://github.com/sandeepbazar/ocm-mcp-server)
+just want to install and go, the [README](https://github.com/ocm-mcp-server/ocm-mcp-server)
 is faster. If you want to understand *why it is built this way*, start here.
 
 > **Get it:** [`pip install ocm-mcp-server`](https://pypi.org/project/ocm-mcp-server/) (PyPI)
 > · [Official MCP Registry listing](https://registry.modelcontextprotocol.io/?q=ocm-mcp-server)
-> · [signed container image](https://github.com/sandeepbazar/ocm-mcp-server/pkgs/container/ocm-mcp-server)
+> · [signed container image](https://github.com/ocm-mcp-server/ocm-mcp-server/pkgs/container/ocm-mcp-server)
 > · current test state: [unit tests & coverage](Unit-Test-Results), [end-to-end fleet run](Test-Results)
 
 ```mermaid

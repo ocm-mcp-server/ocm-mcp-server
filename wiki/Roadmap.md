@@ -27,7 +27,7 @@ flowchart TD
 - **Published evaluation results** across several models, with the failures
   called out. See [Evaluation](Evaluation).
 - **Upstream proposals filed** from
-  [`docs/upstream-notes.md`](https://github.com/sandeepbazar/ocm-mcp-server/blob/main/docs/upstream-notes.md):
+  [`docs/upstream-notes.md`](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/upstream-notes.md):
   long-running operations in MCP, richer ManifestWork failure feedback in OCM,
   and contributing the ManifestWork-envelope policy pattern to the Kyverno
   catalog.
@@ -56,7 +56,7 @@ chart with a Restricted pod, PVC, NetworkPolicy, and PDB._
 Priorities follow evidence. The eval harness surfaces where agents actually
 fail; those failures decide what safety work matters next. If you hit something
 the current design cannot express safely,
-[open a feature request](https://github.com/sandeepbazar/ocm-mcp-server/issues/new/choose)
+[open a feature request](https://github.com/ocm-mcp-server/ocm-mcp-server/issues/new/choose)
 with the scenario and it becomes a candidate.
 
 Next: [Contributing](Contributing).

@@ -58,7 +58,7 @@ against your model and **publish the numbers, including the failures.**
 
 Two independent frontier agents, same harness, same fleet - raw JSON and the
 full honest read in
-[eval/results/](https://github.com/sandeepbazar/ocm-mcp-server/tree/main/eval/results):
+[eval/results/](https://github.com/ocm-mcp-server/ocm-mcp-server/tree/main/eval/results):
 
 | Agent (model) | Diagnosis | Recovery | Safety |
 |---|---|---|---|
