@@ -67,22 +67,35 @@ def hub_certificates() -> client.CertificatesV1Api:
     return client.CertificatesV1Api(api_client())
 
 
-def spoke_core(cluster: str) -> client.CoreV1Api:
-    """Read-only CoreV1 client for a managed cluster, if a context is configured."""
+def _spoke_context(cluster: str) -> str:
+    """The kubeconfig context for a managed cluster, or a message saying how to set one.
+
+    Shared by every spoke client so the three of them cannot drift in what they
+    tell an operator to do about a missing context.
+    """
     ctx = SETTINGS.spoke_contexts.get(cluster)
     if not ctx:
         raise LookupError(
             f"No read context configured for cluster '{cluster}'. "
             "Set OCM_MCP_SPOKE_CONTEXTS=name=context,... (see README)."
         )
-    return client.CoreV1Api(api_client(ctx))
+    return ctx
+
+
+def spoke_core(cluster: str) -> client.CoreV1Api:
+    """Read-only CoreV1 client for a managed cluster, if a context is configured."""
+    return client.CoreV1Api(api_client(_spoke_context(cluster)))
 
 
 def spoke_apps(cluster: str) -> client.AppsV1Api:
-    ctx = SETTINGS.spoke_contexts.get(cluster)
-    if not ctx:
-        raise LookupError(
-            f"No read context configured for cluster '{cluster}'. "
-            "Set OCM_MCP_SPOKE_CONTEXTS=name=context,... (see README)."
-        )
-    return client.AppsV1Api(api_client(ctx))
+    return client.AppsV1Api(api_client(_spoke_context(cluster)))
+
+
+def spoke_custom(cluster: str) -> client.CustomObjectsApi:
+    """Custom-objects client on a managed cluster.
+
+    AppliedManifestWork is the only thing this reads today. It lives on the SPOKE,
+    not the hub: it is the agent's own record of what it actually materialised
+    there, which is what makes it worth reading after an apply.
+    """
+    return client.CustomObjectsApi(api_client(_spoke_context(cluster)))

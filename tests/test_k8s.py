@@ -51,3 +51,22 @@ def test_spoke_apps_client_built(monkeypatch):
     monkeypatch.setattr(k8s.client, "AppsV1Api", lambda c: ("apps", c))
     monkeypatch.setattr(SETTINGS, "spoke_contexts", {"cluster1": "kind-cluster1"}, raising=False)
     assert k8s.spoke_apps("cluster1") == ("apps", ("client", "kind-cluster1"))
+
+
+def test_spoke_custom_without_context_raises(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "spoke_contexts", {}, raising=False)
+    with pytest.raises(LookupError, match="No read context"):
+        k8s.spoke_custom("cluster1")
+
+
+def test_spoke_custom_uses_the_cluster_context(monkeypatch):
+    """AppliedManifestWork lives on the spoke, so this client must not be the hub's."""
+    seen = {}
+
+    def fake_api_client(context=""):
+        seen["context"] = context
+
+    monkeypatch.setattr(SETTINGS, "spoke_contexts", {"cluster1": "kind-cluster1"}, raising=False)
+    monkeypatch.setattr(k8s, "api_client", fake_api_client)
+    k8s.spoke_custom("cluster1")
+    assert seen["context"] == "kind-cluster1"

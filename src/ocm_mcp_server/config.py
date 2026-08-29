@@ -146,6 +146,21 @@ READABLE_RESOURCES: dict[str, tuple[str, str, str, bool]] = {
     ),
     # work distribution
     "manifestworks": ("work.open-cluster-management.io", "v1", "manifestworks", True),
+    # Cluster-scoped, and it lives on the SPOKE rather than the hub - the generic
+    # reader talks to the hub, so this alias is here for completeness of the
+    # allow-list; list_applied_manifestworks is the tool that actually reads it.
+    "appliedmanifestworks": (
+        "work.open-cluster-management.io",
+        "v1",
+        "appliedmanifestworks",
+        False,
+    ),
+    "clusterpermissions": (
+        "rbac.open-cluster-management.io",
+        "v1alpha1",
+        "clusterpermissions",
+        True,
+    ),
     "manifestworkreplicasets": (
         "work.open-cluster-management.io",
         "v1alpha1",

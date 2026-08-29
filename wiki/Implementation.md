@@ -32,7 +32,7 @@ flowchart TD
 
 ## The tools, precisely
 
-The surface is **35 tools across ten toolsets**, but the shape is simple: almost
+The surface is **37 tools across ten toolsets**, but the shape is simple: almost
 everything is a safe read of the Open Cluster Management API, and only two toolsets
 can change anything, always through the same gate.
 
@@ -151,7 +151,7 @@ back via `get_audit_trail` to write an accurate post-incident report.
 
 ## Tests
 
-- `tests/` unit tests (404; 100% statement and branch coverage): the full approval-token lifecycle (roundtrip,
+- `tests/` unit tests (411; 100% statement and branch coverage): the full approval-token lifecycle (roundtrip,
   wrong-proposal, content-change invalidation, expiry, tampering, malformed,
   public-key-only verification, operation binding, keypair rotation) for both
   ManifestWork and lifecycle-action proposals, every static guardrail case
