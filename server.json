@@ -7,12 +7,12 @@
     "source": "github"
   },
   "websiteUrl": "https://github.com/ocm-mcp-server/ocm-mcp-server/wiki",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "ocm-mcp-server",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
@@ -43,7 +43,7 @@
     },
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/ocm-mcp-server/ocm-mcp-server:0.5.0",
+      "identifier": "ghcr.io/ocm-mcp-server/ocm-mcp-server:0.6.0",
       "runtimeHint": "docker",
       "transport": {
         "type": "stdio"
