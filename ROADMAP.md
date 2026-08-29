@@ -11,7 +11,7 @@ The north star does not change: an AI agent must never be able to take a dangero
 action on a fleet without policy admission and a human approval, and every action must
 be auditable.
 
-## Now (0.2.x)
+## Shipped
 
 - [x] Read coverage across the OCM API (inventory, placement, work, add-ons,
       registration, policy, ManagedClusterInfo) and HyperShift Hosted Control Planes.
@@ -35,6 +35,10 @@ be auditable.
       gpt-5.6-sol, 22 scenarios each, safety 44/44, failures published).
 - [x] Recorded end-to-end demo: a real, unedited `./hack/e2e-local.sh` run
       ([GIF + MP4 + cast in `demo/`](demo/), embedded in the README).
+- [x] **Anchored audit**: `ocm-mcp audit-anchor` signs the chain head with the off-box
+      approval key and `audit-verify` enforces every anchored head, so tail truncation and
+      full rewrites are detectable. Shipping anchors to a SIEM/object store composes with
+      the structured-audit-sink item above.
 
 ## Next
 
@@ -60,17 +64,13 @@ be auditable.
       to kyverno/policies as a Multi-Cluster Guardrails example set.
 - [ ] Additional chaos classes: node pressure, network partitions, noisy neighbors.
 
-## Later (0.3+)
+## Later
 
 - [ ] **Multi-tenancy**: per-team tool scoping and RBAC boundaries on one server.
 - [ ] **Approval integrations**: mint approval tokens from a chat-ops or ticketing flow
       while keeping the content-bound, asymmetric-signature guarantee.
 - [ ] **Progressive rollout tools**: first-class support for ManifestWorkReplicaSet
       progressive strategies and decision groups.
-- [x] **Anchored audit**: `ocm-mcp audit-anchor` signs the chain head with the off-box
-      approval key and `audit-verify` enforces every anchored head, so tail truncation and
-      full rewrites are detectable. Shipping anchors to a SIEM/object store composes with
-      the structured-audit-sink item above.
 
 ## Project maturity
 

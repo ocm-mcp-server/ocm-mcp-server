@@ -48,7 +48,11 @@ make bootstrap     # full local fleet, for end-to-end work
 ## Commit and PR conventions
 
 - Conventional-style subjects: `feat:`, `fix:`, `docs:`, `test:`, `chore:`.
-- Sign off every commit (`git commit -s`, DCO). No other trailers.
+- Sign off every commit (`git commit -s`, DCO). No other trailers. This is enforced:
+  the `dco` job fails a pull request whose commits lack the trailer.
+- Signing commits is separate from signing off, and both are wanted. See
+  [CONTRIBUTING.md](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/CONTRIBUTING.md)
+  for the SSH signing setup that produces GitHub's Verified badge.
 - One logical change per commit; keep diffs reviewable.
 - The PR template includes a checklist; new tools must include the safety
   rationale.
