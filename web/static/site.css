@@ -547,6 +547,33 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
 .mermaid-wrap svg .loopText tspan,
 .mermaid-wrap svg .labelText { font-size: 13px !important; }
 
+/* Recorded demos. preload="none" on the element means nothing downloads until the
+   visitor presses play - these are multi-megabyte captures and a docs page should
+   not pay for them on every load. The poster is a small JPEG so the figure still
+   has something to show, and reserves its own height so the page does not jump
+   when the frame decodes. */
+figure video {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Both recordings are an 80x24 terminal rendered at 790x560. Declaring the
+     ratio reserves the right height before the poster decodes, so the page does
+     not jump - the same reason the stat cards hold their own height. */
+  aspect-ratio: 790 / 560;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #000;
+  box-shadow: var(--shadow);
+}
+figure figcaption {
+  margin-top: 10px;
+  font-size: 13.2px;
+  line-height: 1.55;
+  color: var(--text-faint);
+  text-align: center;
+}
+figure { margin: 1.8em 0; }
+
 /* Wrapper the script puts around every prose image so it can carry the zoom
    affordance and the reveal without touching the markdown. */
 .figure-zoom {

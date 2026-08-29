@@ -516,6 +516,10 @@ def build(base: str) -> int:
     shutil.copytree(WEB / "static", OUT / "static")
     shutil.copytree(WEB / "vendor", OUT / "vendor")
     shutil.copytree(DOCS / "assets", OUT / "assets")
+    # Poster frames only - the recordings themselves are served from raw
+    # githubusercontent, the same source the README uses. Copying 11 MB of GIF and
+    # MP4 into the published site repository on every re-record would grow it
+    # without bound, and git keeps every version of a binary forever.
     (OUT / ".nojekyll").write_text("")
 
     print(f"built {len(pages) + 1} pages into {OUT.relative_to(REPO)}/ (base={base})")

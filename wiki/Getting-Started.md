@@ -34,6 +34,16 @@ Walk through the whole conversation, including approval, in
 [Use Cases and Impact](Use-Cases-and-Impact) and the
 [worked examples](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/examples.md).
 
+
+<figure>
+  <video controls preload="none" playsinline width="100%"
+         poster="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/poster-e2e-local.jpg">
+    <source src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/e2e-local.mp4" type="video/mp4">
+    <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/e2e-local.gif">Watch the recording</a>
+  </video>
+  <figcaption>A real, unedited <code>./hack/e2e-local.sh</code> run: the fleet comes up, every tool and prompt is exercised, something is broken and fixed, and the fleet is deleted again.</figcaption>
+</figure>
+
 ## Path B: an existing OCM fleet
 
 Works with any conformant hub. Apply the identity and policies, wire read-only
