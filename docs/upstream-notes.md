@@ -36,3 +36,17 @@ Validating workloads embedded inside another CR (here: ManifestWork
 `spec.workload.manifests`) works well with `foreach`, but no policy in the
 catalog demonstrates it. Contribute the 9 policies in `deploy/policies/`
 as a "Multi-Cluster Guardrails" category example set.
+
+The set is now shaped for that contribution rather than only for this repo:
+every policy carries the catalog's `policies.kyverno.io/minversion`
+annotation, and `deploy/policies/README.md` documents the `foreach` pattern,
+the two identifiers an adopter has to change, and the 42-case offline suite.
+
+Worth raising alongside it: the 1.13 line silently under-enforces a `foreach`
+rule this pack relies on. A container declaring both `runAsNonRoot: true` and
+`runAsUser: 0` is admitted on 1.13.0 and 1.13.6, and rejected on 1.12.0 and on
+1.15.0 and later — so the regression was introduced and fixed within that
+window. Reproducer: `kyverno apply
+deploy/policies/restrict-manifestwork-pod-security.yaml --resource
+deploy/policies/tests/resources.yaml` gives 7 failures on 1.13.x against 8
+everywhere else, with the `bad-run-as-root` fixture as the one that escapes.

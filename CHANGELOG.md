@@ -6,6 +6,27 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **`deploy/policies/` is a standalone, documented Kyverno policy pack.** The nine
+  policies were already there; what was missing was any way in. A README now covers the
+  `foreach`-over-embedded-manifests pattern (no policy in the upstream Kyverno catalog
+  demonstrates validating workloads nested inside another CR), the per-policy table, the
+  42-case offline suite, and the exactly two identifiers an adopter changes — the
+  `managed-by` label and the ServiceAccount in `require-managed-by-label.yaml`. Changing
+  one without the other yields a pack that looks installed and enforces nothing, so that
+  is called out rather than left to be discovered. A matching
+  [Policy pack](docs/policy-pack.md) page joins the site's reference section.
+- **`policies.kyverno.io/minversion: 1.15.0` on all nine policies**, as the
+  kyverno/policies catalog expects. The floor was measured by running the pack against
+  real Kyverno CLI binaries (1.12 through 1.19), not inferred from release notes — and
+  it is deliberately not the oldest version that works. 1.12.0 is correct, but the whole
+  1.13 line silently under-enforces `restrict-manifestwork-pod-security`: a container
+  declaring both `runAsNonRoot: true` and `runAsUser: 0` is admitted on 1.13.0 and
+  1.13.6 and rejected on 1.12.0 and on 1.15.0+. Naming 1.12.0 would place a release that
+  quietly weakens a security control inside the supported range. The finding is written
+  up in `docs/upstream-notes.md` with a reproducer, to raise with Kyverno.
+
 ### Changed
 
 - **The hero's four-layer flow now reads as a pipeline instead of a row of

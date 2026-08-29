@@ -12,6 +12,7 @@ metadata:
     policies.kyverno.io/title: Cap Manifest Count in Agent ManifestWorks
     policies.kyverno.io/category: Multi-Cluster Guardrails
     policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.15.0
     policies.kyverno.io/subject: ManifestWork
     policies.kyverno.io/description: >-
       An agent-proposed ManifestWork may embed at most 10 manifests, so every

@@ -14,6 +14,7 @@ metadata:
     policies.kyverno.io/title: Require managed-by Label on Agent ManifestWorks
     policies.kyverno.io/category: Multi-Cluster Guardrails
     policies.kyverno.io/severity: high
+    policies.kyverno.io/minversion: 1.15.0
     policies.kyverno.io/subject: ManifestWork
     policies.kyverno.io/description: >-
       Every ManifestWork created by the ocm-mcp-server ServiceAccount must carry the

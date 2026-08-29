@@ -274,6 +274,9 @@ control that governs every human `kubectl apply`.
   server ServiceAccount (so an unlabeled work cannot skip the others), and enforce a
   Restricted-Pod-Security baseline in parity with the static guardrails. They are scoped by the
   `app.kubernetes.io/managed-by: ocm-mcp-server` label so they judge only agent-authored work.
+  They are usable on their own: [`deploy/policies/README.md`](deploy/policies/README.md)
+  documents the `foreach`-over-embedded-manifests pattern, the two identifiers an adopter
+  changes, and the Kyverno versions the pack is actually tested against.
 - `make policy-test` runs a **42-case offline suite** with the `kyverno` CLI - good, bad, and
   human-authored `ManifestWork`s - needing no cluster and no dependencies. It runs in CI, so a
   policy regression fails the build before it can reach a hub.

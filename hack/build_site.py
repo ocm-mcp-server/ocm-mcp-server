@@ -65,6 +65,7 @@ JOURNEY: list[tuple[str, str]] = [
 REFERENCE: list[tuple[str, str]] = [
     ("architecture", "Architecture"),
     ("guardrails", "Guardrails"),
+    ("policy-pack", "Policy pack"),
     ("deployment", "Deployment"),
     ("tools", "Tools and prompts"),
     ("examples", "Worked examples"),
