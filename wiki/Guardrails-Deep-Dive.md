@@ -4,7 +4,7 @@ Four independent layers stand between the model and your clusters. A change must
 pass all four, in order. The point of four layers is that each fails
 differently, so a gap in one is caught by the next.
 
-![The four guardrail layers](https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/docs/assets/guardrails-flow.svg)
+![The four guardrail layers](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/guardrails-flow.svg)
 
 ```mermaid
 flowchart TD

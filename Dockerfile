@@ -13,7 +13,7 @@ FROM python:3.14-slim@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9
 
 # The MCP Registry validates OCI-package ownership against this label; without
 # it the registry refuses to list the image (as of the 0.3.0 publish).
-LABEL io.modelcontextprotocol.server.name="io.github.sandeepbazar/ocm-mcp-server"
+LABEL io.modelcontextprotocol.server.name="io.github.ocm-mcp-server/ocm-mcp-server"
 
 # Apply pending Debian security updates. The pinned slim base is the newest
 # python:3.14-slim upstream publishes, but Debian ships fixes faster than the
@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir --no-deps .
 #   docker run -v ~/.kube/config:/kube/config:ro \
 #     -e KUBECONFIG=/kube/config \
 #     -e OCM_MCP_HUB_CONTEXT=... -e OCM_MCP_SPOKE_CONTEXTS=... \
-#     ghcr.io/sandeepbazar/ocm-mcp-server
+#     ghcr.io/ocm-mcp-server/ocm-mcp-server
 # Drop pip from the runtime image. The server never installs anything at
 # run time, and pip's vendored copies of msgpack and setuptools were the
 # last two findings the vulnerability gate reported - dependencies of the

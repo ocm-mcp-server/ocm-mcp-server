@@ -22,7 +22,7 @@ and audit between the model and your clusters.**
 [![Kyverno](https://img.shields.io/badge/policy-Kyverno-ff6f00)](https://kyverno.io/)
 [![CI](https://github.com/ocm-mcp-server/ocm-mcp-server/actions/workflows/ci.yaml/badge.svg)](https://github.com/ocm-mcp-server/ocm-mcp-server/actions)
 [![e2e](https://github.com/ocm-mcp-server/ocm-mcp-server/actions/workflows/e2e.yaml/badge.svg)](https://github.com/ocm-mcp-server/ocm-mcp-server/actions/workflows/e2e.yaml)
-[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwiki%2Fsandeepbazar%2Focm-mcp-server%2Fcoverage-badge.json)](https://github.com/ocm-mcp-server/ocm-mcp-server/wiki/Unit-Test-Results)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwiki%2Focm-mcp-server%2Focm-mcp-server%2Fcoverage-badge.json)](https://github.com/ocm-mcp-server/ocm-mcp-server/wiki/Unit-Test-Results)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ocm-mcp-server/ocm-mcp-server/badge)](https://scorecard.dev/viewer/?uri=github.com/ocm-mcp-server/ocm-mcp-server)
 [![PyPI](https://img.shields.io/pypi/v/ocm-mcp-server?label=PyPI)](https://pypi.org/project/ocm-mcp-server/)
 [![Release](https://img.shields.io/github/v/tag/ocm-mcp-server/ocm-mcp-server?label=release)](https://github.com/ocm-mcp-server/ocm-mcp-server/releases)

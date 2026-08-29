@@ -19,7 +19,7 @@ published (git history keeps every draft).
 - Start from the header block (SPDX lines + the Status/Published/Canonical
   quote block) - fill in the Medium URL right after publishing, and flip
   Status to `published`.
-- Media: hotlink `https://raw.githubusercontent.com/sandeepbazar/ocm-mcp-server/main/...`
+- Media: hotlink `https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/...`
   so the post renders identically on GitHub and on Medium import; videos go
   to YouTube (Medium cannot host MP4s) and are embedded by URL.
 - Add a row to the table above.
