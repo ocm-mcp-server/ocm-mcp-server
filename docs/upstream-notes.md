@@ -30,23 +30,26 @@ without spoke access.
 
 ## 3. Kyverno: document foreach-over-CR-embedded-manifests as a pattern
 
-**Target:** kyverno/policies (docs/policy contribution)
+**Filed:** [kyverno/policies#1534](https://github.com/kyverno/policies/issues/1534) —
+proposes the pattern, links the pack, and asks whether a new category or a single
+well-documented exemplar is the better contribution before opening a PR.
 
 Validating workloads embedded inside another CR (here: ManifestWork
-`spec.workload.manifests`) works well with `foreach`, but no policy in the
-catalog demonstrates it. Contribute the 9 policies in `deploy/policies/`
-as a "Multi-Cluster Guardrails" category example set.
+`spec.workload.manifests`) works well with `foreach`, but no policy in the catalog
+demonstrates it. The set is shaped for that contribution rather than only for this
+repository: every policy carries the catalog's `policies.kyverno.io/minversion`
+annotation, and `deploy/policies/README.md` documents the `foreach` pattern, the two
+identifiers an adopter has to change, and the 42-case offline suite.
 
-The set is now shaped for that contribution rather than only for this repo:
-every policy carries the catalog's `policies.kyverno.io/minversion`
-annotation, and `deploy/policies/README.md` documents the `foreach` pattern,
-the two identifiers an adopter has to change, and the 42-case offline suite.
+The 1.13 under-enforcement was deliberately **not** filed as a separate bug. A container
+declaring both `runAsNonRoot: true` and `runAsUser: 0` is admitted on 1.13.0 and 1.13.6,
+and rejected on 1.12.0 and on 1.15.0 and later — so it was introduced and fixed inside
+that window. 1.13.6 was last patched in May 2025 and every supported release behaves
+correctly, so a bug report would be noise for the maintainers. It is recorded in the
+proposal instead, as the evidence for the `minversion: 1.15.0` floor: naming 1.12.0
+would place a release that quietly weakens the control inside the supported range.
 
-Worth raising alongside it: the 1.13 line silently under-enforces a `foreach`
-rule this pack relies on. A container declaring both `runAsNonRoot: true` and
-`runAsUser: 0` is admitted on 1.13.0 and 1.13.6, and rejected on 1.12.0 and on
-1.15.0 and later — so the regression was introduced and fixed within that
-window. Reproducer: `kyverno apply
+Reproducer, if it is ever needed: `kyverno apply
 deploy/policies/restrict-manifestwork-pod-security.yaml --resource
-deploy/policies/tests/resources.yaml` gives 7 failures on 1.13.x against 8
-everywhere else, with the `bad-run-as-root` fixture as the one that escapes.
+deploy/policies/tests/resources.yaml` gives 7 failures on 1.13.x against 8 everywhere
+else, with the `bad-run-as-root` fixture as the one that escapes.
