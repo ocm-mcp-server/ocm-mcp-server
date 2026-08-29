@@ -1,5 +1,9 @@
 # Deployment guide
 
+> Running the server is documented below. The settings that make *this repository's*
+> CI and releases work - rulesets, deploy keys, PyPI and registry ownership - are in
+> [repository setup](repository-setup.md).
+
 Three paths, in increasing order of seriousness: a laptop fleet for trying the
 pattern, a real OCM fleet, and a hardened production setup. Troubleshooting is
 at the end.
