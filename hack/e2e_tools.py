@@ -450,7 +450,7 @@ def _mcp_protocol():
     """Drive the ACTUAL server binary over stdio JSON-RPC with the official MCP client.
 
     Everything before this phase calls the tool functions in-process; a regression in
-    the FastMCP layer itself (schema serialization, annotations, resource templates,
+    the MCPServer layer itself (schema serialization, annotations, resource templates,
     the stdio transport) would pass those. This phase catches it.
     """
     P = "11. MCP protocol layer - the real server binary over stdio JSON-RPC"

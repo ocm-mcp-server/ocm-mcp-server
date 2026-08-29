@@ -15,7 +15,7 @@ The tool surface is organized into toolsets, mirrored in the README:
     resources      generic get/list over an allow-list of OCM API types  (read)
     audit          pending proposals, this server's own audit trail       (read)
 
-Every read tool is annotated readOnlyHint=True. Every write is annotated
+Every read tool is annotated read_only_hint=True. Every write is annotated
 destructiveHint and, more importantly, is *enforced*: a change reaches a cluster
 only after static guardrails, a Kyverno dry-run, and a human-minted approval
 token bound to the exact content. The agent never sees a kubeconfig, a Secret, or
@@ -32,7 +32,7 @@ import sys
 from typing import Any
 
 from kubernetes.client import ApiException
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from mcp.types import ToolAnnotations
 
 from . import approvals, guardrails, ocm
@@ -51,7 +51,7 @@ from .config import (
 )
 from .tracing import traced_tool
 
-mcp = FastMCP(
+mcp = MCPServer(
     "ocm-mcp-server",
     instructions=(
         "Tools for operating a multi-cluster Kubernetes fleet through an Open Cluster "
@@ -65,9 +65,9 @@ mcp = FastMCP(
 )
 
 # MCP tool annotations advertise each tool's safety class to the client and model.
-READ = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True)
-PROPOSE = ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True)
-APPLY = ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True)
+READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=True)
+PROPOSE = ToolAnnotations(read_only_hint=False, destructive_hint=False, open_world_hint=True)
+APPLY = ToolAnnotations(read_only_hint=False, destructive_hint=True, open_world_hint=True)
 
 
 def _json(data: Any) -> str:
