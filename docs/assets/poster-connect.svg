@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 790 560" width="790" height="560"
+     role="img" aria-label="Recorded live against a real fleet: an agent's privileged latest-tag shortcut is refused by the guardrails, the pinned proposal is signed by a human with an Ed25519 token, then applied and verified">
+  <!--
+    Poster for demo/connect-*.mp4.
+
+    Every colour is a site token, and the three semantic ones are the same values
+    the hero flow and the guardrail diagrams already use - #f85149 refused,
+    #fdba74 human approval, #3fb950 applied - so a reader who has seen those
+    already knows this vocabulary.
+
+    Deliberately no play triangle: the browser draws its own control, centred, and
+    a second one is noise. The middle band is kept clear so that control lands in
+    space rather than on the type.
+  -->
+  <defs>
+    <style>
+      .m { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }
+      .s { font-family: "Inter var", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    </style>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1428"/>
+      <stop offset="1" stop-color="#0b1020"/>
+    </linearGradient>
+    <linearGradient id="refuseGlow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f85149" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#f85149" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="790" height="560" fill="url(#ground)"/>
+
+  <!-- eyebrow: says what kind of artefact this is before anything else -->
+  <text class="m" x="48" y="62" fill="#7f8db5" font-size="12" letter-spacing="2.4">
+    RECORDED LIVE  ·  REAL FLEET  ·  NOT A MOCK-UP
+  </text>
+
+  <!-- the thesis, in the product's own words -->
+  <text class="s" x="48" y="112" fill="#eef2ff" font-size="34" font-weight="700" letter-spacing="-0.6">
+    Watch it refuse.
+  </text>
+  <text class="s" x="48" y="152" fill="#8ea2ff" font-size="34" font-weight="700" letter-spacing="-0.6">
+    Then watch a human sign.
+  </text>
+
+  <!-- ── the arc, as the transcript it actually is ───────────────────────── -->
+
+  <!-- 1. the shortcut -->
+  <text class="m" x="48" y="222" fill="#7f8db5" font-size="17">$</text>
+  <text class="m" x="72" y="222" fill="#c3cfe8" font-size="17">ship it fast — nginx:latest, privileged</text>
+
+  <!-- 2. THE SIGNATURE: the only saturated red on the panel -->
+  <rect x="40" y="240" width="640" height="52" fill="url(#refuseGlow)"/>
+  <rect x="40" y="240" width="3" height="52" fill="#f85149"/>
+  <text class="m" x="72" y="264" fill="#f85149" font-size="18" font-weight="700">REFUSED</text>
+  <text class="m" x="72" y="284" fill="#fda4af" font-size="14">image must be pinned · privileged denied</text>
+
+  <!-- the gap between refusal and the corrected proposal is the only large one:
+       it is where the operator rethinks. Kept clear of type so the browser's own
+       play control lands in space. -->
+
+  <!-- 3. the compliant proposal -->
+  <text class="m" x="48" y="366" fill="#7f8db5" font-size="17">$</text>
+  <text class="m" x="72" y="366" fill="#c3cfe8" font-size="17">propose — nginx:1.27.4, non-root, caps dropped</text>
+
+  <!-- 4. the human gate -->
+  <rect x="40" y="386" width="3" height="28" fill="#fdba74"/>
+  <text class="m" x="72" y="406" fill="#fdba74" font-size="15">
+    awaiting human · ocm-mcp approve → Ed25519 token
+  </text>
+
+  <!-- 5. only now -->
+  <rect x="40" y="426" width="3" height="28" fill="#3fb950"/>
+  <text class="m" x="72" y="446" fill="#6ee7b7" font-size="15">
+    APPLIED · verified · written to the audit trail
+  </text>
+
+  <!-- footer: who drove it. the point is that it is interchangeable -->
+  <line x1="48" y1="502" x2="742" y2="502" stroke="#24305c" stroke-width="1"/>
+  <text class="m" x="48" y="528" fill="#7f8db5" font-size="12" letter-spacing="1.2">
+    SAME SESSION, THREE AGENTS  ·  CLAUDE  ·  CODEX  ·  GEMINI
+  </text>
+</svg>

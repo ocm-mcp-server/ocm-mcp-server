@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 790 560" width="790" height="560"
+     role="img" aria-label="A real, unedited end-to-end run: a fleet is built on kind, every tool and prompt is exercised, something is broken and fixed, and the fleet is deleted again — 85 steps, 81 ok, 1 unavailable, 0 failed">
+  <!--
+    Poster for demo/e2e-local.mp4. Same design language as poster-connect.svg,
+    different argument: that one promises a refusal, this one promises a number.
+    The counts are the real ones from the recorded run, and they are the reason to
+    press play - a suite that reports 0 failed is only worth anything if you can
+    watch it happen.
+  -->
+  <defs>
+    <style>
+      .m { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }
+      .s { font-family: "Inter var", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    </style>
+    <linearGradient id="ground2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1428"/>
+      <stop offset="1" stop-color="#0b1020"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="790" height="560" fill="url(#ground2)"/>
+
+  <text class="m" x="48" y="62" fill="#7f8db5" font-size="12" letter-spacing="2.4">
+    UNEDITED  ·  ONE REAL RUN  ·  RE-RECORDED EACH RELEASE
+  </text>
+
+  <text class="s" x="48" y="112" fill="#eef2ff" font-size="34" font-weight="700" letter-spacing="-0.6">
+    A fleet, built and torn
+  </text>
+  <text class="s" x="48" y="152" fill="#8ea2ff" font-size="34" font-weight="700" letter-spacing="-0.6">
+    down in one command.
+  </text>
+
+  <!-- the phases, as the script actually orders them -->
+  <text class="m" x="48" y="214" fill="#c3cfe8" font-size="16">1 hub + 2 spokes on kind, joined and enriched</text>
+  <text class="m" x="48" y="246" fill="#c3cfe8" font-size="16">every tool and prompt exercised against it</text>
+  <text class="m" x="48" y="278" fill="#c3cfe8" font-size="16">something broken, diagnosed, and fixed the gated way</text>
+  <text class="m" x="48" y="310" fill="#c3cfe8" font-size="16">the whole fleet deleted again</text>
+
+  <!-- the result, which is the actual invitation -->
+  <line x1="48" y1="360" x2="742" y2="360" stroke="#24305c" stroke-width="1"/>
+
+  <text class="m" x="48" y="418" fill="#6ee7b7" font-size="44" font-weight="700">85</text>
+  <text class="m" x="48" y="442" fill="#7f8db5" font-size="12" letter-spacing="1.6">STEPS</text>
+
+  <text class="m" x="190" y="418" fill="#6ee7b7" font-size="44" font-weight="700">81</text>
+  <text class="m" x="190" y="442" fill="#7f8db5" font-size="12" letter-spacing="1.6">OK</text>
+
+  <text class="m" x="332" y="418" fill="#fdba74" font-size="44" font-weight="700">1</text>
+  <text class="m" x="332" y="442" fill="#7f8db5" font-size="12" letter-spacing="1.6">UNAVAILABLE</text>
+
+  <text class="m" x="530" y="418" fill="#6ee7b7" font-size="44" font-weight="700">0</text>
+  <text class="m" x="530" y="442" fill="#7f8db5" font-size="12" letter-spacing="1.6">FAILED</text>
+
+  <text class="m" x="48" y="512" fill="#7f8db5" font-size="13">
+    the one unavailable is a CRD this hub does not have, and says so by name
+  </text>
+</svg>

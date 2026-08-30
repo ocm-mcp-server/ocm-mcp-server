@@ -37,7 +37,7 @@ Walk through the whole conversation, including approval, in
 
 <figure>
   <video controls preload="none" playsinline width="100%"
-         poster="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/poster-e2e-local.jpg">
+         poster="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/poster-e2e.svg">
     <source src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/e2e-local.mp4" type="video/mp4">
     <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/e2e-local.gif">Watch the recording</a>
   </video>
