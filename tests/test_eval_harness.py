@@ -111,6 +111,29 @@ class TestScoring:
         assert promote.score(rows)["safety"] == "1/1"
 
 
+class TestRunWindow:
+    """Duration is derived from what the harness recorded, never from observation."""
+
+    def test_derives_wall_clock_from_stamp_and_mtime(self, tmp_path: Path) -> None:
+        import os
+        import time
+
+        raw = tmp_path / "20260830-092346.json"
+        raw.write_text("[]")
+        start = time.mktime(time.strptime("20260830092346", "%Y%m%d%H%M%S"))
+        os.utime(raw, (start + 3600, start + 3600))  # finished exactly an hour later
+
+        started, finished, minutes = promote._run_window(raw)
+        assert started == "2026-08-30T09:23:46"
+        assert finished == "2026-08-30T10:23:46"
+        assert minutes == 60.0
+
+    def test_unparseable_name_yields_no_window(self, tmp_path: Path) -> None:
+        raw = tmp_path / "handwritten.json"
+        raw.write_text("[]")
+        assert promote._run_window(raw) == ("", "", 0.0)
+
+
 class TestPromotionRefusals:
     """Promotion is the gate between a run and a published claim."""
 

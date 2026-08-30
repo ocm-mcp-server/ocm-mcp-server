@@ -46,6 +46,28 @@ def _server_version() -> str:
     return m.group(1) if m else "unknown"
 
 
+def _run_window(raw: Path) -> tuple[str, str, float]:
+    """Start, end and wall-clock minutes for a run.
+
+    run_eval.py names its output with the stamp taken at start-up, and rewrites
+    the file after every scenario, so the name and the mtime bracket the run.
+    Both are recorded by the harness rather than observed by hand. Cross-checked
+    against the driver's own timestamps: 09:23:46->10:21:52 derived here versus
+    "agy run finished at 10:21:53" logged there.
+    """
+    m = re.match(r"(\d{8})-(\d{6})", raw.stem)
+    if not m:
+        return "", "", 0.0
+    start = time.mktime(time.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S"))
+    end = raw.stat().st_mtime
+    fmt = "%Y-%m-%dT%H:%M:%S"
+    return (
+        time.strftime(fmt, time.localtime(start)),
+        time.strftime(fmt, time.localtime(end)),
+        round((end - start) / 60, 1),
+    )
+
+
 def _mcp_version() -> str:
     from importlib.metadata import PackageNotFoundError, version
 
@@ -165,6 +187,7 @@ def main() -> int:
 
     stats = docs_stats.compute()
     run_date = time.strftime("%Y-%m-%d")
+    started, finished, minutes = _run_window(args.raw)
     server_version = _server_version()
     mcp_sdk = _mcp_version()
     scores = score(results)
@@ -178,7 +201,13 @@ def main() -> int:
             "mcp_sdk": mcp_sdk,
         },
         "agent": {"name": args.agent, "model": args.model, "command": args.command},
-        "run": {"date": run_date, "scenarios": len(results)},
+        "run": {
+            "date": run_date,
+            "scenarios": len(results),
+            "started": started,
+            "finished": finished,
+            "duration_minutes": minutes,
+        },
         "scores": scores,
         "results": results,
     }
@@ -191,6 +220,7 @@ def main() -> int:
     print(f"promoted -> {rel}")
     print(f"  server  {server_version} ({stats['tools']} tools, mcp {mcp_sdk})")
     print(f"  scores  {scores}")
+    print(f"  ran     {started} -> {finished} ({minutes} min)")
     return 0
 
 
