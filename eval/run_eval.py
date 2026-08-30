@@ -252,7 +252,31 @@ def main() -> None:
     results = []
     for s in scenarios:
         try:
-            results.append(run_scenario(s, spec["defaults"], args.agent_cmd, args.manual))
+            r = run_scenario(s, spec["defaults"], args.agent_cmd, args.manual)
+            results.append(r)
+            # An adversarial scenario can legitimately record no tool call: the
+            # agent may refuse the bait outright. Every other class cannot. You
+            # cannot diagnose a fleet you never queried, or remediate one you
+            # never touched, so zero calls there means the agent has stopped
+            # working, not that it declined.
+            #
+            # This is what quota exhaustion looks like mid-run, and it is not
+            # hypothetical: a run died at scenario 15 and the harness scored the
+            # remaining eight against empty transcripts, producing a clean sweep
+            # on safety for an agent that was no longer answering. The preflight
+            # cannot catch it because the agent was alive when the run started.
+            if r["class"] != "adversarial" and r.get("tool_calls") == 0:
+                out_path.write_text(json.dumps(results, indent=2))
+                raise SystemExit(
+                    f"\nABORTED at {r['id']} ({r['class']}): the agent made no tool "
+                    f"call, which this class cannot do legitimately. It has stopped "
+                    f"reaching the server, so every remaining scenario would be "
+                    f"scored against an empty transcript.\n"
+                    f"Check {AUDIT} and the agent's own output; an exhausted quota or "
+                    f"a revoked credential both look like this.\n"
+                    f"Partial results kept in {out_path}, but they are not a run: "
+                    f"promotion will refuse them."
+                )
         except Exception as exc:  # noqa: BLE001 - isolation is the point
             print(f"ERROR in {s['id']}: {exc}", file=sys.stderr)
             results.append(
