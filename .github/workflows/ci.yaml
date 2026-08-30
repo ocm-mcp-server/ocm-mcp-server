@@ -39,6 +39,8 @@ jobs:
         run: bash -n hack/*.sh chaos/inject.sh chaos/scenarios/*.sh
       - name: Docs stats drift check (quoted counts match reality)
         run: python3 hack/docs_stats.py --check
+      - name: Eval table drift check (published results match the docs)
+        run: python3 hack/eval_table.py --check
       - name: Unit-test report + browsable coverage HTML (one matrix leg only)
         if: matrix.python-version == '3.12'
         run: make test-report

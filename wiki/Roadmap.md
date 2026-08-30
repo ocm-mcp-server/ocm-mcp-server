@@ -33,7 +33,7 @@ flowchart TD
   [CNCF readiness](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/cncf-sandbox-readiness.md).
 
 _Shipped: a recorded end-to-end demo in the README, and published evaluation
-results across two models with the failures called out - see
+results across agents from different vendors with the failures called out - see
 [Evaluation](Evaluation)._
 
 ## Mid term

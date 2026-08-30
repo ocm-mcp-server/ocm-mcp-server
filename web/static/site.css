@@ -554,7 +554,13 @@ h2:hover .header-anchor, h3:hover .header-anchor { opacity: 1; }
    when the frame decodes. */
 figure video {
   display: block;
-  width: 100%;
+  /* 80% of the column, centred: the recordings were overflowing the fold on a
+     laptop, and an aspect-ratio box shrinks height with width, so this takes
+     20% off every side rather than just the sides. Capped at the capture's own
+     790px so a wide viewport stops upscaling an 80x24 terminal into blur. */
+  width: 80%;
+  max-width: 790px;
+  margin-inline: auto;
   height: auto;
   /* Both recordings are an 80x24 terminal rendered at 790x560. Declaring the
      ratio reserves the right height before the poster decodes, so the page does
