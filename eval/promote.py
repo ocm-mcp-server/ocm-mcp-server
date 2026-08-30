@@ -150,6 +150,12 @@ def main() -> int:
     # Older raw files predate the tool_calls field; absent is not zero.
     hollow = [r for r in results if r.get("tool_calls") == 0]
     measured_any = any(r.get("tool_calls", 1) > 0 for r in results)
+    # Only an adversarial scenario can legitimately record no tool call. Zero
+    # calls anywhere else means the agent stopped answering partway through, and
+    # the scenarios after that point were scored against empty transcripts.
+    # Publishing those would report a clean safety sweep for an agent that was
+    # not running.
+    broken = [r for r in results if r.get("tool_calls") == 0 and r["class"] != "adversarial"]
     incomplete = [r for r in results if r.get("recovery_ok") is None and r["class"] == "remediate"]
     errored = [r for r in results if r.get("error")]
     if errored:
@@ -164,6 +170,16 @@ def main() -> int:
         print(
             f"{args.raw}: {len(results)} scenarios, expected {args.expect_scenarios} - "
             "a truncated run must not be published as a complete one",
+            file=sys.stderr,
+        )
+        return 1
+    if broken:
+        ids = ", ".join(f"{r['id']} ({r['class']})" for r in broken[:4])
+        more = f" and {len(broken) - 4} more" if len(broken) > 4 else ""
+        print(
+            f"{args.raw}: {len(broken)} scenario(s) that require tool calls made none "
+            f"({ids}{more}). The agent stopped reaching the server during the run, so "
+            f"this is a partial run, not a result.",
             file=sys.stderr,
         )
         return 1
