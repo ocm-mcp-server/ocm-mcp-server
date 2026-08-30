@@ -120,6 +120,12 @@ def main() -> int:
         help="refuse to promote unless the run has exactly this many scenarios",
     )
     ap.add_argument("--force", action="store_true", help="promote a run older than HEAD anyway")
+    ap.add_argument(
+        "--out-dir",
+        type=Path,
+        default=None,
+        help="where to write the promoted file (default: eval/results/published)",
+    )
     args = ap.parse_args()
 
     results = json.loads(args.raw.read_text())
@@ -233,7 +239,11 @@ def main() -> int:
         "results": results,
     }
 
-    out_dir = REPO / "eval" / "results" / "published"
+    # Overridable so a test never has to write into the repository's real
+    # evidence directory. An earlier version of the test suite promoted a
+    # fixture into it, and only the mixed-build guard in hack/eval_table.py
+    # stopped a fake result reaching a published table.
+    out_dir = args.out_dir or (REPO / "eval" / "results" / "published")
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{run_date.replace('-', '')}-{args.agent}-{args.model}.json"
     out.write_text(json.dumps(doc, indent=2) + "\n")

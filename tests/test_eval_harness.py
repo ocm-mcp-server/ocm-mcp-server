@@ -150,6 +150,13 @@ class TestPromotionRefusals:
                 "test",
                 "--command",
                 "x",
+                # Never the repository's real evidence directory. An earlier
+                # version of this helper promoted a fixture straight into
+                # eval/results/published/, and only the mixed-build guard in
+                # hack/eval_table.py stopped that fake result reaching a
+                # published table.
+                "--out-dir",
+                str(raw.parent / "published"),
                 *extra,
             ],
             capture_output=True,
