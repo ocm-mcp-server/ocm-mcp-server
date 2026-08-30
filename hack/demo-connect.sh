@@ -6,6 +6,7 @@
 #
 #   ./hack/demo-connect.sh                # drive Claude
 #   AGENT=codex ./hack/demo-connect.sh    # drive Codex through the same ten chapters
+#   AGENT=agy ./hack/demo-connect.sh      # drive Gemini via the Antigravity CLI
 #   DRY_RUN=1 ./hack/demo-connect.sh      # print the chapters, call no model
 #
 # This drives a REAL agent over the REAL MCP protocol against a REAL fleet. It is
@@ -50,6 +51,10 @@ ask() {
     # instead, which looks like a working demo and proves nothing.
     claude) printf '%s' "$prompt" | claude -p --allowedTools "mcp__ocm" ;;
     codex)  printf '%s' "$prompt" | codex exec --dangerously-bypass-approvals-and-sandbox - ;;
+    # agy is the Antigravity CLI, Gemini-backed. Its -p takes the prompt ATTACHED
+    # to the flag: written apart, -p swallows the next flag as its prompt. Same
+    # class of trap as claude's variadic --allowedTools, and agy says so plainly.
+    agy)    agy --dangerously-skip-permissions -p="$prompt" ;;
     *) echo "unknown AGENT: $AGENT" >&2; return 1 ;;
   esac
 }
@@ -85,6 +90,13 @@ if [[ "$AGENT" == "claude" ]]; then
   run "claude mcp remove ocm -s project >/dev/null 2>&1 || true"
   run "claude mcp add ocm --env OCM_MCP_HUB_CONTEXT=\$OCM_MCP_HUB_CONTEXT --env OCM_MCP_SPOKE_CONTEXTS=\$OCM_MCP_SPOKE_CONTEXTS --env OCM_MCP_HOME=\$OCM_MCP_HOME -- $SERVER_BIN"
   run "claude mcp list 2>/dev/null | grep ocm"
+elif [[ "$AGENT" == "agy" ]]; then
+  # agy mcp add takes its flags BEFORE the server name; put -e after and they
+  # become arguments to the server binary instead of environment variables.
+  SERVER_BIN="$WORK/ocm/bin/ocm-mcp-server"
+  run "agy mcp remove ocm >/dev/null 2>&1 || true"
+  run "agy mcp add -e OCM_MCP_HUB_CONTEXT=\$OCM_MCP_HUB_CONTEXT -e OCM_MCP_SPOKE_CONTEXTS=\$OCM_MCP_SPOKE_CONTEXTS -e OCM_MCP_HOME=\$OCM_MCP_HOME ocm $SERVER_BIN"
+  run "agy mcp list | grep ocm"
 else
   echo "  (codex reads examples/codex-config.toml - see examples/README.md)"
 fi

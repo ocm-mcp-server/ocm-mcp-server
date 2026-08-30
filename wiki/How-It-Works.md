@@ -90,7 +90,7 @@ one is covered by the others. Details in
     <source src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-claude.mp4" type="video/mp4">
     <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-claude.gif">Watch the recording</a>
   </video>
-  <figcaption>A fleet operator's day, recorded live: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the day read back from the audit trail.</figcaption>
+  <figcaption>A fleet operator's day, recorded live: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the day read back from the audit trail. The identical session is also recorded against <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-codex.gif">Codex</a> and <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-agy.gif">Gemini</a> - same server, same fleet, only the agent changes.</figcaption>
 </figure>
 
 ## Why approval is a token, not a chat "yes"

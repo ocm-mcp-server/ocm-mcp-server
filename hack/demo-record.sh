@@ -7,7 +7,8 @@
 #
 #   ./hack/demo-record.sh claude
 #   ./hack/demo-record.sh codex
-#   ./hack/demo-record.sh both        # one fleet, both agents, back to back
+#   ./hack/demo-record.sh agy
+#   ./hack/demo-record.sh all         # one fleet, all three agents, back to back
 #
 # Produces demo/connect-<agent>.{cast,gif,mp4}. Assumes a fleet is already up
 # (SPOKES=3 ./hack/bootstrap.sh); it does not create or delete clusters, so the
@@ -53,7 +54,9 @@ record_one() {
 case "${1:-claude}" in
   claude) record_one claude ;;
   codex)  record_one codex ;;
+  agy)    record_one agy ;;
   both)   record_one claude; record_one codex ;;
-  *) echo "usage: $0 [claude|codex|both]" >&2; exit 2 ;;
+  all)    record_one claude; record_one codex; record_one agy ;;
+  *) echo "usage: $0 [claude|codex|agy|both|all]" >&2; exit 2 ;;
 esac
 echo "== done"
