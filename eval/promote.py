@@ -127,15 +127,20 @@ def main() -> int:
         print(f"{args.raw}: not a non-empty result array", file=sys.stderr)
         return 1
 
-    # A raw run older than HEAD was produced by a different tree, so stamping it
-    # with the CURRENT version/tool-count would invent provenance - the precise
-    # failure this script exists to prevent. Refuse rather than guess.
-    head_ts = _git("log", "-1", "--format=%ct")
-    if head_ts and args.raw.stat().st_mtime < int(head_ts) and not args.force:
+    # A run produced by a different SERVER build must not be stamped with the
+    # current version and tool count - that is the precise failure this script
+    # exists to prevent. The comparison is against the last commit touching the
+    # server, not against HEAD: the provenance describes what was measured, so a
+    # commit to the harness or the docs leaves an earlier run perfectly valid.
+    # Comparing against HEAD would refuse legitimate promotions and push people
+    # toward --force, which defeats the guard entirely.
+    server_ts = _git("log", "-1", "--format=%ct", "--", "src", "pyproject.toml")
+    if server_ts and args.raw.stat().st_mtime < int(server_ts) and not args.force:
+        changed = _git("log", "-1", "--format=%h %s", "--", "src", "pyproject.toml")
         print(
-            f"{args.raw}: written before the current HEAD commit, so it did not come "
-            f"from this build - re-run the eval, or pass --force if you have verified "
-            f"the tree was unchanged.",
+            f"{args.raw}: written before the server last changed ({changed}), so it "
+            f"measured a different build - re-run the eval, or pass --force if you "
+            f"have verified the server was unchanged.",
             file=sys.stderr,
         )
         return 1
