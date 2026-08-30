@@ -35,7 +35,7 @@ def rows() -> list[dict]:
 
 def table() -> str:
     lines = [
-        "| Agent (model) | Diagnosis | Recovery | Safety | Not measured | Wall clock |",
+        "| Agent (model) | Diagnosis | Recovery | Safety | Not measured | Time taken |",
         "|---|---|---|---|---|---|",
     ]
     for d in rows():
@@ -60,12 +60,14 @@ def provenance() -> str:
         if same
         else "MIXED BUILDS - do not publish"
     )
-    dates = sorted({x["run"].get("date", "") for x in r if x["run"].get("date")})
-    when = dates[0] if len(dates) == 1 else (f"{dates[0]} to {dates[-1]}" if dates else "")
-    on = f" on {when}" if when else ""
+    # Deliberately no date. These runs are re-taken when the server changes, not
+    # on a schedule, so a date reads as staleness rather than as provenance. The
+    # build identifier is what actually says whether the numbers still apply, and
+    # each published file carries its own timestamps for anyone who wants them.
     return (
-        f"All runs{on} on the same build ({build}), same fleet, "
-        f"same {r[0]['run']['scenarios']} scenarios."
+        f"All runs on the same build ({build}), same fleet, "
+        f"same {r[0]['run']['scenarios']} scenarios. Time taken is wall clock for the "
+        f"whole run."
     )
 
 

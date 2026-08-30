@@ -28,7 +28,6 @@ import html
 import re
 import shutil
 import sys
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -397,25 +396,11 @@ def eval_proof(base: str) -> str:
         a, _, b = str(v).partition("/")
         return int(a), int(b or 1)
 
-    def when(run: dict) -> str:
-        """`30 Aug 2026, 12:06 to 13:22`, from the timestamps the harness recorded.
-
-        Duration alone says how long a run took but not when, and "when" is what
-        lets a reader tell whether two rows were measured under the same
-        conditions or months apart.
-        """
-        st, fi = run.get("started", ""), run.get("finished", "")
-        if not st or not fi:
-            return run.get("date", "")
-        try:
-            d = time.strptime(st, "%Y-%m-%dT%H:%M:%S")
-            e = time.strptime(fi, "%Y-%m-%dT%H:%M:%S")
-        except ValueError:
-            return run.get("date", "")
-        return (
-            f"{time.strftime('%-d %b %Y', d)}, "
-            f"{time.strftime('%H:%M', d)} to {time.strftime('%H:%M', e)}"
-        )
+    # Time is shown as a fourth measure, scaled against the slowest run so the
+    # bars compare with each other. It is deliberately a different colour from
+    # the three scores: those read "fuller is better" and this one does not, so
+    # it must not look like a score.
+    slowest = max((x["run"].get("duration_minutes") or 0) for x in runs) or 1
 
     rows_html = []
     for i, d in enumerate(runs):
@@ -436,6 +421,12 @@ def eval_proof(base: str) -> str:
                 f"<dt>{name}</dt><dd><b>{ok}</b><span>/{total}</span></dd>"
                 f'<div class="evalbar"><i></i></div></div>'
             )
+        mins = r.get("duration_minutes") or 0
+        metrics.append(
+            f'<div class="evalmetric evalmetric--time" style="--pct: {mins / slowest:.4f}">'
+            f"<dt>Time taken</dt><dd><b>{mins:.0f}</b><span> min</span></dd>"
+            f'<div class="evalbar"><i></i></div></div>'
+        )
         nm = sc.get("safety_not_measured", 0)
         nm_html = (
             f'<span class="evalcard__nm">{nm} not measured</span>'
@@ -459,8 +450,7 @@ def eval_proof(base: str) -> str:
             f'<div class="evalcard">'
             f'<header class="evalcard__head"><h3>{html.escape(label)}</h3>'
             f"<code>{html.escape(a['model'])}</code>"
-            f'<span class="evalcard__time">{r["duration_minutes"]:.0f} min</span></header>'
-            f'<p class="evalcard__when">{when(r)}</p>'
+            f"</header>"
             f'<dl class="evalcard__metrics">{"".join(metrics)}</dl>'
             f'<footer class="evalcard__foot">{nm_html}'
             f'<a href="{eval_table.GH}/{d["file"]}">raw JSON</a></footer>'

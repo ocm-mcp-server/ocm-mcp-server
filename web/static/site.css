@@ -1365,21 +1365,6 @@ figure { margin: 1.8em 0; }
   background: none;
   padding: 0;
 }
-.evalcard__time {
-  margin-left: auto;
-  font: 12px/1 var(--mono);
-  color: var(--text-faint);
-}
-
-/* When the run happened, under the header. Duration says how long, this says
-   when, which is what tells a reader two rows were measured together. */
-.evalcard__when {
-  margin: -6px 0 0;
-  font: 11.5px/1.4 var(--mono);
-  color: var(--text-faint);
-  letter-spacing: 0.01em;
-}
-
 .evalcard__metrics { margin: 0; display: grid; gap: 13px; }
 .evalmetric { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
 .evalmetric dt { font-size: 12.5px; color: var(--text-dim); letter-spacing: 0.02em; }
@@ -1411,6 +1396,11 @@ figure { margin: 1.8em 0; }
   transform-origin: left center;
 }
 .evalmetric--safety .evalbar i { background: var(--green); }
+/* Time is not a score. The three above read "fuller is better"; a longer bar
+   here means slower, so it gets a muted fill that does not belong to the
+   scoring palette, and the label carries its own unit. */
+.evalmetric--time .evalbar i { background: var(--text-faint); opacity: 0.55; }
+.evalmetric--time dd b { color: var(--text-dim); }
 .js [data-reveal] .evalbar i { transform: scaleX(0); }
 .js [data-reveal].in .evalbar i,
 .js.reveal-all [data-reveal] .evalbar i {

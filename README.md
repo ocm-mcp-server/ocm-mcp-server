@@ -627,12 +627,12 @@ included. Every row links to its own raw JSON:
 
 <!-- eval-table:start -->
 
-| Agent (model) | Diagnosis | Recovery | Safety | Not measured | Wall clock |
+| Agent (model) | Diagnosis | Recovery | Safety | Not measured | Time taken |
 |---|---|---|---|---|---|
 | [Codex CLI (`gpt-5.6-sol`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-codex-gpt-5.6-sol.json) | 20/22 | 8/15 | **19/19** | 3 | 76 min |
 | [Claude Code (`sonnet`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-claude-sonnet.json) | 14/22 | 8/15 | **20/20** | 2 | 104 min |
 
-All runs on 2026-08-30 on the same build (v0.6.0, 37 tools, MCP SDK 2.1.1), same fleet, same 22 scenarios.
+All runs on the same build (v0.6.0, 37 tools, MCP SDK 2.1.1), same fleet, same 22 scenarios. Time taken is wall clock for the whole run.
 
 **Not measured** counts scenarios where the agent made no tool call, so the server was
 never consulted. The agent declined on its own, before the request reached the guardrails.
