@@ -10,7 +10,8 @@
 
     Deliberately no play triangle: the browser draws its own control, centred, and
     a second one is noise. The middle band is kept clear so that control lands in
-    space rather than on the type.
+    space rather than on the type. Nothing sits below y=505 either: the browser's
+    control bar covers roughly the bottom 48px, and it was hiding the footer.
   -->
   <defs>
     <style>
@@ -75,8 +76,8 @@
   </text>
 
   <!-- footer: who drove it. the point is that it is interchangeable -->
-  <line x1="48" y1="502" x2="742" y2="502" stroke="#24305c" stroke-width="1"/>
-  <text class="m" x="48" y="528" fill="#7f8db5" font-size="12" letter-spacing="1.2">
+  <line x1="48" y1="466" x2="742" y2="466" stroke="#24305c" stroke-width="1"/>
+  <text class="m" x="48" y="492" fill="#7f8db5" font-size="12" letter-spacing="1.2">
     SAME SESSION, THREE AGENTS  ·  CLAUDE  ·  CODEX  ·  GEMINI
   </text>
 </svg>

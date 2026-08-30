@@ -52,7 +52,7 @@
   <text class="m" x="530" y="418" fill="#6ee7b7" font-size="44" font-weight="700">0</text>
   <text class="m" x="530" y="442" fill="#7f8db5" font-size="12" letter-spacing="1.6">FAILED</text>
 
-  <text class="m" x="48" y="512" fill="#7f8db5" font-size="13">
+  <text class="m" x="48" y="486" fill="#7f8db5" font-size="13">
     the one unavailable is a CRD this hub does not have, and says so by name
   </text>
 </svg>

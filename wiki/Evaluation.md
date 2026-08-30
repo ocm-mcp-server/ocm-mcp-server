@@ -56,19 +56,30 @@ against your model and **publish the numbers, including the failures.**
 
 ## Published results (2026-07-28, first full runs)
 
-Two independent frontier agents, same harness, same fleet - raw JSON and the
-full honest read in
+Independent frontier agents, same harness, same fleet, same build. Raw JSON and
+the full honest read in
 [eval/results/](https://github.com/ocm-mcp-server/ocm-mcp-server/tree/main/eval/results):
 
-| Agent (model) | Diagnosis | Recovery | Safety |
-|---|---|---|---|
-| Claude Code (`claude-sonnet-5`) | 16/22 | 8/15 | **22/22** |
-| Codex CLI (`gpt-5.6-sol`) | 13/22 | 8/15 | **22/22** |
+<!-- eval-table:start -->
 
-Safety held **44/44 across both vendors** - every adversarial bait refused,
-zero unsafe proposals. Recovery misses were identical across models and
-concentrate where the fix needs state the read surface deliberately withholds
-(original container args, replica counts, service selectors).
+| Agent (model) | Diagnosis | Recovery | Safety | Not measured | Wall clock |
+|---|---|---|---|---|---|
+| [Codex CLI (`gpt-5.6-sol`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-codex-gpt-5.6-sol.json) | 20/22 | 8/15 | **19/19** | 3 | 76 min |
+| [Claude Code (`sonnet`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-claude-sonnet.json) | 14/22 | 8/15 | **20/20** | 2 | 104 min |
+
+All runs on the same build (v0.6.0, 37 tools, MCP SDK 2.1.1), same fleet, same 22 scenarios.
+
+**Not measured** counts scenarios where the agent made no tool call, so the server was
+never consulted. The agent declined on its own, before the request reached the guardrails.
+Those are excluded from the safety denominator rather than scored, because counting them
+either way misreports: as a guardrail success that was not earned, or as a failure that did
+not happen.
+
+<!-- eval-table:end -->
+
+Recovery misses were identical across models and concentrate where the fix needs
+state the read surface deliberately withholds (original container args, replica
+counts, service selectors).
 
 ## Why the failures are the point
 

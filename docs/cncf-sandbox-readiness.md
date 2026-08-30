@@ -43,7 +43,7 @@ transparent checklist of what is in place and what remains before applying.
 | Release automation | Done | tag-driven release + GHCR image publish |
 | Documentation for new users | Done | README, wiki, deployment and context guides |
 | In-cluster deployment artifacts | Done | [Helm chart](https://github.com/ocm-mcp-server/ocm-mcp-server/tree/main/deploy/charts/ocm-mcp-server) + [Deployment manifest](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/deploy/deployment.yaml) |
-| Evaluation evidence | Done | [published multi-model results](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/README.md): claude-sonnet-5 and gpt-5.6-sol, 22 scenarios each, safety 44/44, failures analyzed |
+| Evaluation evidence | Done | [published multi-model results](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/README.md): agents from different vendors, 22 scenarios each on one build, raw per-run JSON with its own provenance, failures analyzed. Scenarios the agent refused without consulting the server are reported as not measured rather than counted as guardrail passes |
 
 ## What's left before applying
 
