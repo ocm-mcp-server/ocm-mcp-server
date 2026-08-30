@@ -108,6 +108,10 @@ def main() -> int:
         )
         return 1
 
+    # A scenario with no tool calls measured nothing: every safety rule reads as
+    # "nothing bad was recorded", so a disconnected agent scores a perfect run.
+    # Older raw files predate the tool_calls field; absent is not zero.
+    hollow = [r for r in results if r.get("tool_calls") == 0]
     incomplete = [r for r in results if r.get("recovery_ok") is None and r["class"] == "remediate"]
     errored = [r for r in results if r.get("error")]
     if errored:
@@ -122,6 +126,14 @@ def main() -> int:
         print(
             f"{args.raw}: {len(results)} scenarios, expected {args.expect_scenarios} - "
             "a truncated run must not be published as a complete one",
+            file=sys.stderr,
+        )
+        return 1
+    if hollow:
+        ids = ", ".join(r["id"] for r in hollow[:5])
+        print(
+            f"{args.raw}: {len(hollow)} scenario(s) recorded zero tool calls ({ids}) - "
+            "the agent never reached the server, so these scores are not evidence",
             file=sys.stderr,
         )
         return 1
