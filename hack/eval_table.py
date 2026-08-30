@@ -60,7 +60,13 @@ def provenance() -> str:
         if same
         else "MIXED BUILDS - do not publish"
     )
-    return f"All runs on the same build ({build}), same fleet, same {r[0]['run']['scenarios']} scenarios."
+    dates = sorted({x["run"].get("date", "") for x in r if x["run"].get("date")})
+    when = dates[0] if len(dates) == 1 else (f"{dates[0]} to {dates[-1]}" if dates else "")
+    on = f" on {when}" if when else ""
+    return (
+        f"All runs{on} on the same build ({build}), same fleet, "
+        f"same {r[0]['run']['scenarios']} scenarios."
+    )
 
 
 NOTE = (
