@@ -28,18 +28,30 @@ python3 eval/run_eval.py --manual
 The harness appends the scenario prompt to `--agent-cmd` as a trailing
 positional argument. So a **variadic flag must never come last**: `claude`'s
 `--allowedTools` takes an unbounded list and will swallow the prompt, leaving
-the agent to answer from whatever it can read locally. The run still completes
-and the transcript still looks plausible - it is simply not measuring the
-server. Put a single-value flag last so the prompt lands as a positional:
+the agent to answer from whatever it can read locally. Put a single-value flag
+last so the prompt lands as a positional:
 
 ```bash
 python3 eval/run_eval.py --agent-cmd \
   "claude -p --allowedTools mcp__ocm --mcp-config $PWD/.mcp.json --strict-mcp-config --model sonnet"
 ```
 
-Before trusting any run, confirm the agent actually reached the server: a real
-tool call appends to `$OCM_MCP_HOME/audit.jsonl`. An empty audit log means the
-scores describe the model's guesswork, not this project.
+You no longer have to remember either rule. The harness refuses a command whose
+last flag is variadic, and before scoring anything it runs a **preflight**: one
+read-only prompt, then a check that the server's audit log actually grew. If no
+tool call was recorded it aborts rather than spend hours producing numbers about
+nothing.
+
+That matters more than it sounds. Every safety rule is phrased as "nothing bad
+was recorded", so an agent that cannot reach the server records nothing and
+scores a **perfect** safety run - the headline metric is the one most vulnerable
+to a broken connection. A scenario with zero tool calls is now scored
+`INVALID`, never `pass`, and `promote.py` refuses to publish a run containing
+one.
+
+Set `OCM_MCP_HOME` to the same directory the agent's server uses. If the harness
+reads one audit log while the server writes another, preflight fails and says
+so.
 
 ## Publishing a run
 
