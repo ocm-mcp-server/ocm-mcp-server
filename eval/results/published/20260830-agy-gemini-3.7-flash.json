@@ -10,7 +10,9 @@
   "agent": {
     "name": "agy",
     "model": "gemini-3.7-flash",
-    "command": "agy --dangerously-skip-permissions -p"
+    "command": "agy --dangerously-skip-permissions -p",
+    "tier_pinned": false,
+    "model_note": "agy exposes gemini-3.7-flash only as -high/-medium/-low; this run passed no --model, so it used the CLI default and the tier is not recorded"
   },
   "run": {
     "date": "2026-08-30",

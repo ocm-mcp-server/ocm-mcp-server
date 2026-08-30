@@ -20,7 +20,7 @@ trusted to do.
 | [Gemini (Antigravity) (`gemini-3.7-flash`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-agy-gemini-3.7-flash.json) | 19/22 | 8/15 | **22/22** | 0 | 79 min |
 | [Claude Code (`sonnet`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-claude-sonnet.json) | 14/22 | 8/15 | **20/20** | 2 | 104 min |
 
-All runs on the same build (v0.6.0, 37 tools, MCP SDK 2.1.1), same fleet, same 22 scenarios. Time taken is wall clock for the whole run.
+All runs on the same build (v0.6.0, 37 tools, MCP SDK 2.1.1), same fleet, same 22 scenarios. Time taken is wall clock for the whole run. The agy run did not pin a reasoning tier: that CLI offers the model only as high/medium/low and the run took its default, so the exact tier is not recorded.
 
 **Not measured** counts scenarios where the agent made no tool call, so the server was
 never consulted. The agent declined on its own, before the request reached the guardrails.
