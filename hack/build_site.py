@@ -372,6 +372,94 @@ def fill(template: str, values: dict[str, str]) -> str:
     return template
 
 
+def eval_proof(base: str) -> str:
+    """The closing evidence section, one row per agent: its scores beside its own
+    recording of the same ten chapters.
+
+    Built from eval/results/published/, so it cannot drift from the README table
+    and disappears entirely if nothing is published, which beats a page promising
+    evidence it cannot show. Pairing the numbers with the run matters: a score on
+    its own asks to be trusted, a score next to the agent doing the work does not.
+    """
+    sys.path.insert(0, str(REPO / "hack"))
+    import eval_table
+
+    runs = eval_table.rows()
+    if not runs:
+        return ""
+
+    raw = "https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main"
+    # The harness names an agent by its CLI; the recordings are named the same way.
+    DEMO = {"claude": "connect-claude", "codex": "connect-codex", "agy": "connect-agy"}
+
+    def frac(v: str) -> tuple[int, int]:
+        a, _, b = str(v).partition("/")
+        return int(a), int(b or 1)
+
+    rows_html = []
+    for i, d in enumerate(runs):
+        a, sc, r = d["agent"], d["scores"], d["run"]
+        label = eval_table.LABELS.get(a["name"], a["name"])
+        metrics = []
+        # Safety leads: it is the axis the server exists for.
+        for name, key in (("Safety", "safety"), ("Diagnosis", "diagnosis"), ("Recovery", "recovery")):
+            ok, total = frac(sc[key])
+            pct = ok / total if total else 0
+            mod = " evalmetric--safety" if key == "safety" else ""
+            metrics.append(
+                f'<div class="evalmetric{mod}" style="--pct: {pct:.4f}">'
+                f"<dt>{name}</dt><dd><b>{ok}</b><span>/{total}</span></dd>"
+                f'<div class="evalbar"><i></i></div></div>'
+            )
+        nm = sc.get("safety_not_measured", 0)
+        nm_html = (
+            f'<span class="evalcard__nm">{nm} not measured</span>'
+            if nm
+            else '<span class="evalcard__nm evalcard__nm--none">every scenario reached the server</span>'
+        )
+        stem = DEMO.get(a["name"])
+        video = (
+            f'<figure class="evalvid">'
+            f'<video controls preload="none" playsinline '
+            f'poster="{raw}/docs/assets/poster-connect.svg" '
+            f'aria-label="{html.escape(label)} running the same ten chapters">'
+            f'<source src="{raw}/demo/{stem}.mp4" type="video/mp4">'
+            f'<a href="{raw}/demo/{stem}.gif">Watch the {html.escape(label)} recording</a>'
+            f"</video></figure>"
+            if stem
+            else ""
+        )
+        rows_html.append(
+            f'<li class="evalrow" data-reveal style="--d: {i * 80}ms">'
+            f'<div class="evalcard">'
+            f'<header class="evalcard__head"><h3>{html.escape(label)}</h3>'
+            f'<code>{html.escape(a["model"])}</code>'
+            f'<span class="evalcard__time">{r["duration_minutes"]:.0f} min</span></header>'
+            f'<dl class="evalcard__metrics">{"".join(metrics)}</dl>'
+            f'<footer class="evalcard__foot">{nm_html}'
+            f'<a href="{eval_table.GH}/{d["file"]}">raw JSON</a></footer>'
+            f"</div>{video}</li>"
+        )
+
+    srv = runs[0]["server"]
+    n = len(runs)
+    word = {1: "One agent", 2: "Two agents", 3: "Three agents"}.get(n, f"{n} agents")
+    return (
+        '<section class="shell sec evalproof" id="evaluation">'
+        '<div class="sec__head" data-reveal>'
+        f"<h2>{word}. One server. The failures too.</h2>"
+        f'<p>The same {runs[0]["run"]["scenarios"]} scripted incidents, the same fleet, the same '
+        f'build (v{srv["version"]}, {srv["tools"]} tools). Only the agent changes. '
+        "Each row links to the run that produced its numbers.</p>"
+        "</div>"
+        f'<ol class="evalrows">{"".join(rows_html)}</ol>'
+        '<p class="evalnote" data-reveal><b>Not measured</b> is neither a pass nor a failure: '
+        "the agent made no tool call, so the guardrails were never consulted. "
+        f'<a href="{base}journey/evaluation/">How the harness scores</a></p>'
+        "</section>"
+    )
+
+
 def stats() -> dict[str, int]:
     """Reuse docs_stats.compute(), the same function CI uses to guard the quoted
     numbers in the README, so the homepage cannot show a stale count."""
@@ -488,6 +576,7 @@ def build(base: str) -> int:
             "stat_cases": str(st["policy_cases"]),
             "journey_cards": cards(pages, "journey", base, 6),
             "reference_cards": cards(pages, "reference", base, 6),
+            "eval_proof": eval_proof(base),
         },
     )
     (OUT / "index.html").write_text(
