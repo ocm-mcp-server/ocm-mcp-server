@@ -54,7 +54,18 @@ def provenance() -> str:
     if not r:
         return ""
     srv = r[0]["server"]
-    same = all(x["server"]["commit"] == srv["commit"] for x in r)
+    # Compare what actually defines the build the agents measured, not the commit
+    # they happened to be promoted at. Runs taken hours apart are compared here
+    # while the harness and the docs keep changing around them, so the commit
+    # moves for reasons that leave the server untouched. Comparing hashes called
+    # three runs of an identical v0.6.0 server a mixed build and refused to
+    # render, which is the same over-broad comparison the staleness guard in
+    # promote.py had.
+    identity = ("version", "tools", "prompts", "resources", "mcp_sdk")
+    same = all(
+        tuple(x["server"].get(k) for k in identity) == tuple(srv.get(k) for k in identity)
+        for x in r
+    )
     build = (
         f"v{srv['version']}, {srv['tools']} tools, MCP SDK {srv['mcp_sdk']}"
         if same
