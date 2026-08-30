@@ -75,11 +75,21 @@ def provenance() -> str:
     # on a schedule, so a date reads as staleness rather than as provenance. The
     # build identifier is what actually says whether the numbers still apply, and
     # each published file carries its own timestamps for anyone who wants them.
-    return (
+    line = (
         f"All runs on the same build ({build}), same fleet, "
         f"same {r[0]['run']['scenarios']} scenarios. Time taken is wall clock for the "
         f"whole run."
     )
+    # A model name in the table looks like an identifier, so say when one is not.
+    unpinned = [x["agent"]["name"] for x in r if x["agent"].get("tier_pinned") is False]
+    if unpinned:
+        who = ", ".join(unpinned)
+        line += (
+            f" The {who} run did not pin a reasoning tier: that CLI offers the model "
+            f"only as high/medium/low and the run took its default, so the exact tier "
+            f"is not recorded."
+        )
+    return line
 
 
 NOTE = (
