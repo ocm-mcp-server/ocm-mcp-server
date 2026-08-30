@@ -15,6 +15,9 @@ single place.
 | `connect-codex.gif` | The same ten chapters driven by **Codex** instead of Claude, against the same server and the same fleet. Two agents, one protocol - which is the argument for speaking MCP rather than shipping a client. |
 | `connect-codex.mp4` | The Codex recording as MP4. |
 | `connect-codex.cast` | The raw asciinema cast for the Codex run. |
+| `connect-agy.gif` | The same ten chapters driven by **Gemini**, through the Antigravity CLI (`agy`). Google deprecated OAuth sign-in for the standalone Gemini CLI for individual accounts, so `agy` - which carries its own auth - is the way to drive Gemini headlessly. |
+| `connect-agy.mp4` | The Gemini recording as MP4. |
+| `connect-agy.cast` | The raw asciinema cast for the Gemini run. |
 | `e2e-local.gif` | A real, unedited `./hack/e2e-local.sh` run (asciinema recording, long waits compressed): fleet up, every tool/prompt exercised, break-then-fix, all steps passing, fleet deleted. Shown under "Try it end to end". |
 | `e2e-local.mp4` | The same recording as MP4, for embedding outside GitHub. |
 | `e2e-local.cast` | The raw asciinema cast the GIF/MP4 are rendered from (`agg e2e-local.cast out.gif` to re-render). |
@@ -30,8 +33,8 @@ real MCP protocol against a real fleet, and recorded by
 SPOKES=3 ./hack/bootstrap.sh          # 1 hub + 3 spokes, once
 DRY_RUN=1 ./hack/demo-connect.sh      # print the ten chapters, call no model
 
-./hack/demo-record.sh both            # claude then codex, same fleet
-./hack/demo-record.sh claude          # or just one
+./hack/demo-record.sh all             # claude, codex, then gemini - one fleet
+./hack/demo-record.sh agy             # or just one
 ```
 
 `AGENT=codex` runs the same ten chapters through `codex exec` instead. Each chapter is
