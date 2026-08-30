@@ -747,7 +747,7 @@ agentic operations, connect on
 
 ## Author
 
-**Sandeep Bazar** - Passionate in Technology especially around Multi-cluster Kubernetes platforms, day-2
+**[Sandeep Bazar](https://www.linkedin.com/in/sandeepbazar/)** - Passionate in Technology especially around Multi-cluster Kubernetes platforms, day-2
 operations, and making fleets safer to automate.
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-connect-0A66C2?logo=linkedin)](https://www.linkedin.com/in/sandeepbazar/)

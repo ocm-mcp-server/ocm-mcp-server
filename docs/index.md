@@ -39,7 +39,7 @@ agent ──typed MCP tools──▶ ocm-mcp-server ──▶ OCM hub ──▶ 
 
 ## Author
 
-**Sandeep Bazar** - 
+**[Sandeep Bazar](https://www.linkedin.com/in/sandeepbazar/)** - 
 [LinkedIn](https://www.linkedin.com/in/sandeepbazar/) ·
 [YouTube: Tech Horizon Hub](https://www.youtube.com/@techhorizonhub) ·
 sponsorship & support via [LinkedIn](https://www.linkedin.com/in/sandeepbazar/)
