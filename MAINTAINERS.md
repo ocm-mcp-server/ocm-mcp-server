@@ -8,7 +8,7 @@ for what maintainers do and how to become one.
 
 | Name | GitHub | Company/Organization | Contact |
 |---|---|---|---|
-| Sandeep Bazar | [@sandeepbazar](https://github.com/sandeepbazar) | Independent | [LinkedIn](https://www.linkedin.com/in/sandeepbazar/) |
+| [Sandeep Bazar](https://www.linkedin.com/in/sandeepbazar/) | [@sandeepbazar](https://github.com/sandeepbazar) | Independent | [LinkedIn](https://www.linkedin.com/in/sandeepbazar/) |
 
 > Growing this table is the project's top community goal: current CNCF lifecycle
 > requirements ask for at least three maintainers from at least two employer
