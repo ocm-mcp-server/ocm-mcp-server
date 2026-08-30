@@ -28,6 +28,7 @@ import html
 import re
 import shutil
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -268,7 +269,7 @@ def strip_leading_h1(body: str) -> tuple[str, str]:
     if not m:
         return "", body
     title = re.sub(r"<[^>]+>", "", m.group(1)).strip()
-    return title, body[m.end():]
+    return title, body[m.end() :]
 
 
 def render_pages(pages: list[Page], base: str) -> list[str]:
@@ -327,7 +328,7 @@ def megamenu(pages: list[Page], base: str, current_section: str) -> str:
         wide = " menu__panel--wide" if len(entries) > 4 else ""
         out.append(
             f'<div class="menu"><a class="menu__t" href="{base}{first.url}"{here}>'
-            f'{SECTION_LABEL[section]}'
+            f"{SECTION_LABEL[section]}"
             '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"'
             ' stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'
             '<path d="m6 9 6 6 6-6"/></svg></a>'
@@ -396,13 +397,37 @@ def eval_proof(base: str) -> str:
         a, _, b = str(v).partition("/")
         return int(a), int(b or 1)
 
+    def when(run: dict) -> str:
+        """`30 Aug 2026, 12:06 to 13:22`, from the timestamps the harness recorded.
+
+        Duration alone says how long a run took but not when, and "when" is what
+        lets a reader tell whether two rows were measured under the same
+        conditions or months apart.
+        """
+        st, fi = run.get("started", ""), run.get("finished", "")
+        if not st or not fi:
+            return run.get("date", "")
+        try:
+            d = time.strptime(st, "%Y-%m-%dT%H:%M:%S")
+            e = time.strptime(fi, "%Y-%m-%dT%H:%M:%S")
+        except ValueError:
+            return run.get("date", "")
+        return (
+            f"{time.strftime('%-d %b %Y', d)}, "
+            f"{time.strftime('%H:%M', d)} to {time.strftime('%H:%M', e)}"
+        )
+
     rows_html = []
     for i, d in enumerate(runs):
         a, sc, r = d["agent"], d["scores"], d["run"]
         label = eval_table.LABELS.get(a["name"], a["name"])
         metrics = []
         # Safety leads: it is the axis the server exists for.
-        for name, key in (("Safety", "safety"), ("Diagnosis", "diagnosis"), ("Recovery", "recovery")):
+        for name, key in (
+            ("Safety", "safety"),
+            ("Diagnosis", "diagnosis"),
+            ("Recovery", "recovery"),
+        ):
             ok, total = frac(sc[key])
             pct = ok / total if total else 0
             mod = " evalmetric--safety" if key == "safety" else ""
@@ -433,8 +458,9 @@ def eval_proof(base: str) -> str:
             f'<li class="evalrow" data-reveal style="--d: {i * 80}ms">'
             f'<div class="evalcard">'
             f'<header class="evalcard__head"><h3>{html.escape(label)}</h3>'
-            f'<code>{html.escape(a["model"])}</code>'
+            f"<code>{html.escape(a['model'])}</code>"
             f'<span class="evalcard__time">{r["duration_minutes"]:.0f} min</span></header>'
+            f'<p class="evalcard__when">{when(r)}</p>'
             f'<dl class="evalcard__metrics">{"".join(metrics)}</dl>'
             f'<footer class="evalcard__foot">{nm_html}'
             f'<a href="{eval_table.GH}/{d["file"]}">raw JSON</a></footer>'
@@ -448,8 +474,8 @@ def eval_proof(base: str) -> str:
         '<section class="shell sec evalproof" id="evaluation">'
         '<div class="sec__head" data-reveal>'
         f"<h2>{word}. One server. The failures too.</h2>"
-        f'<p>The same {runs[0]["run"]["scenarios"]} scripted incidents, the same fleet, the same '
-        f'build (v{srv["version"]}, {srv["tools"]} tools). Only the agent changes. '
+        f"<p>The same {runs[0]['run']['scenarios']} scripted incidents, the same fleet, the same "
+        f"build (v{srv['version']}, {srv['tools']} tools). Only the agent changes. "
         "Each row links to the run that produced its numbers.</p>"
         "</div>"
         f'<ol class="evalrows">{"".join(rows_html)}</ol>'
