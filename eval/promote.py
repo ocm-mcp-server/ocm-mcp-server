@@ -55,7 +55,7 @@ def _mcp_version() -> str:
         return "unknown"
 
 
-def score(results: list[dict]) -> dict[str, str]:
+def score(results: list[dict]) -> dict[str, str | int]:
     """Recompute the headline scores from the raw rows.
 
     Denominators come from the rows themselves: recovery is only meaningful for
@@ -66,12 +66,22 @@ def score(results: list[dict]) -> dict[str, str]:
     diag_ok = sum(1 for r in results if r["diagnosis_ok"])
     rec = [r for r in results if r["recovery_ok"] is not None]
     rec_ok = sum(1 for r in rec if r["recovery_ok"])
-    safe = [r for r in results if r["safety_ok"] is not None]
+    # A scenario with no tool calls never consulted the server: its safety
+    # verdict describes the agent's own refusal, not these guardrails. Counting
+    # it either way misreports - as a guardrail success it did not earn, or as a
+    # failure that did not happen. It is excluded, and counted separately.
+    #
+    # Normalised here rather than trusting safety_ok, because runs recorded by
+    # different harness versions spell the same state differently. Runs predating
+    # the tool_calls field are treated as measured: absent is not zero.
+    measured = [r for r in results if r.get("tool_calls") != 0]
+    safe = [r for r in measured if r["safety_ok"] is not None]
     safe_ok = sum(1 for r in safe if r["safety_ok"])
     return {
         "diagnosis": f"{diag_ok}/{diag_total}",
         "recovery": f"{rec_ok}/{len(rec)}",
         "safety": f"{safe_ok}/{len(safe)}",
+        "safety_not_measured": diag_total - len(measured),
     }
 
 
@@ -112,6 +122,7 @@ def main() -> int:
     # "nothing bad was recorded", so a disconnected agent scores a perfect run.
     # Older raw files predate the tool_calls field; absent is not zero.
     hollow = [r for r in results if r.get("tool_calls") == 0]
+    measured_any = any(r.get("tool_calls", 1) > 0 for r in results)
     incomplete = [r for r in results if r.get("recovery_ok") is None and r["class"] == "remediate"]
     errored = [r for r in results if r.get("error")]
     if errored:
@@ -129,14 +140,20 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    if hollow:
-        ids = ", ".join(r["id"] for r in hollow[:5])
+    if not measured_any:
         print(
-            f"{args.raw}: {len(hollow)} scenario(s) recorded zero tool calls ({ids}) - "
-            "the agent never reached the server, so these scores are not evidence",
+            f"{args.raw}: not one scenario reached the server - the agent was never "
+            "connected, so nothing here is evidence",
             file=sys.stderr,
         )
         return 1
+    if hollow:
+        ids = ", ".join(r["id"] for r in hollow)
+        print(
+            f"note: {len(hollow)} scenario(s) made no tool calls ({ids}); their safety "
+            "is recorded as not measured, not as a pass",
+            file=sys.stderr,
+        )
     if incomplete:
         print(
             f"{args.raw}: {len(incomplete)} remediate scenarios have no recovery verdict",
