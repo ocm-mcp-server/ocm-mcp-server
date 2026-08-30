@@ -209,23 +209,61 @@ jobs:
           # packages are created PRIVATE by default, so the very first push of a
           # NEW package name always lands private. Visibility is per package and
           # persists, so this bites once per name, never on later versions.
-          # Fail here instead, immediately, saying exactly what to click.
+          # Fail here instead, saying exactly what to click.
+          #
+          # Two very different failures used to land in the same branch, and the
+          # message named the wrong one. This job needs only `pypi`, while the
+          # image is pushed by publish-image.yaml, a SEPARATE workflow triggered
+          # by the same tag. They run concurrently, so an absent tag is the
+          # normal state for the first minute of a release. v0.6.0 failed here
+          # 37 seconds after publish-image started and reported "make the
+          # package public" for a package that was already public.
+          #
+          # The registry API tells the two apart, so this does too:
+          #   404      the tag is not pushed YET, a race worth waiting out
+          #   401/403  not anonymously readable, a settings problem, fail now
+          # A cross-workflow `needs:` cannot express the dependency, so the wait
+          # lives here.
+          accept='application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json'
+          deadline=$((SECONDS + 300))
           fail=0
           for ref in $(jq -r '.packages[] | select(.registryType == "oci") | .identifier' server.json); do
             image="${ref%:*}"; tag="${ref##*:}"
             host="${image%%/*}"; repo="${image#*/}"
-            token=$(curl -fsSL "https://${host}/token?scope=repository:${repo}:pull" | jq -r '.token // empty')
-            code=$(curl -s -o /dev/null -w '%{http_code}' \
-              -H "Authorization: Bearer ${token}" \
-              -H 'Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json' \
-              "https://${host}/v2/${repo}/manifests/${tag}")
-            if [ "$code" = "200" ]; then
-              echo "ok: ${ref} is public"
-            else
-              fail=1
-              echo "::error::${ref} is not anonymously pullable (HTTP ${code}). The MCP Registry only accepts public images."
-              echo "::error::Fix: https://github.com/orgs/${repo%%/*}/packages/container/${repo##*/}/settings -> Danger Zone -> Change visibility -> Public. The confirmation box wants the package name '${repo##*/}', not the word 'confirm'. Then re-run this job."
-            fi
+            settings="https://github.com/orgs/${repo%%/*}/packages/container/${repo##*/}/settings"
+            while :; do
+              # No -f here. With it, curl exits non-zero on the 403 a private
+              # package returns, the failure is swallowed by the subshell, and
+              # the manifest request then goes out with an empty bearer token,
+              # producing a misleading code instead of the real one.
+              token=$(curl -sS "https://${host}/token?scope=repository:${repo}:pull" 2>/dev/null | jq -r '.token // empty')
+              if [ -z "$token" ]; then
+                echo "::error::${ref}: the registry would not issue an anonymous pull token, so the package is not public."
+                echo "::error::Fix: ${settings} -> Danger Zone -> Change visibility -> Public. The confirmation box wants the package name '${repo##*/}', not the word 'confirm'. Then re-run this job."
+                fail=1; break
+              fi
+              code=$(curl -s -o /dev/null -w '%{http_code}' \
+                -H "Authorization: Bearer ${token}" -H "Accept: ${accept}" \
+                "https://${host}/v2/${repo}/manifests/${tag}")
+              case "$code" in
+                200)
+                  echo "ok: ${ref} is public"; break ;;
+                401|403)
+                  echo "::error::${ref} is not anonymously pullable (HTTP ${code}). The MCP Registry only accepts public images."
+                  echo "::error::Fix: ${settings} -> Danger Zone -> Change visibility -> Public. The confirmation box wants the package name '${repo##*/}', not the word 'confirm'. Then re-run this job."
+                  fail=1; break ;;
+                404)
+                  if [ "$SECONDS" -ge "$deadline" ]; then
+                    echo "::error::${ref}: tag ${tag} never appeared. publish-image.yaml probably failed for this tag; check that workflow rather than the package visibility."
+                    fail=1; break
+                  fi
+                  echo "waiting for publish-image.yaml to push ${tag} (HTTP 404, retrying)"
+                  sleep 15 ;;
+                *)
+                  echo "::error::${ref}: unexpected HTTP ${code} from ${host}."
+                  fail=1; break ;;
+              esac
+            done
           done
           exit "$fail"
       - name: Publish to the MCP Registry
