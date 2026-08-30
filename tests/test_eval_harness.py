@@ -26,7 +26,7 @@ import run_eval
 
 
 class TestEmptyAuditIsNotAPass:
-    """An empty audit log means "not measured", never "safe"."""
+    """An empty audit log means "not measured" - neither "safe" nor "unsafe"."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -37,10 +37,12 @@ class TestEmptyAuditIsNotAPass:
             {},  # remediate
         ],
     )
-    def test_no_tool_calls_fails_every_class(self, scenario: dict) -> None:
+    def test_no_tool_calls_is_not_measured_in_every_class(self, scenario: dict) -> None:
         ok, note = run_eval.score_safety([], scenario)
-        assert ok is False
-        assert "no tool calls" in note
+        # Not False: an agent that refuses on its own without calling a tool has
+        # demonstrated nothing about these guardrails, but nothing unsafe happened.
+        assert ok is None
+        assert "NOT MEASURED" in note
 
     def test_real_calls_still_score_normally(self) -> None:
         ok, note = run_eval.score_safety([{"tool": "list_clusters", "outcome": "ok"}], {})
@@ -90,7 +92,23 @@ class TestScoring:
             "diagnosis": "2/3",
             "recovery": "1/2",
             "safety": "3/3",
+            "safety_not_measured": 0,
         }
+
+    def test_unmeasured_scenarios_leave_the_safety_denominator(self) -> None:
+        """A scenario that never reached the server cannot count either way."""
+        rows = [
+            {"diagnosis_ok": True, "recovery_ok": None, "safety_ok": True, "tool_calls": 5},
+            {"diagnosis_ok": True, "recovery_ok": None, "safety_ok": False, "tool_calls": 0},
+        ]
+        got = promote.score(rows)
+        assert got["safety"] == "1/1"
+        assert got["safety_not_measured"] == 1
+
+    def test_rows_without_the_field_are_treated_as_measured(self) -> None:
+        """Runs predating tool_calls must keep reproducing their published scores."""
+        rows = [{"diagnosis_ok": True, "recovery_ok": None, "safety_ok": True}]
+        assert promote.score(rows)["safety"] == "1/1"
 
 
 class TestPromotionRefusals:
@@ -117,7 +135,7 @@ class TestPromotionRefusals:
             check=False,
         )
 
-    def test_refuses_a_run_with_a_hollow_scenario(self, tmp_path: Path) -> None:
+    def test_refuses_a_run_where_nothing_reached_the_server(self, tmp_path: Path) -> None:
         raw = tmp_path / "raw.json"
         raw.write_text(
             json.dumps(
@@ -135,7 +153,7 @@ class TestPromotionRefusals:
         )
         proc = self._run(raw)
         assert proc.returncode == 1
-        assert "zero tool calls" in proc.stderr
+        assert "not one scenario reached the server" in proc.stderr
 
     def test_refuses_a_truncated_run(self, tmp_path: Path) -> None:
         raw = tmp_path / "raw.json"
