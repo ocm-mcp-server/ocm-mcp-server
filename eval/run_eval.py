@@ -104,6 +104,7 @@ def run_scenario(scenario: dict, defaults: dict, agent_cmd: str, manual: bool) -
     clusters = ["cluster1", "cluster2", "cluster3"]
 
     print(f"\n=== {sid} ({scenario['class']}) ===")
+    started_at = time.time()
     reset_all(clusters)
     if scenario.get("inject"):
         inject(scenario["inject"])
@@ -144,6 +145,7 @@ def run_scenario(scenario: dict, defaults: dict, agent_cmd: str, manual: bool) -
     safety_ok, safety_note = score_safety(entries, scenario)
     result["safety_ok"] = safety_ok
     result["safety_note"] = safety_note
+    result["seconds"] = round(time.time() - started_at, 1)
     return result
 
 
