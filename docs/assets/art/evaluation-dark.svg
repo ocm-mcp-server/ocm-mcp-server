@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 366" role="img" aria-label="Published evaluation results for three agents on the same build and fleet: diagnosis and recovery vary by agent, while safety held on all 61 scenarios that reached the guardrails, with zero unsafe writes across 66 runs.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 390" role="img" aria-label="Published evaluation results for three agents on the same build and fleet: diagnosis and recovery vary by agent, while safety held on all 61 scenarios that reached the guardrails, with zero unsafe writes across 66 runs.">
   <style>
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -15,7 +15,7 @@
     @keyframes rise{0%,4%{opacity:0;transform:translateY(8px)}14%,100%{opacity:1;transform:translateY(0)}}
     @keyframes tally{0%,62%{opacity:0;transform:scale(.86)}70%,100%{opacity:1;transform:scale(1)}}
     .arow{opacity:0;animation:rise 12s ease-out infinite}
-    .a1{animation-delay:.5s}.a2{animation-delay:1s}
+    .a1{animation-delay:0.5s}.a2{animation-delay:1s}
     .fill{transform-origin:left center;transform-box:fill-box;animation:fillx 12s cubic-bezier(.2,.8,.3,1) infinite}
     .f1{animation-delay:.25s}.f2{animation-delay:.5s}
     .tally{transform-origin:left center;transform-box:fill-box;animation:tally 12s ease-out infinite}
@@ -23,7 +23,7 @@
 
     @media (prefers-reduced-motion:reduce){*{animation:none!important}}
   </style>
-  <rect width="1280" height="366" rx="18" fill="#0b1020"/>
+  <rect width="1280" height="390" rx="18" fill="#0b1020"/>
   <text x="40" y="44" text-anchor="start" class="mono cap" fill="#38bdf8">EVALUATION · 22 SCRIPTED INCIDENT SCENARIOS · FAILURES PUBLISHED TOO</text>
   <text x="1240" y="44" text-anchor="end" class="mono cap" fill="#93a4c8">SAME BUILD · SAME FLEET · ONLY THE AGENT CHANGES</text>
   <text x="40" y="84" class="sans" font-size="17" font-weight="700" fill="#e8ecf8">Safety is the axis this server is answerable for. It is also the only one that is full.</text>
@@ -44,11 +44,11 @@
     <text x="40" y="290" class="mono xs" fill="#93a4c8">gpt-5.6-sol</text>
     <text x="470" y="268" class="mono xs" fill="#93a4c8">diagnosis</text><text x="670" y="268" text-anchor="end" class="mono xs" fill="#e8ecf8">20/22</text><rect x="470" y="276" width="200" height="9" rx="4.5" fill="#93a4c8" fill-opacity=".14"/><rect class="fill f0" x="470" y="276" width="182" height="9" rx="4.5" fill="#93a4c8" fill-opacity=".5"/><text x="726" y="268" class="mono xs" fill="#93a4c8">recovery</text><text x="926" y="268" text-anchor="end" class="mono xs" fill="#e8ecf8">8/15</text><rect x="726" y="276" width="200" height="9" rx="4.5" fill="#93a4c8" fill-opacity=".14"/><rect class="fill f1" x="726" y="276" width="107" height="9" rx="4.5" fill="#93a4c8" fill-opacity=".5"/><text x="982" y="268" class="mono xs" fill="#93a4c8">safety</text><text x="1182" y="268" text-anchor="end" class="mono xs" fill="#22c55e">19/19</text><rect x="982" y="276" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".14"/><rect class="fill f2" x="982" y="276" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".95"/>
   </g>
-  <line x1="40" y1="316" x2="1240" y2="316" stroke="#243154"/>
+  <line x1="40" y1="340" x2="1240" y2="340" stroke="#243154"/>
   <g class="tally">
-    <text x="40" y="348" class="mono num" fill="#22c55e">61/61</text>
-    <text x="115" y="348" class="mono xs" fill="#93a4c8">scenarios that reached the guardrails held</text>
-    <text x="700" y="348" class="mono num" fill="#22c55e">0</text>
-    <text x="724" y="348" class="mono xs" fill="#93a4c8">unsafe writes across 66 runs — every one of them replayable from the audit log</text>
+    <text x="40" y="372" class="mono num" fill="#22c55e">61/61</text>
+    <text x="115" y="372" class="mono xs" fill="#93a4c8">scenarios that reached the guardrails held</text>
+    <text x="700" y="372" class="mono num" fill="#22c55e">0</text>
+    <text x="724" y="372" class="mono xs" fill="#93a4c8">unsafe writes across 66 runs — every one of them replayable from the audit log</text>
   </g>
 </svg>

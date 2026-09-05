@@ -671,13 +671,18 @@ def evaluation(name: str) -> str:
     Diagnosis and recovery are the agent's to win or lose and are drawn dim; safety is the
     only bar this server is answerable for, and it is the one that fills to the end.
     """
-    t, W, H = THEMES[name], 1280, 366
     facts = eval_facts()
     rows_data = facts["rows"]
+    # The panel grows a row per published agent rather than assuming three. A fourth run
+    # dropped into eval/results/published/ should appear here on the next build, not push
+    # the tally off the bottom edge.
+    top, gap = 152, 62
+    rule = top + len(rows_data) * gap + 2
+    t, W, H = THEMES[name], 1280, rule + 50
     bar_x, pitch, bar_w = 470, 256, 200
     rows = ""
     for i, row in enumerate(rows_data):
-        y = 152 + i * 62
+        y = top + i * gap
         cells = ""
         for j, (axis, col, own) in enumerate((("diagnosis", t["dim"], False), ("recovery", t["dim"], False),
                                               ("safety", OK, True))):
@@ -702,23 +707,24 @@ def evaluation(name: str) -> str:
     @keyframes rise{0%,4%{opacity:0;transform:translateY(8px)}14%,100%{opacity:1;transform:translateY(0)}}
     @keyframes tally{0%,62%{opacity:0;transform:scale(.86)}70%,100%{opacity:1;transform:scale(1)}}
     .arow{opacity:0;animation:rise 12s ease-out infinite}
-    .a1{animation-delay:.5s}.a2{animation-delay:1s}
+    ROW_DELAYS
     .fill{transform-origin:left center;transform-box:fill-box;animation:fillx 12s cubic-bezier(.2,.8,.3,1) infinite}
     .f1{animation-delay:.25s}.f2{animation-delay:.5s}
     .tally{transform-origin:left center;transform-box:fill-box;animation:tally 12s ease-out infinite}
     @media (prefers-reduced-motion:reduce){.arow,.tally{opacity:1;transform:none}.fill{transform:none}}
-"""
+""".replace("ROW_DELAYS", "".join(
+        f".a{i}{{animation-delay:{i * 0.5:g}s}}" for i in range(1, len(rows_data))))
     body = f'''  {eyebrow(40, 44, "EVALUATION · 22 SCRIPTED INCIDENT SCENARIOS · FAILURES PUBLISHED TOO", ACCENT)}
   {eyebrow(1240, 44, "SAME BUILD · SAME FLEET · ONLY THE AGENT CHANGES", t["dim"], "end")}
   <text x="40" y="84" class="sans" font-size="17" font-weight="700" fill="{t["ink"]}">Safety is the axis this server is answerable for. It is also the only one that is full.</text>
   <text x="40" y="104" class="mono xs" fill="{t["dim"]}">Diagnosis and recovery belong to the agent, and they are published unflattered.</text>
   {rows}
-  <line x1="40" y1="316" x2="1240" y2="316" stroke="{t["edge"]}"/>
+  <line x1="40" y1="{rule}" x2="1240" y2="{rule}" stroke="{t["edge"]}"/>
   <g class="tally">
-    <text x="40" y="348" class="mono num" fill="{OK}">{facts["held"]}/{facts["held"]}</text>
-    <text x="{40 + 15 * (2 * len(str(facts['held'])) + 1)}" y="348" class="mono xs" fill="{t["dim"]}">scenarios that reached the guardrails held</text>
-    <text x="700" y="348" class="mono num" fill="{OK}">0</text>
-    <text x="724" y="348" class="mono xs" fill="{t["dim"]}">unsafe writes across {facts["runs"]} runs — every one of them replayable from the audit log</text>
+    <text x="40" y="{rule + 32}" class="mono num" fill="{OK}">{facts["held"]}/{facts["held"]}</text>
+    <text x="{40 + 15 * (2 * len(str(facts['held'])) + 1)}" y="{rule + 32}" class="mono xs" fill="{t["dim"]}">scenarios that reached the guardrails held</text>
+    <text x="700" y="{rule + 32}" class="mono num" fill="{OK}">0</text>
+    <text x="724" y="{rule + 32}" class="mono xs" fill="{t["dim"]}">unsafe writes across {facts["runs"]} runs — every one of them replayable from the audit log</text>
   </g>'''
     return svg(name, W, H, f"Published evaluation results for three agents on the same build and "
                f"fleet: diagnosis and recovery vary by agent, while safety held on all "
