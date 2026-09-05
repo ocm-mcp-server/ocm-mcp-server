@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 430" role="img" aria-label="Two writes walk the same four gates: a privileged, unpinned request is refused at the first layer and never reaches a cluster, while a compliant one passes the static checks, Kyverno, a human Ed25519 signature and RBAC, and is applied and verified.">
+  <style>
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .s{font-size:11px}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    .num{font-size:22px;font-weight:700}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+
+    @keyframes runA{0%,4%{transform:translateX(0)}14%,22%{transform:translateX(142.0px)}
+      31%,100%{transform:translateX(0)}}
+    @keyframes tintA{0%,13%{opacity:0}16%,30%{opacity:1}34%,100%{opacity:0}}
+    @keyframes hideA{0%,13%{opacity:1}16%,30%{opacity:0}34%,100%{opacity:1}}
+    @keyframes runB{0%,34%{transform:translateX(0)}
+      41%,44%{transform:translateX(142.0px)}
+      49%,52%{transform:translateX(354.0px)}
+      57%,67%{transform:translateX(566.0px)}
+      73%,76%{transform:translateX(778.0px)}
+      83%,94%{transform:translateX(930px)}
+      97%,100%{transform:translateX(930px);opacity:0}}
+    @keyframes showB{0%,33%{opacity:0}35%,85%{opacity:1}91%,100%{opacity:0}}
+@keyframes mA{0%,13%{opacity:0;transform:scale(.5)}17%,30%{opacity:1;transform:scale(1)}33%,100%{opacity:0;transform:scale(.5)}}@keyframes mB0{0%,38%{opacity:0;transform:scale(.5)}42%,94%{opacity:1;transform:scale(1)}97%,100%{opacity:0;transform:scale(.5)}}@keyframes mB1{0%,46%{opacity:0;transform:scale(.5)}50%,94%{opacity:1;transform:scale(1)}97%,100%{opacity:0;transform:scale(.5)}}@keyframes mB2{0%,64%{opacity:0;transform:scale(.5)}68%,94%{opacity:1;transform:scale(1)}97%,100%{opacity:0;transform:scale(.5)}}@keyframes mB3{0%,70%{opacity:0;transform:scale(.5)}74%,94%{opacity:1;transform:scale(1)}97%,100%{opacity:0;transform:scale(.5)}}.mB0{animation:mB0 15s ease-out infinite}.mB1{animation:mB1 15s ease-out infinite}.mB2{animation:mB2 15s ease-out infinite}.mB3{animation:mB3 15s ease-out infinite}
+    @keyframes refused{0%,15%{opacity:0}19%,32%{opacity:1}36%,100%{opacity:0}}
+    @keyframes waiting{0%,56%{opacity:0}59%,64%{opacity:1}67%,100%{opacity:0}}
+    @keyframes signed{0%,64%{opacity:0}68%,94%{opacity:1}97%,100%{opacity:0}}
+    @keyframes landed{0%,82%{opacity:0}86%,96%{opacity:1}99%,100%{opacity:0}}
+    @keyframes live{0%,84%{opacity:.42}90%,96%{opacity:1}99%,100%{opacity:.42}}
+    .pkt{transform-box:fill-box}
+    .runA{animation:runA 15s ease-in-out infinite}
+    .runB{animation:runB 15s ease-in-out infinite,showB 15s linear infinite}
+    .tintA{animation:tintA 15s linear infinite}.hideA{animation:hideA 15s linear infinite}
+    .m{transform-origin:center;transform-box:fill-box;opacity:0}
+    .refused{animation:refused 15s linear infinite}
+    .waiting{animation:waiting 15s ease-in-out infinite}
+    .signed{animation:signed 15s linear infinite}
+    .landed{animation:landed 15s linear infinite}
+    .node{animation:live 15s ease-in-out infinite}
+    .n1{animation-delay:.15s}.n2{animation-delay:.3s}.n3{animation-delay:.45s}
+    .n4{animation-delay:.6s}.n5{animation-delay:.75s}
+    @media (prefers-reduced-motion:reduce){
+      .runB{transform:translateX(930px)}.m,.signed,.landed,.refused{opacity:1}
+      .runA,.tintA,.waiting{opacity:0}.hideA{opacity:1}.node{opacity:1}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <rect width="1280" height="430" rx="18" fill="#0b1020"/>
+  <circle class="glow" cx="1146" cy="200" r="150" fill="url(#gg-dark)"/>
+  <defs><radialGradient id="gg-dark">
+    <stop offset="0%" stop-color="#22c55e" stop-opacity=".3"/>
+    <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/></radialGradient></defs>
+  <text x="32" y="44" text-anchor="start" class="mono cap" fill="#93a4c8">AGENT · PROPOSES</text>
+  <text x="676" y="44" text-anchor="middle" class="mono cap" fill="#38bdf8">FOUR GATES · EACH ONE CAN REFUSE ON ITS OWN</text>
+  <text x="1248" y="44" text-anchor="end" class="mono cap" fill="#22c55e">FLEET · SAFE</text>
+  <g><rect x="32" y="76" width="196" height="254" rx="12" fill="#121a30" stroke="#243154"/>
+    <text x="48" y="106" class="sans" font-size="14" font-weight="700" fill="#e8ecf8">AI agent</text>
+    <text x="48" y="122" class="mono xs" fill="#93a4c8">holds no kubeconfig</text>
+    
+    <rect x="44" y="140" width="172" height="52" rx="9" fill="#121a30" stroke="#243154"/>
+    <rect x="44" y="140" width="3" height="52" rx="1.5" fill="#f43f5e"/>
+    <text x="58" y="158" class="mono b" fill="#e8ecf8">apply_manifestwork</text>
+    <text x="58" y="172" class="mono xs" fill="#f43f5e">image: nginx:latest</text>
+    <text x="58" y="184" class="mono xs" fill="#f43f5e">privileged: true</text>
+    <rect x="44" y="206" width="172" height="52" rx="9" fill="#121a30" stroke="#243154"/>
+    <rect x="44" y="206" width="3" height="52" rx="1.5" fill="#22c55e"/>
+    <text x="58" y="224" class="mono b" fill="#e8ecf8">apply_manifestwork</text>
+    <text x="58" y="238" class="mono xs" fill="#22c55e">nginx:1.27@sha256:9f2…</text>
+    <text x="58" y="250" class="mono xs" fill="#22c55e">runAsNonRoot: true</text>
+  </g><line class="wire" x1="216" y1="166" x2="1124" y2="166" stroke="#f43f5e" stroke-width="1.4" stroke-dasharray="4 6" opacity=".3"/><line class="wire" x1="216" y1="232" x2="1124" y2="232" stroke="#22c55e" stroke-width="1.4" stroke-dasharray="4 6" opacity=".3"/>
+  <g>
+    <rect x="268" y="76" width="180" height="254" rx="12" fill="#121a30" stroke="#243154"/>
+    <rect x="268" y="76" width="180" height="3" rx="1.5" fill="#8ea2ff" opacity=".9"/>
+    <text x="284" y="102" class="mono xs" fill="#8ea2ff">LAYER 1</text>
+    <text x="284" y="121" class="sans" font-size="14" font-weight="700" fill="#e8ecf8">guardrails</text>
+    <text x="284" y="137" class="mono xs" fill="#93a4c8">this server, first</text>
+    <line x1="358.0" y1="146" x2="358.0" y2="272" stroke="#8ea2ff" stroke-width="1.2"
+          stroke-dasharray="3 5" opacity=".5"/>
+    <text x="284" y="286" class="mono xs" fill="#8ea2ff">STOPS</text><text x="284" y="300" class="mono xs" fill="#93a4c8">privileged, host access,</text><text x="284" y="312" class="mono xs" fill="#93a4c8">unpinned images</text>
+  </g>
+  <g>
+    <rect x="480" y="76" width="180" height="254" rx="12" fill="#121a30" stroke="#243154"/>
+    <rect x="480" y="76" width="180" height="3" rx="1.5" fill="#38bdf8" opacity=".9"/>
+    <text x="496" y="102" class="mono xs" fill="#38bdf8">LAYER 2</text>
+    <text x="496" y="121" class="sans" font-size="14" font-weight="700" fill="#e8ecf8">Kyverno</text>
+    <text x="496" y="137" class="mono xs" fill="#93a4c8">dry-run on the hub</text>
+    <line x1="570.0" y1="146" x2="570.0" y2="272" stroke="#38bdf8" stroke-width="1.2"
+          stroke-dasharray="3 5" opacity=".5"/>
+    <text x="496" y="286" class="mono xs" fill="#38bdf8">STOPS</text><text x="496" y="300" class="mono xs" fill="#93a4c8">whatever your org's</text><text x="496" y="312" class="mono xs" fill="#93a4c8">policies reject</text>
+  </g>
+  <g>
+    <rect x="692" y="76" width="180" height="254" rx="12" fill="#121a30" stroke="#243154"/>
+    <rect x="692" y="76" width="180" height="3" rx="1.5" fill="#fb923c" opacity=".9"/>
+    <text x="708" y="102" class="mono xs" fill="#fb923c">LAYER 3</text>
+    <text x="708" y="121" class="sans" font-size="14" font-weight="700" fill="#e8ecf8">approval</text>
+    <text x="708" y="137" class="mono xs" fill="#93a4c8">a person, Ed25519</text>
+    <line x1="782.0" y1="146" x2="782.0" y2="272" stroke="#fb923c" stroke-width="1.2"
+          stroke-dasharray="3 5" opacity=".5"/>
+    <text x="708" y="286" class="mono xs" fill="#fb923c">STOPS</text><text x="708" y="300" class="mono xs" fill="#93a4c8">anything no human</text><text x="708" y="312" class="mono xs" fill="#93a4c8">signed for</text>
+  </g>
+  <g>
+    <rect x="904" y="76" width="180" height="254" rx="12" fill="#121a30" stroke="#243154"/>
+    <rect x="904" y="76" width="180" height="3" rx="1.5" fill="#22c55e" opacity=".9"/>
+    <text x="920" y="102" class="mono xs" fill="#22c55e">LAYER 4</text>
+    <text x="920" y="121" class="sans" font-size="14" font-weight="700" fill="#e8ecf8">RBAC</text>
+    <text x="920" y="137" class="mono xs" fill="#93a4c8">Kubernetes itself</text>
+    <line x1="994.0" y1="146" x2="994.0" y2="272" stroke="#22c55e" stroke-width="1.2"
+          stroke-dasharray="3 5" opacity=".5"/>
+    <text x="920" y="286" class="mono xs" fill="#22c55e">STOPS</text><text x="920" y="300" class="mono xs" fill="#93a4c8">no Secrets, no exec,</text><text x="920" y="312" class="mono xs" fill="#93a4c8">no stray deletes</text>
+  </g>
+  <g><rect x="1116" y="76" width="132" height="254" rx="12" fill="#121a30" stroke="#243154"/>
+    <text x="1132" y="106" class="sans" font-size="14" font-weight="700" fill="#e8ecf8">fleet</text>
+    <text x="1132" y="122" class="mono xs" fill="#93a4c8">via the OCM hub</text>
+    <g class="node n0"><polygon points="1146.0,179.0 1154.6,183.1 1156.7,192.4 1150.8,199.9 1141.2,199.9 1135.3,192.4 1137.4,183.1" fill="#22c55e" fill-opacity=".14" stroke="#22c55e" stroke-width="1.65" stroke-linejoin="round"/><line x1="1147.4" y1="187.0" x2="1149.7" y2="182.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1149.2" y1="189.3" x2="1154.4" y2="188.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1148.6" y1="192.1" x2="1152.7" y2="195.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1146.0" y1="193.3" x2="1146.0" y2="198.6" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1143.4" y1="192.1" x2="1139.3" y2="195.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1142.8" y1="189.3" x2="1137.6" y2="188.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1144.6" y1="187.0" x2="1142.3" y2="182.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><circle cx="1146" cy="190" r="2.6" fill="none" stroke="#22c55e" stroke-width="1.65"/></g><g class="node n1"><polygon points="1180.0,179.0 1188.6,183.1 1190.7,192.4 1184.8,199.9 1175.2,199.9 1169.3,192.4 1171.4,183.1" fill="#22c55e" fill-opacity=".14" stroke="#22c55e" stroke-width="1.65" stroke-linejoin="round"/><line x1="1181.4" y1="187.0" x2="1183.7" y2="182.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1183.2" y1="189.3" x2="1188.4" y2="188.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1182.6" y1="192.1" x2="1186.7" y2="195.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1180.0" y1="193.3" x2="1180.0" y2="198.6" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1177.4" y1="192.1" x2="1173.3" y2="195.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1176.8" y1="189.3" x2="1171.6" y2="188.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1178.6" y1="187.0" x2="1176.3" y2="182.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><circle cx="1180" cy="190" r="2.6" fill="none" stroke="#22c55e" stroke-width="1.65"/></g><g class="node n2"><polygon points="1214.0,179.0 1222.6,183.1 1224.7,192.4 1218.8,199.9 1209.2,199.9 1203.3,192.4 1205.4,183.1" fill="#22c55e" fill-opacity=".14" stroke="#22c55e" stroke-width="1.65" stroke-linejoin="round"/><line x1="1215.4" y1="187.0" x2="1217.7" y2="182.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1217.2" y1="189.3" x2="1222.4" y2="188.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1216.6" y1="192.1" x2="1220.7" y2="195.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1214.0" y1="193.3" x2="1214.0" y2="198.6" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1211.4" y1="192.1" x2="1207.3" y2="195.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1210.8" y1="189.3" x2="1205.6" y2="188.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1212.6" y1="187.0" x2="1210.3" y2="182.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><circle cx="1214" cy="190" r="2.6" fill="none" stroke="#22c55e" stroke-width="1.65"/></g><g class="node n3"><polygon points="1146.0,221.0 1154.6,225.1 1156.7,234.4 1150.8,241.9 1141.2,241.9 1135.3,234.4 1137.4,225.1" fill="#22c55e" fill-opacity=".14" stroke="#22c55e" stroke-width="1.65" stroke-linejoin="round"/><line x1="1147.4" y1="229.0" x2="1149.7" y2="224.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1149.2" y1="231.3" x2="1154.4" y2="230.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1148.6" y1="234.1" x2="1152.7" y2="237.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1146.0" y1="235.3" x2="1146.0" y2="240.6" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1143.4" y1="234.1" x2="1139.3" y2="237.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1142.8" y1="231.3" x2="1137.6" y2="230.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1144.6" y1="229.0" x2="1142.3" y2="224.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><circle cx="1146" cy="232" r="2.6" fill="none" stroke="#22c55e" stroke-width="1.65"/></g><g class="node n4"><polygon points="1180.0,221.0 1188.6,225.1 1190.7,234.4 1184.8,241.9 1175.2,241.9 1169.3,234.4 1171.4,225.1" fill="#22c55e" fill-opacity=".14" stroke="#22c55e" stroke-width="1.65" stroke-linejoin="round"/><line x1="1181.4" y1="229.0" x2="1183.7" y2="224.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1183.2" y1="231.3" x2="1188.4" y2="230.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1182.6" y1="234.1" x2="1186.7" y2="237.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1180.0" y1="235.3" x2="1180.0" y2="240.6" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1177.4" y1="234.1" x2="1173.3" y2="237.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1176.8" y1="231.3" x2="1171.6" y2="230.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1178.6" y1="229.0" x2="1176.3" y2="224.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><circle cx="1180" cy="232" r="2.6" fill="none" stroke="#22c55e" stroke-width="1.65"/></g><g class="node n5"><polygon points="1214.0,221.0 1222.6,225.1 1224.7,234.4 1218.8,241.9 1209.2,241.9 1203.3,234.4 1205.4,225.1" fill="#22c55e" fill-opacity=".14" stroke="#22c55e" stroke-width="1.65" stroke-linejoin="round"/><line x1="1215.4" y1="229.0" x2="1217.7" y2="224.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1217.2" y1="231.3" x2="1222.4" y2="230.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1216.6" y1="234.1" x2="1220.7" y2="237.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1214.0" y1="235.3" x2="1214.0" y2="240.6" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1211.4" y1="234.1" x2="1207.3" y2="237.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1210.8" y1="231.3" x2="1205.6" y2="230.1" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><line x1="1212.6" y1="229.0" x2="1210.3" y2="224.3" stroke="#22c55e" stroke-width="1.87" stroke-linecap="round"/><circle cx="1214" cy="232" r="2.6" fill="none" stroke="#22c55e" stroke-width="1.65"/></g>
+    <g class="landed"><g><rect x="1132" y="258" width="46" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="1155.0" y="270.6" text-anchor="middle" class="mono xs" fill="#22c55e">applied</text></g><g><rect x="1132" y="280" width="56" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="1160.0" y="292.6" text-anchor="middle" class="mono xs" fill="#22c55e">verified</text></g></g>
+  </g>
+  <g class="m mA"><circle cx="358.0" cy="192" r="8" fill="#f43f5e" fill-opacity=".18" stroke="#f43f5e" stroke-width="1.4"/><path d="M354.64 188.64 l6.72 6.72 M361.36 188.64 l-6.72 6.72" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round"/></g><g class="m mB0"><circle cx="358.0" cy="258" r="8" fill="#22c55e" fill-opacity=".18" stroke="#22c55e" stroke-width="1.4"/><path d="M353.84 258 l3.3280000000000003 3.3280000000000003 l5.824 -6.656000000000001" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g><g class="m mB1"><circle cx="570.0" cy="258" r="8" fill="#22c55e" fill-opacity=".18" stroke="#22c55e" stroke-width="1.4"/><path d="M565.84 258 l3.3280000000000003 3.3280000000000003 l5.824 -6.656000000000001" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g><g class="m mB2"><circle cx="782.0" cy="258" r="8" fill="#22c55e" fill-opacity=".18" stroke="#22c55e" stroke-width="1.4"/><path d="M777.84 258 l3.3280000000000003 3.3280000000000003 l5.824 -6.656000000000001" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g><g class="m mB3"><circle cx="994.0" cy="258" r="8" fill="#22c55e" fill-opacity=".18" stroke="#22c55e" stroke-width="1.4"/><path d="M989.84 258 l3.3280000000000003 3.3280000000000003 l5.824 -6.656000000000001" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g class="waiting"><g><rect x="730.0" y="196" width="104" height="18" rx="6" fill="#fb923c" fill-opacity=".16" stroke="#fb923c" stroke-opacity=".45"/><text x="782.0" y="208.6" text-anchor="middle" class="mono xs" fill="#fb923c">awaiting a human</text></g></g>
+  <g class="signed"><g><rect x="736.0" y="196" width="92" height="18" rx="6" fill="#a78bfa" fill-opacity=".16" stroke="#a78bfa" stroke-opacity=".45"/><text x="782.0" y="208.6" text-anchor="middle" class="mono xs" fill="#a78bfa">Ed25519 token</text></g></g>
+  <g class="pkt runA"><g class="hideA"><circle cx="216" cy="166" r="7" fill="#38bdf8"/></g>
+    <g class="tintA"><circle cx="216" cy="166" r="7" fill="#f43f5e"/></g></g>
+  <g class="pkt runB"><circle cx="216" cy="232" r="7" fill="#22c55e"/></g>
+  <g class="refused"><g><rect x="258" y="356" width="560" height="18" rx="6" fill="#f43f5e" fill-opacity=".16" stroke="#f43f5e" stroke-opacity=".45"/><text x="538.0" y="368.6" text-anchor="middle" class="mono xs" fill="#f43f5e">refused at Layer 1 — privileged: true, image not pinned — it never reached a cluster</text></g></g>
+  <g class="signed"><g><rect x="258" y="384" width="560" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="538.0" y="396.6" text-anchor="middle" class="mono xs" fill="#22c55e">all four satisfied — content-bound token signed by a person, applied, verified</text></g></g>
+  <text x="836" y="370" class="mono xs" fill="#93a4c8">None of these layers live in the system prompt,</text>
+  <text x="836" y="392" class="mono xs" fill="#93a4c8">so none of them can be talked out of.</text>
+</svg>

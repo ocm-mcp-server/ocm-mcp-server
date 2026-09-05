@@ -38,6 +38,8 @@ topology-agnostic. Two things depend on topology:
 optional CRD is absent; `FAIL` means the hub returned an error (check RBAC and the
 CRD). Non-zero exit on any `FAIL`, so it works as a health gate too.
 
+![The whole tool surface across ten toolsets, with only work and registration able to change anything](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/toolsets-dark.svg)
+
 ## Tool classes
 
 | Class | Meaning | Enforcement |

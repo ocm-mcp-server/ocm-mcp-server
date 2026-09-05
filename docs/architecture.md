@@ -329,6 +329,8 @@ OTLP sink and asserts a real trace batch arrives naming the `tool.*` span and th
 The parity between the left and middle columns is not aspirational: CI runs the same
 fixture corpus through both layers and fails on any verdict mismatch.
 
+![A hash-chained audit line per call, where editing an earlier line breaks the chain, beside the optional spans that show where the time went](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/audit-dark.svg)
+
 ## Design decisions worth arguing about
 
 **Why validate ManifestWorks, not Pods?** Policies on the managed clusters see
