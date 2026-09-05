@@ -4,7 +4,7 @@
 whole Open Cluster Management API is safe to inspect. Only two toolsets can change
 anything, and only through the propose -> approve -> apply gate.
 
-![Reads are free; writes are gated](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/read-write-paths.svg)
+![Reads answer immediately and freely; writes go through propose, a human approval, and a one-time-token apply](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/paths-dark.svg)
 
 Every hub-level tool works for any managed spoke - a standalone OpenShift cluster, a
 HyperShift hosted cluster, or a cloud cluster - because on the hub they are all
@@ -25,6 +25,8 @@ print a `PASS / EMPTY / SKIP / FAIL` table before wiring up an agent.
 | **hosted-control-planes** | HyperShift HostedClusters and NodePools (when the hub hosts them) | 3 | - |
 | **resources** | generic get/list over an allow-list of OCM API types | 2 | - |
 | **audit** | pending proposals, this server's own audit trail | 2 | - |
+
+![The whole tool surface across ten toolsets, with only work and registration able to change anything](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/toolsets-dark.svg)
 
 ## Tool classes
 

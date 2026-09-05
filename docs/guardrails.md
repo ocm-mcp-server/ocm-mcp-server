@@ -42,6 +42,8 @@ Defense in depth matters because each layer fails differently: static checks
 can lag policy; policy can have gaps; humans approve too fast; RBAC is the
 backstop that holds when the other three don't.
 
+![Two writes meet the same four gates: the privileged, unpinned one is refused at layer one and never reaches a cluster; the compliant one is signed by a person, applied and verified](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/gauntlet-dark.svg)
+
 ## Deliberate absences
 
 There is no tool for: reading Secrets, exec/port-forward, deleting arbitrary

@@ -135,6 +135,8 @@ crash), then each manifest is rejected on any of:
 All violations across all manifests are reported at once, so the agent can fix
 everything in one revision. The Kyverno layer enforces the same baseline on the hub.
 
+![A hash-chained audit line per call, where editing an earlier line breaks the chain, beside the optional spans that show where the time went](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/audit-dark.svg)
+
 ## Observability
 
 Every tool call produces two independent records:

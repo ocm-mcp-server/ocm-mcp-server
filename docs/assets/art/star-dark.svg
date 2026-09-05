@@ -1,6 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 34" role="img" aria-label="Star this repository on GitHub">
   <style>
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;font-weight:700}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .s{font-size:11px}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    .num{font-size:22px;font-weight:700}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+
+    .lbl{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;font-weight:700}
     @keyframes cur{0%{transform:translate(34px,26px);opacity:0}12%{opacity:1}30%,38%{transform:translate(12px,13px)}
       44%{transform:translate(12px,15px)}58%{transform:translate(12px,13px)}80%{transform:translate(12px,13px);opacity:1}
       92%,100%{transform:translate(34px,26px);opacity:0}}
@@ -12,15 +23,17 @@
     .star{animation:fill 5s ease-in-out infinite,pop 5s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
     .cur{animation:cur 5s ease-in-out infinite}
     .n{animation:tick 5s ease-in-out infinite}
-    @media (prefers-reduced-motion:reduce){*{animation:none!important}.star{fill:#f5b301;stroke-width:0}.n{opacity:1}}
+    @media (prefers-reduced-motion:reduce){.star{fill:#f5b301;stroke-width:0}.n{opacity:1}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
   </style>
-  <g class="btn">
+    <g class="btn">
     <rect x=".8" y=".8" width="130.4" height="32.4" rx="9" fill="#121a30" stroke="#243154"/>
     <path class="star" d="M20 8.2 l3.3 6.7 7.4 1.1 -5.35 5.2 1.26 7.35 -6.61-3.47 -6.61 3.47 1.26-7.35 -5.35-5.2 7.4-1.1 z"
           fill="none" stroke="#f5b301" stroke-width="1.6" stroke-linejoin="round"/>
-    <text x="42" y="22" class="mono" fill="#e8ecf8">Star</text>
+    <text x="42" y="22" class="lbl" fill="#e8ecf8">Star</text>
     <g class="n"><rect x="90" y="9" width="32" height="16" rx="5" fill="#f5b301" opacity=".16"/>
-      <text x="106" y="21" text-anchor="middle" class="mono" fill="#d69a00">+1</text></g>
+      <text x="106" y="21" text-anchor="middle" class="lbl" fill="#d69a00">+1</text></g>
   </g>
   <g class="cur"><path d="M0 0 L0 13.5 L3.6 10.4 L6.1 15.6 L8.4 14.5 L5.9 9.4 L10.6 9.1 Z"
      fill="#e8ecf8" stroke="#0b1020" stroke-width="1.1"/></g>

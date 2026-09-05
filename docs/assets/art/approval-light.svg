@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 340" role="img" aria-label="A write is two calls with a person between them: propose returns a content hash, a human signs that exact hash on their own terminal with an Ed25519 key, apply spends the one-time token, and a replay of the same token is rejected.">
+  <style>
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .s{font-size:11px}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    .num{font-size:22px;font-weight:700}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+
+@keyframes s0{0%,4%{opacity:.28}8%,88%{opacity:1}92%,100%{opacity:.28}}@keyframes s1{0%,20%{opacity:.28}24%,88%{opacity:1}92%,100%{opacity:.28}}@keyframes s2{0%,36%{opacity:.28}40%,88%{opacity:1}92%,100%{opacity:.28}}@keyframes s3{0%,52%{opacity:.28}56%,88%{opacity:1}92%,100%{opacity:.28}}.s0{animation:s0 13s ease-in-out infinite}.s1{animation:s1 13s ease-in-out infinite}.s2{animation:s2 13s ease-in-out infinite}.s3{animation:s3 13s ease-in-out infinite}
+    @keyframes ttl{0%,42%{width:236px}92%,100%{width:26px}}
+    @keyframes replay{0%,72%{opacity:0;transform:translateX(0)}78%{opacity:1}
+      84%{opacity:1;transform:translateX(-150px)}88%,100%{opacity:0;transform:translateX(-150px)}}
+    @keyframes stamp{0%,84%{opacity:0;transform:scale(1.7)}89%,96%{opacity:1;transform:scale(1)}
+      99%,100%{opacity:0;transform:scale(1.7)}}
+    .step{opacity:.28}
+    .ttl{animation:ttl 13s linear infinite}
+    .replay{animation:replay 13s ease-in-out infinite}
+    .stamp{animation:stamp 13s ease-out infinite;transform-origin:center;transform-box:fill-box}
+    @media (prefers-reduced-motion:reduce){.step{opacity:1}.ttl{width:120px}
+      .replay,.stamp{opacity:1;transform:none}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <rect width="1280" height="340" rx="18" fill="#fbfcff"/>
+  <text x="40" y="44" text-anchor="start" class="mono cap" fill="#38bdf8">A WRITE IS TWO CALLS WITH A PERSON BETWEEN THEM</text>
+  <text x="1240" y="44" text-anchor="end" class="mono cap" fill="#5a6b8c">NO STEP CAN BE SKIPPED BY ASKING NICELY</text>
+  <text x="40" y="88" class="sans" font-size="19" font-weight="700" fill="#0f1729">The server never holds the authority to change anything on its own.</text>
+  <text x="40" y="110" class="mono s" fill="#5a6b8c">It holds a public verifier key. The signing key stays with the person, on their terminal.</text>
+  
+  <g class="step s0">
+    <rect x="40" y="132" width="232" height="96" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <circle cx="66" cy="158" r="13" fill="#38bdf8" fill-opacity=".18" stroke="#38bdf8"/>
+    <text x="66" y="163" text-anchor="middle" class="mono b" fill="#38bdf8">1</text>
+    <text x="86" y="163" class="sans" font-size="13" font-weight="700" fill="#0f1729">propose</text>
+    <text x="86" y="190" class="mono xs" fill="#5a6b8c">propose_manifestwork(...)</text><text x="86" y="204" class="mono xs" fill="#5a6b8c">→ sha256:9f2c1e…</text><text x="86" y="218" class="mono xs" fill="#5a6b8c">nothing has left the hub</text>
+  </g><path class="wire" d="M272 158 h22" stroke="#38bdf8" stroke-width="1.6" stroke-dasharray="4 5" opacity=".55" fill="none"/>
+  <g class="step s1">
+    <rect x="298" y="132" width="232" height="96" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <circle cx="324" cy="158" r="13" fill="#fb923c" fill-opacity=".18" stroke="#fb923c"/>
+    <text x="324" y="163" text-anchor="middle" class="mono b" fill="#fb923c">2</text>
+    <text x="344" y="163" class="sans" font-size="13" font-weight="700" fill="#0f1729">a person looks</text>
+    <text x="344" y="190" class="mono xs" fill="#5a6b8c">$ ocm-mcp approve 9f2c1e…</text><text x="344" y="204" class="mono xs" fill="#5a6b8c">on a trusted terminal,</text><text x="344" y="218" class="mono xs" fill="#5a6b8c">not through the agent</text>
+  </g><path class="wire" d="M530 158 h22" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="4 5" opacity=".55" fill="none"/>
+  <g class="step s2">
+    <rect x="556" y="132" width="232" height="96" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <circle cx="582" cy="158" r="13" fill="#a78bfa" fill-opacity=".18" stroke="#a78bfa"/>
+    <text x="582" y="163" text-anchor="middle" class="mono b" fill="#a78bfa">3</text>
+    <text x="602" y="163" class="sans" font-size="13" font-weight="700" fill="#0f1729">token minted</text>
+    <text x="602" y="190" class="mono xs" fill="#5a6b8c">Ed25519, bound to the hash,</text><text x="602" y="204" class="mono xs" fill="#5a6b8c">the operation, the audience,</text><text x="602" y="218" class="mono xs" fill="#5a6b8c">and an expiry</text>
+  </g><path class="wire" d="M788 158 h22" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="4 5" opacity=".55" fill="none"/>
+  <g class="step s3">
+    <rect x="814" y="132" width="232" height="96" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <circle cx="840" cy="158" r="13" fill="#22c55e" fill-opacity=".18" stroke="#22c55e"/>
+    <text x="840" y="163" text-anchor="middle" class="mono b" fill="#22c55e">4</text>
+    <text x="860" y="163" class="sans" font-size="13" font-weight="700" fill="#0f1729">apply</text>
+    <text x="860" y="190" class="mono xs" fill="#5a6b8c">token verified and burned,</text><text x="860" y="204" class="mono xs" fill="#5a6b8c">ManifestWork delivered,</text><text x="860" y="218" class="mono xs" fill="#5a6b8c">audit line written</text>
+  </g>
+  <g><rect x="40" y="258" width="560" height="46" rx="10" fill="#ffffff" stroke="#dfe6f5"/>
+    <text x="56" y="278" class="mono xs" fill="#a78bfa">TOKEN TTL · IT EXPIRES WHETHER OR NOT ANYONE USES IT</text>
+    <rect x="56" y="288" width="236" height="7" rx="3.5" fill="#a78bfa" fill-opacity=".16"/>
+    <rect class="ttl" x="56" y="288" width="236" height="7" rx="3.5" fill="#a78bfa"/>
+    <text x="308" y="295" class="mono xs" fill="#5a6b8c">bound to one hash, one operation, one use</text>
+  </g>
+  <g><rect x="624" y="258" width="616" height="46" rx="10" fill="#ffffff" stroke="#dfe6f5"/>
+    <text x="640" y="285" class="mono xs" fill="#f43f5e">REPLAY</text>
+    <text x="700" y="285" class="mono xs" fill="#5a6b8c">a captured token buys nothing twice</text>
+    <g class="replay"><g><rect x="1136" y="272" width="94" height="18" rx="6" fill="#a78bfa" fill-opacity=".16" stroke="#a78bfa" stroke-opacity=".45"/><text x="1183.0" y="284.6" text-anchor="middle" class="mono xs" fill="#a78bfa">token, again</text></g></g>
+    <g class="stamp"><g><circle cx="966" cy="281" r="10" fill="#f43f5e" fill-opacity=".18" stroke="#f43f5e" stroke-width="1.4"/><path d="M961.8 276.8 l8.4 8.4 M970.2 276.8 l-8.4 8.4" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round"/></g>
+      <text x="984" y="285" class="mono xs" fill="#f43f5e">rejected — already spent</text></g>
+  </g>
+</svg>

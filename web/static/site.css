@@ -1443,3 +1443,12 @@ figure { margin: 1.8em 0; }
 .hero__art img.hero__art-light{display:none}
 [data-theme="light"] .hero__art img.hero__art-dark{display:none}
 [data-theme="light"] .hero__art img.hero__art-light{display:block}
+
+/* Animated art, in both cuts. build_site.py emits the pair for any markdown image under
+   assets/art/; the visible one follows the theme the reader chose here, not the one their
+   operating system happens to be set to. */
+.art{display:block;margin:clamp(18px,2.6vw,30px) 0}
+.art img{display:block;width:100%;height:auto;border-radius:14px}
+.art img.art--light{display:none}
+[data-theme="light"] .art img.art--dark{display:none}
+[data-theme="light"] .art img.art--light{display:block}
