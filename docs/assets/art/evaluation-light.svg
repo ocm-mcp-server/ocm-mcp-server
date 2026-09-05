@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 366" role="img" aria-label="Published evaluation results for three agents on the same build and fleet: diagnosis and recovery vary by agent, while safety held on all 61 scenarios that reached the guardrails, with zero unsafe writes across 66 runs.">
+  <style>
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .s{font-size:11px}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    .num{font-size:22px;font-weight:700}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+
+    @keyframes fillx{0%,8%{transform:scaleX(0)}30%,100%{transform:scaleX(1)}}
+    @keyframes rise{0%,4%{opacity:0;transform:translateY(8px)}14%,100%{opacity:1;transform:translateY(0)}}
+    @keyframes tally{0%,62%{opacity:0;transform:scale(.86)}70%,100%{opacity:1;transform:scale(1)}}
+    .arow{opacity:0;animation:rise 12s ease-out infinite}
+    .a1{animation-delay:.5s}.a2{animation-delay:1s}
+    .fill{transform-origin:left center;transform-box:fill-box;animation:fillx 12s cubic-bezier(.2,.8,.3,1) infinite}
+    .f1{animation-delay:.25s}.f2{animation-delay:.5s}
+    .tally{transform-origin:left center;transform-box:fill-box;animation:tally 12s ease-out infinite}
+    @media (prefers-reduced-motion:reduce){.arow,.tally{opacity:1;transform:none}.fill{transform:none}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <rect width="1280" height="366" rx="18" fill="#fbfcff"/>
+  <text x="40" y="44" text-anchor="start" class="mono cap" fill="#38bdf8">EVALUATION · 22 SCRIPTED INCIDENT SCENARIOS · FAILURES PUBLISHED TOO</text>
+  <text x="1240" y="44" text-anchor="end" class="mono cap" fill="#5a6b8c">SAME BUILD · SAME FLEET · ONLY THE AGENT CHANGES</text>
+  <text x="40" y="84" class="sans" font-size="17" font-weight="700" fill="#0f1729">Safety is the axis this server is answerable for. It is also the only one that is full.</text>
+  <text x="40" y="104" class="mono xs" fill="#5a6b8c">Diagnosis and recovery belong to the agent, and they are published unflattered.</text>
+  
+  <g class="arow a0">
+    <text x="40" y="148" class="sans" font-size="14" font-weight="700" fill="#0f1729">Gemini (Antigravity)</text>
+    <text x="40" y="166" class="mono xs" fill="#5a6b8c">gemini-3.7-flash</text>
+    <text x="470" y="144" class="mono xs" fill="#5a6b8c">diagnosis</text><text x="670" y="144" text-anchor="end" class="mono xs" fill="#0f1729">19/22</text><rect x="470" y="152" width="200" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".14"/><rect class="fill f0" x="470" y="152" width="173" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".5"/><text x="726" y="144" class="mono xs" fill="#5a6b8c">recovery</text><text x="926" y="144" text-anchor="end" class="mono xs" fill="#0f1729">8/15</text><rect x="726" y="152" width="200" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".14"/><rect class="fill f1" x="726" y="152" width="107" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".5"/><text x="982" y="144" class="mono xs" fill="#5a6b8c">safety</text><text x="1182" y="144" text-anchor="end" class="mono xs" fill="#22c55e">22/22</text><rect x="982" y="152" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".14"/><rect class="fill f2" x="982" y="152" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".95"/>
+  </g>
+  <g class="arow a1">
+    <text x="40" y="210" class="sans" font-size="14" font-weight="700" fill="#0f1729">Claude Code</text>
+    <text x="40" y="228" class="mono xs" fill="#5a6b8c">sonnet</text>
+    <text x="470" y="206" class="mono xs" fill="#5a6b8c">diagnosis</text><text x="670" y="206" text-anchor="end" class="mono xs" fill="#0f1729">14/22</text><rect x="470" y="214" width="200" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".14"/><rect class="fill f0" x="470" y="214" width="127" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".5"/><text x="726" y="206" class="mono xs" fill="#5a6b8c">recovery</text><text x="926" y="206" text-anchor="end" class="mono xs" fill="#0f1729">8/15</text><rect x="726" y="214" width="200" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".14"/><rect class="fill f1" x="726" y="214" width="107" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".5"/><text x="982" y="206" class="mono xs" fill="#5a6b8c">safety</text><text x="1182" y="206" text-anchor="end" class="mono xs" fill="#22c55e">20/20</text><rect x="982" y="214" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".14"/><rect class="fill f2" x="982" y="214" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".95"/>
+  </g>
+  <g class="arow a2">
+    <text x="40" y="272" class="sans" font-size="14" font-weight="700" fill="#0f1729">Codex CLI</text>
+    <text x="40" y="290" class="mono xs" fill="#5a6b8c">gpt-5.6-sol</text>
+    <text x="470" y="268" class="mono xs" fill="#5a6b8c">diagnosis</text><text x="670" y="268" text-anchor="end" class="mono xs" fill="#0f1729">20/22</text><rect x="470" y="276" width="200" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".14"/><rect class="fill f0" x="470" y="276" width="182" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".5"/><text x="726" y="268" class="mono xs" fill="#5a6b8c">recovery</text><text x="926" y="268" text-anchor="end" class="mono xs" fill="#0f1729">8/15</text><rect x="726" y="276" width="200" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".14"/><rect class="fill f1" x="726" y="276" width="107" height="9" rx="4.5" fill="#5a6b8c" fill-opacity=".5"/><text x="982" y="268" class="mono xs" fill="#5a6b8c">safety</text><text x="1182" y="268" text-anchor="end" class="mono xs" fill="#22c55e">19/19</text><rect x="982" y="276" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".14"/><rect class="fill f2" x="982" y="276" width="200" height="9" rx="4.5" fill="#22c55e" fill-opacity=".95"/>
+  </g>
+  <line x1="40" y1="316" x2="1240" y2="316" stroke="#dfe6f5"/>
+  <g class="tally">
+    <text x="40" y="348" class="mono num" fill="#22c55e">61/61</text>
+    <text x="115" y="348" class="mono xs" fill="#5a6b8c">scenarios that reached the guardrails held</text>
+    <text x="700" y="348" class="mono num" fill="#22c55e">0</text>
+    <text x="724" y="348" class="mono xs" fill="#5a6b8c">unsafe writes across 66 runs — every one of them replayable from the audit log</text>
+  </g>
+</svg>

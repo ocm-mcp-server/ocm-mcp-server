@@ -16,8 +16,8 @@
   </div>
 
   <div class="hero__art" data-reveal style="--d:260ms">
-    <img class="hero__art-dark" src="{{base}}static/hero/hero-dark.svg" alt="An agent's tool calls pass through a guardrailed control plane where reads are free, consequential writes need a human signature, and everything is recorded." width="880" loading="eager">
-    <img class="hero__art-light" src="{{base}}static/hero/hero-light.svg" alt="" aria-hidden="true" width="880" loading="lazy">
+    <img class="hero__art-dark" src="{{base}}assets/art/hero-dark.svg" alt="An agent's tool calls pass through a guardrailed control plane where reads are free, consequential writes need a human signature, and everything is recorded." width="880" loading="eager">
+    <img class="hero__art-light" src="{{base}}assets/art/hero-light.svg" alt="" aria-hidden="true" width="880" loading="lazy">
   </div>
 
   <!-- The write path. A real list rather than a decorative SVG: the labels
@@ -144,6 +144,55 @@
          the server asking nicely.</p>
     </article>
   </div>
+
+  <div class="art" data-reveal>
+      <img class="art--dark" src="{{base}}assets/art/gauntlet-dark.svg" alt="Two writes meet the same four gates: a privileged, unpinned request is refused at layer one and never reaches a cluster, while a compliant one is signed by a person, applied and verified." loading="lazy">
+      <img class="art--light" src="{{base}}assets/art/gauntlet-light.svg" alt="" aria-hidden="true" loading="lazy">
+    </div>
+  <p class="flow__legend">Watch the same four gates take two requests. Only one of them
+     reaches a cluster, and a person had to sign for it.</p>
+</section>
+
+<section class="shell sec">
+  <div class="sec__head" data-reveal>
+    <h2>A write is two calls with a person between them</h2>
+    <p>The server holds a public verifier key and nothing else. The signing key stays with
+       the person, on their own terminal, and the token it produces is bound to one content
+       hash, one operation, and an expiry.</p>
+  </div>
+  <div class="art" data-reveal>
+      <img class="art--dark" src="{{base}}assets/art/approval-dark.svg" alt="A write is two calls with a person between them: propose returns a content hash, a human signs that hash on their own terminal, apply spends the one-time token, and a replay of the same token is rejected." loading="lazy">
+      <img class="art--light" src="{{base}}assets/art/approval-light.svg" alt="" aria-hidden="true" loading="lazy">
+    </div>
+</section>
+
+<section class="shell sec">
+  <div class="sec__head" data-reveal>
+    <h2>Almost all of this surface is read</h2>
+    <p>The whole Open Cluster Management API is safe to inspect, so most of the server is
+       readable and free. Only two toolsets can change anything, and only through the gate.</p>
+  </div>
+  <div class="art" data-reveal>
+      <img class="art--dark" src="{{base}}assets/art/paths-dark.svg" alt="Reads and writes take different paths through the server: read-only tools answer immediately and freely, while writing tools go through propose, a human approval, and a one-time-token apply." loading="lazy">
+      <img class="art--light" src="{{base}}assets/art/paths-light.svg" alt="" aria-hidden="true" loading="lazy">
+    </div>
+  <div class="art" data-reveal>
+      <img class="art--dark" src="{{base}}assets/art/toolsets-dark.svg" alt="The whole tool surface across ten toolsets, of which only work and registration can change anything. No tool reads Secrets, execs into a pod, or deletes what it did not create." loading="lazy">
+      <img class="art--light" src="{{base}}assets/art/toolsets-light.svg" alt="" aria-hidden="true" loading="lazy">
+    </div>
+</section>
+
+<section class="shell sec">
+  <div class="sec__head" data-reveal>
+    <h2>Two records of every call, with different jobs</h2>
+    <p>The audit log is a safety artifact: append-only, hash-chained, and the thing an
+       incident report is written from. The spans are a debugging one, and nothing
+       safety-related trusts them.</p>
+  </div>
+  <div class="art" data-reveal>
+      <img class="art--dark" src="{{base}}assets/art/audit-dark.svg" alt="Every tool call leaves two records: a hash-chained audit line, where editing an earlier line visibly breaks the chain, and an optional OpenTelemetry span showing where the time went." loading="lazy">
+      <img class="art--light" src="{{base}}assets/art/audit-light.svg" alt="" aria-hidden="true" loading="lazy">
+    </div>
 </section>
 
 <section class="shell sec">
@@ -160,6 +209,19 @@
     <p>Architecture, deployment paths, the full tool surface, and the threat model.</p>
   </div>
   <div class="cards">{{reference_cards}}</div>
+</section>
+
+<section class="shell sec">
+  <div class="sec__head" data-reveal>
+    <h2>Honest numbers, failures included</h2>
+    <p>The same build, the same fleet and the same scenarios, run by three different agents.
+       Diagnosis and recovery belong to the agent. Safety is the axis this server is
+       answerable for.</p>
+  </div>
+  <div class="art" data-reveal>
+      <img class="art--dark" src="{{base}}assets/art/evaluation-dark.svg" alt="Published evaluation results for three agents on the same build and fleet: diagnosis and recovery vary by agent, while safety held on every scenario that reached the guardrails, with zero unsafe writes." loading="lazy">
+      <img class="art--light" src="{{base}}assets/art/evaluation-light.svg" alt="" aria-hidden="true" loading="lazy">
+    </div>
 </section>
 
 {{eval_proof}}

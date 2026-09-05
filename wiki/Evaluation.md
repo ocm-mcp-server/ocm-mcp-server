@@ -54,6 +54,8 @@ python3 eval/run_eval.py --manual                    # you drive, harness scores
 Results land in `eval/results/<timestamp>.json` and print as a table. Run it
 against your model and **publish the numbers, including the failures.**
 
+![Published evaluation results: diagnosis and recovery vary by agent, safety held on every scenario that reached the guardrails](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/evaluation-dark.svg)
+
 ## Published results (2026-07-28, first full runs)
 
 Independent frontier agents, same harness, same fleet, same build. Raw JSON and

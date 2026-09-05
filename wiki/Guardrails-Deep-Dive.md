@@ -4,7 +4,7 @@ Four independent layers stand between the model and your clusters. A change must
 pass all four, in order. The point of four layers is that each fails
 differently, so a gap in one is caught by the next.
 
-![The four guardrail layers](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/guardrails-flow.svg)
+![Two writes meet the same four gates: the privileged, unpinned one is refused at layer one and never reaches a cluster; the compliant one is signed by a person, applied and verified](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/gauntlet-dark.svg)
 
 ```mermaid
 flowchart TD
@@ -56,6 +56,8 @@ here too with no extra wiring. And you do not have to write them from scratch: t
 community library [kyverno/policies](https://github.com/kyverno/policies) and the
 searchable [Kyverno Policies catalog](https://kyverno.io/policies/) are a ready source
 of validation, Pod Security Standards, and best-practice policies to adopt or adapt.
+
+![A write is two calls with a person between them, and a replayed token is rejected](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/approval-dark.svg)
 
 ## Layer 3: human approval (content-bound)
 

@@ -5,7 +5,7 @@ commands live in the
 [deployment guide](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/docs/deployment.md);
 this page is the shape of the journey.
 
-![Three deployment paths](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/deploy-paths.svg)
+![Three deployment paths: a laptop fleet in about fifteen minutes, a hub you already run, and a production install](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/deploy-dark.svg)
 
 ## Path A: laptop fleet (about 15 minutes)
 
