@@ -1435,4 +1435,11 @@ figure { margin: 1.8em 0; }
   .evalcard__time { margin-left: 0; width: 100%; }
 }
 
-
+/* The hero art has an intrinsic 880px width; without this it forces the page wider than a phone.
+   The page carries its own light/dark switch on the root, which prefers-color-scheme cannot see,
+   so the two files are swapped on that attribute rather than by a picture media query. */
+.hero__art{display:block;width:100%;max-width:880px;height:auto;margin:clamp(20px,3vw,32px) auto 0}
+.hero__art img{display:block;width:100%;height:auto;border-radius:16px}
+.hero__art img.hero__art-light{display:none}
+[data-theme="light"] .hero__art img.hero__art-dark{display:none}
+[data-theme="light"] .hero__art img.hero__art-light{display:block}

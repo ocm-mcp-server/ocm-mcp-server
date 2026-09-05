@@ -109,13 +109,50 @@ def hero(name: str) -> str:
 </svg>'''
 
 
+def star_button(name: str) -> str:
+    """The star call to action. A cursor travels in, presses, and the star fills.
+
+    The press and the fill run off one clock so the star never lights before the click that causes
+    it, which is the detail that makes a looping animation read as cause and effect.
+    """
+    t, w, h = THEMES[name], 132, 34
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" role="img" aria-label="Star this repository on GitHub">
+  <style>
+    .mono{{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;font-weight:700}}
+    @keyframes cur{{0%{{transform:translate(34px,26px);opacity:0}}12%{{opacity:1}}30%,38%{{transform:translate(12px,13px)}}
+      44%{{transform:translate(12px,15px)}}58%{{transform:translate(12px,13px)}}80%{{transform:translate(12px,13px);opacity:1}}
+      92%,100%{{transform:translate(34px,26px);opacity:0}}}}
+    @keyframes press{{0%,38%,58%,100%{{transform:scale(1)}}46%{{transform:scale(.94)}}}}
+    @keyframes fill{{0%,44%{{fill:none;stroke-width:1.6}}52%,88%{{fill:#f5b301;stroke-width:0}}96%,100%{{fill:none;stroke-width:1.6}}}}
+    @keyframes pop{{0%,44%{{transform:scale(1)}}54%{{transform:scale(1.28)}}64%,100%{{transform:scale(1)}}}}
+    @keyframes tick{{0%,52%{{opacity:0}}62%,86%{{opacity:1}}94%,100%{{opacity:0}}}}
+    .btn{{animation:press 5s ease-in-out infinite;transform-origin:50% 50%}}
+    .star{{animation:fill 5s ease-in-out infinite,pop 5s ease-in-out infinite;transform-origin:center;transform-box:fill-box}}
+    .cur{{animation:cur 5s ease-in-out infinite}}
+    .n{{animation:tick 5s ease-in-out infinite}}
+    @media (prefers-reduced-motion:reduce){{*{{animation:none!important}}.star{{fill:#f5b301;stroke-width:0}}.n{{opacity:1}}}}
+  </style>
+  <g class="btn">
+    <rect x=".8" y=".8" width="{w - 1.6}" height="{h - 1.6}" rx="9" fill="{t['panel']}" stroke="{t['edge']}"/>
+    <path class="star" d="M20 8.2 l3.3 6.7 7.4 1.1 -5.35 5.2 1.26 7.35 -6.61-3.47 -6.61 3.47 1.26-7.35 -5.35-5.2 7.4-1.1 z"
+          fill="none" stroke="#f5b301" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="42" y="22" class="mono" fill="{t['ink']}">Star</text>
+    <g class="n"><rect x="{w - 42}" y="9" width="32" height="16" rx="5" fill="#f5b301" opacity=".16"/>
+      <text x="{w - 26}" y="21" text-anchor="middle" class="mono" fill="#d69a00">+1</text></g>
+  </g>
+  <g class="cur"><path d="M0 0 L0 13.5 L3.6 10.4 L6.1 15.6 L8.4 14.5 L5.9 9.4 L10.6 9.1 Z"
+     fill="{t['ink']}" stroke="{t['bg']}" stroke-width="1.1"/></g>
+</svg>"""
+
+
 def main() -> None:
     root = pathlib.Path(__file__).resolve().parent.parent
     out = root / "docs" / "assets" / "hero"
     out.mkdir(parents=True, exist_ok=True)
     for name in THEMES:
         (out / f"hero-{name}.svg").write_text(hero(name), encoding="utf-8")
-    print(f"wrote {len(THEMES)} animated files -> {out.relative_to(root)}")
+        (out / f"star-{name}.svg").write_text(star_button(name), encoding="utf-8")
+    print(f"wrote {2 * len(THEMES)} animated files -> {out.relative_to(root)}")
 
 
 if __name__ == "__main__":
