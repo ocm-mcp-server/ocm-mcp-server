@@ -1,7 +1,11 @@
 <!-- mcp-name: io.github.ocm-mcp-server/ocm-mcp-server -->
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/banner.svg" alt="ocm-mcp-server - AgentOps for Kubernetes fleets, done safely" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/hero-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/hero-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/hero-light.svg" alt="ocm-mcp-server: an agent's tool calls pass through a guardrailed control plane where reads are free, consequential writes need a human signature, and everything is recorded." width="880">
+</picture>
 
 # 🛡️ ocm-mcp-server
 

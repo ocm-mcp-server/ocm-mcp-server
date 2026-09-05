@@ -1,0 +1,77 @@
+{
+  "action": "",
+  "applied_uid": "107f0baa-96ed-497b-9e3e-0a0609b8a56e",
+  "applied_work": "storefront",
+  "approved_by": "sandeepbazar",
+  "cluster": "cluster2",
+  "content_hash": "0927e3131b73498368e5e731fe0f43f72487f4129d1098fe7d55f38afc833788",
+  "created_at": 1788061225.76047,
+  "id": "c5011733c1c64399850ebb90693a1045",
+  "kind": "manifestwork",
+  "manifests": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "app": "storefront"
+        },
+        "name": "storefront",
+        "namespace": "shop"
+      },
+      "spec": {
+        "replicas": 2,
+        "selector": {
+          "matchLabels": {
+            "app": "storefront"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "storefront"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "image": "nginx:1.27.4",
+                "name": "nginx",
+                "ports": [
+                  {
+                    "containerPort": 8080,
+                    "name": "http"
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  },
+                  "runAsNonRoot": true,
+                  "seccompProfile": {
+                    "type": "RuntimeDefault"
+                  }
+                }
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "name": "storefront",
+  "params": {},
+  "schema_version": 1,
+  "status": "applied",
+  "summary": "Deploy storefront Deployment in namespace shop with 2 replicas of nginx:1.27.4, non-root security context, privilege escalation disabled, and all capabilities dropped."
+}
