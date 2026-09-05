@@ -824,6 +824,21 @@ def hero(name: str) -> str:
         f'path="M280 {79 + i * 44} C 336 {79 + i * 44}, 368 142, 414 142"/></circle>'
         for i in range(len(CALLS)))
 
+    # Outbound: the shield is the middle of the journey, not the end of it. Each verdict gets
+    # the same treatment the inbound calls get - a dashed wire, a travelling packet, and an
+    # arrowhead at the panel - so the eye is carried from the call through the gate to where
+    # the call actually lands.
+    out_wires = ""
+    for i, (_, col, _) in enumerate(HERO_GATES):
+        y = 111 + i * 40
+        path = f"M492 142 C 528 142, 546 {y}, 578 {y}"
+        out_wires += (
+            f'<path class="wire" d="{path}" fill="none" stroke="{col}" stroke-width="1.5" '
+            f'opacity=".5" stroke-dasharray="4 6"/>'
+            f'<path d="M576 {y - 4} l6 4 -6 4z" fill="{col}" opacity=".75"/>'
+            f'<circle r="3" fill="{col}"><animateMotion dur="{2.6 + i * 0.4}s" '
+            f'repeatCount="indefinite" path="{path}"/></circle>')
+
     gates = "".join(f'''
     <g class="vrow v{i}">
       {panel(596, 96 + i * 40, 248, 30, t, 8)}
@@ -853,7 +868,7 @@ def hero(name: str) -> str:
   {eyebrow(24, 34, "AGENT · ASKS", t["dim"])}
   {eyebrow(392, 34, "GUARDRAILED", ACCENT)}
   {eyebrow(596, 34, "FLEET · SAFE", OK)}{rows}
-  {wires}
+  {wires}{out_wires}
   <g transform="translate(452 142)"><g class="bob">
     <circle class="ring" r="34" fill="none" stroke="{ACCENT}" stroke-width="2"/>
     <circle class="ring ring2" r="34" fill="none" stroke="{ACCENT}" stroke-width="2"/>
