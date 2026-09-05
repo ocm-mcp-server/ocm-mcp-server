@@ -2,9 +2,9 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/hero-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/hero-light.svg">
-  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/hero-light.svg" alt="ocm-mcp-server: an agent's tool calls pass through a guardrailed control plane where reads are free, consequential writes need a human signature, and everything is recorded." width="880">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/hero-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/hero-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/hero-light.svg" alt="ocm-mcp-server: an agent's tool calls pass through a guardrailed control plane where reads are free, consequential writes need a human signature, and everything is recorded." width="880">
 </picture>
 
 # 🛡️ ocm-mcp-server
@@ -13,9 +13,9 @@
 
 <p align="center">
   <strong>Star us&nbsp;❤️&nbsp;→</strong>&nbsp;<a href="https://github.com/ocm-mcp-server/ocm-mcp-server" title="Star ocm-mcp-server on GitHub"><picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/star-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/star-light.svg">
-    <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/star-light.svg" alt="Star this repository on GitHub" width="132" height="34" align="middle">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/star-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/star-light.svg">
+    <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/star-light.svg" alt="Star this repository on GitHub" width="132" height="34" align="middle">
   </picture></a>
 </p>
 
@@ -102,7 +102,25 @@ between the model and your clusters:
 None of these layers live in the system prompt, so none of them can be talked out of.
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/guardrails-flow.svg" alt="The four guardrail layers between an AI agent and your clusters" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/approval-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/approval-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/approval-light.svg" alt="A write is two calls with a person between them: propose returns a content hash, a human signs that exact hash on their own terminal with an Ed25519 key, apply spends the one-time token, and a replay of the same token is rejected." width="100%">
+</picture>
+
+<sub>A write is two calls with a person between them. The token is bound to one content hash and one operation, it expires on its own, and offered a second time it is refused.</sub>
+
+</div>
+
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/gauntlet-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/gauntlet-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/gauntlet-light.svg" alt="Two writes walk the same four gates: a privileged, unpinned request is refused at the first layer and never reaches a cluster, while a compliant one passes the static checks, Kyverno, a human Ed25519 signature and RBAC, and is applied and verified." width="100%">
+</picture>
+
+<sub>Two writes, the same four gates. The privileged, unpinned one dies at Layer&nbsp;1 and never reaches a cluster; the compliant one waits for a person to sign the exact content, then lands and is verified.</sub>
+
 </div>
 
 <div align="center">
@@ -318,13 +336,24 @@ hosted cluster, or a cloud cluster - because on the hub they are all `ManagedClu
 | **inventory** | ManagedClusters, ClusterSets, set bindings, ClusterClaims, ManagedClusterInfo | 6 | - |
 | **observability** | cluster health, one-call fleet sweep, events, pod logs | 4 | - |
 | **placement** | Placements, PlacementDecisions, AddOnPlacementScores | 3 | - |
-| **work** | ManifestWork status feedback + the gated deploy and rollback flow | 7 | gated |
+| **work** | ManifestWork status feedback + the gated deploy and rollback flow | 9 | gated |
 | **addons** | ClusterManagementAddOns, fleet + per-cluster add-on health | 3 | - |
 | **registration** | pending join CSRs + gated cluster lifecycle actions | 3 | gated |
 | **policy** | governance compliance + violations rollup (if the add-on is installed) | 2 | - |
 | **hosted-control-planes** | HyperShift HostedClusters and NodePools (when the hub hosts them) | 3 | - |
 | **resources** | generic get/list over an allow-list of OCM API types | 2 | - |
 | **audit** | pending proposals, this server's own audit trail | 2 | - |
+
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/toolsets-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/toolsets-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/toolsets-light.svg" alt="The whole surface: 37 tools across ten toolsets, of which only work and registration can change anything, and only through the propose, approve and apply gate. No tool reads Secrets, execs into a pod, or deletes what it did not create." width="100%">
+</picture>
+
+<sub>The whole surface at once. Eight toolsets cannot change anything at all; the two that can are the two wearing a lock.</sub>
+
+</div>
 
 Every read tool is annotated `readOnlyHint`; every write tool is annotated
 `destructiveHint` and enforced by the gate. Setting `OCM_MCP_READ_ONLY=1` turns off
@@ -335,7 +364,14 @@ the two writing toolsets entirely, for a strictly-inspection deployment.
 > nothing), so you can confirm exactly what the server sees before wiring up an agent.
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/read-write-paths.svg" alt="Reads are free; writes are gated by propose, approve, apply" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/paths-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/paths-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/paths-light.svg" alt="Reads and writes take different paths through the server: 31 read-only tools answer immediately and freely, while all 6 writing tools go through propose, a human approval, and a one-time-token apply." width="100%">
+</picture>
+
+<sub>The two lanes, to scale: a read answers straight away, a write crawls through propose, a human signature, and a one-time-token apply.</sub>
+
 </div>
 
 There is deliberately no tool that reads Secrets, execs into pods, or deletes
@@ -518,6 +554,17 @@ Every tool call produces up to three independent records, each with a different 
 | **OTel trace span** | opt-in | *where* time went; the call structure behind a slow or failed operation | any OTLP backend: Jaeger, OTel Collector, Grafana Tempo, ... |
 | **Prometheus metrics** | opt-in | *how often* and *how slow*, per tool and outcome, for dashboards/alerts | `GET /metrics` (`OCM_MCP_METRICS_PORT`, localhost by default). **This server's own counters only** - it does not scrape or proxy Prometheus on managed/HCP clusters; fleet state comes from the Kubernetes APIs |
 
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/audit-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/audit-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/audit-light.svg" alt="Every tool call leaves two records: a hash-chained audit line, where editing an earlier line visibly breaks the chain, and an optional OpenTelemetry span showing where the time went, with the approval token never attached." width="100%">
+</picture>
+
+<sub>The same call, recorded twice. Edit an earlier line and the chain says so; the spans, meanwhile, only ever answer where the time went.</sub>
+
+</div>
+
 **What the tracing is:** [OpenTelemetry](https://opentelemetry.io/) is the CNCF
 standard for distributed tracing; [Jaeger](https://www.jaegertracing.io/) is a CNCF
 trace viewer. When enabled, this server opens one span per tool call - named
@@ -554,7 +601,14 @@ and [architecture - observability](docs/architecture.md#6-observability---three-
 ## Quickstart (laptop, ~15 minutes)
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/deploy-paths.svg" alt="Three deployment paths: laptop, real fleet, production" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/deploy-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/deploy-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/deploy-light.svg" alt="Three deployment paths: a full OCM hub on a laptop in about fifteen minutes, the server pointed at a hub you already run, and a production install with a signed image, least-privilege RBAC, policies and telemetry." width="100%">
+</picture>
+
+<sub>Three ways in. Every row ends somewhere useful — nobody has to reach the third to get an answer out of the first.</sub>
+
 </div>
 
 Requirements: podman (or docker), [kind](https://kind.sigs.k8s.io/), kubectl,
@@ -661,6 +715,17 @@ adversarial bait before calling any tool, so the guardrails are never consulted 
 that was never presented would otherwise score identically to a bait that was blocked.
 Recovery misses concentrate on scenarios whose fix needs state the read surface
 deliberately withholds.
+
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/evaluation-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/evaluation-light.svg">
+  <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/evaluation-light.svg" alt="Published evaluation results for three agents on the same build and fleet: diagnosis and recovery vary by agent, while safety held on all 61 scenarios that reached the guardrails, with zero unsafe writes across 66 runs." width="100%">
+</picture>
+
+<sub>Diagnosis and recovery belong to the agent and are published unflattered. Safety is the axis this server is answerable for, and it is the full one.</sub>
+
+</div>
 
 Run it against your model of choice and publish your numbers, including the failures.
 The point is real data about what agents can and cannot yet be trusted to do.

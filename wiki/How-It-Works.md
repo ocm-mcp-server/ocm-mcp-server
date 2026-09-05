@@ -18,7 +18,7 @@ static guardrails, writes an audit line and a trace span for every call, and
 talks to the hub. The hub enforces Kyverno policy and RBAC. A human, on a
 separate trusted terminal, is the only source of approval tokens.
 
-![Reads are free; writes are gated](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/read-write-paths.svg)
+![Reads answer immediately and freely; writes go through propose, a human approval, and a one-time-token apply](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/paths-dark.svg)
 
 ## The read path (free)
 
@@ -92,6 +92,8 @@ one is covered by the others. Details in
   </video>
   <figcaption>A fleet operator's day, recorded live: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the day read back from the audit trail. The identical session is also recorded against <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-codex.gif">Codex</a> and <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-agy.gif">Gemini</a> - same server, same fleet, only the agent changes.</figcaption>
 </figure>
+
+![A write is two calls with a person between them, and a replayed token is rejected](https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/approval-dark.svg)
 
 ## Why approval is a token, not a chat "yes"
 

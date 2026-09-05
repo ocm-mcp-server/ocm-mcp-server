@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 356" role="img" aria-label="Reads and writes take different paths through the server: 31 read-only tools answer immediately and freely, while all 6 writing tools go through propose, a human approval, and a one-time-token apply.">
+  <style>
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .s{font-size:11px}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    .num{font-size:22px;font-weight:700}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+
+    @keyframes zip{0%{transform:translateX(0);opacity:0}4%{opacity:1}
+      34%{transform:translateX(880px);opacity:1}38%{transform:translateX(880px);opacity:0}
+      39%,100%{transform:translateX(0);opacity:0}}
+    @keyframes back{0%,38%{opacity:0;transform:translateX(880px)}42%{opacity:1}
+      62%{transform:translateX(0);opacity:1}66%,100%{transform:translateX(0);opacity:0}}
+    @keyframes crawl{0%,4%{transform:translateX(0);opacity:0}8%{opacity:1}
+      20%,30%{transform:translateX(306px)}42%,64%{transform:translateX(536px)}
+      76%,90%{transform:translateX(766px)}94%,100%{transform:translateX(912px);opacity:0}}
+    @keyframes hold{0%,44%{opacity:0}48%,62%{opacity:1}66%,100%{opacity:0}}
+    @keyframes done{0%,88%{opacity:0}92%,97%{opacity:1}99%,100%{opacity:0}}
+    .zip{animation:zip 11s cubic-bezier(.2,.9,.3,1) infinite}
+    .back{animation:back 11s cubic-bezier(.2,.9,.3,1) infinite}
+    .crawl{animation:crawl 11s ease-in-out infinite}
+    .hold{animation:hold 11s ease-in-out infinite}
+    .done{animation:done 11s ease-in-out infinite}
+    @media (prefers-reduced-motion:reduce){
+      .zip,.back{opacity:1;transform:translateX(440px)}
+      .crawl{opacity:1;transform:translateX(766px)}.done{opacity:1}.hold{opacity:0}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <rect width="1280" height="356" rx="18" fill="#0b1020"/>
+  <text x="32" y="42" text-anchor="start" class="mono cap" fill="#93a4c8">ONE SERVER · TWO KINDS OF CALL</text>
+  <text x="1248" y="42" text-anchor="end" class="mono cap" fill="#38bdf8">37 TOOLS · 31 OF THEM READ-ONLY</text>
+  <g><rect x="32" y="88" width="200" height="212" rx="12" fill="#121a30" stroke="#243154"/>
+    <text x="48" y="118" class="sans" font-size="15" font-weight="700" fill="#e8ecf8">ocm-mcp-server</text>
+    <text x="48" y="134" class="mono xs" fill="#93a4c8">holds the kubeconfig</text>
+    <line x1="48" y1="150" x2="216" y2="150" stroke="#243154"/>
+    <text x="48" y="180" class="mono num" fill="#22c55e">31</text>
+    <text x="78" y="180" class="mono xs" fill="#93a4c8">read tools</text>
+    <text x="48" y="196" class="mono xs" fill="#93a4c8">readOnlyHint · no gate</text>
+    <text x="48" y="238" class="mono num" fill="#38bdf8">6</text>
+    <text x="63" y="238" class="mono xs" fill="#93a4c8">write tools</text>
+    <text x="48" y="254" class="mono xs" fill="#93a4c8">3 propose · 3 apply</text>
+    <text x="48" y="284" class="mono xs" fill="#f43f5e">0 that read Secrets or exec</text>
+  </g>
+  <text x="300" y="70" text-anchor="start" class="mono cap" fill="#22c55e">READS · FREE, IMMEDIATE, THE WHOLE OCM API</text>
+  <g><rect x="300" y="88" width="140" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="370.0" y="100.6" text-anchor="middle" class="mono xs" fill="#22c55e">list_clusters</text></g><g><rect x="452" y="88" width="140" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="522.0" y="100.6" text-anchor="middle" class="mono xs" fill="#22c55e">get_fleet_status</text></g><g><rect x="604" y="88" width="140" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="674.0" y="100.6" text-anchor="middle" class="mono xs" fill="#22c55e">get_cluster_health</text></g><g><rect x="756" y="88" width="140" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="826.0" y="100.6" text-anchor="middle" class="mono xs" fill="#22c55e">list_placements</text></g>
+  <line class="wire" x1="240" y1="132" x2="1132" y2="132" stroke="#22c55e" stroke-width="1.5"
+        stroke-dasharray="4 6" opacity=".35"/>
+  <g class="zip"><circle cx="248" cy="132" r="6.5" fill="#22c55e"/></g>
+  <g class="back"><circle cx="248" cy="132" r="6.5" fill="#22c55e" fill-opacity=".35" stroke="#22c55e"/>
+    <text x="264" y="120" class="mono xs" fill="#22c55e">answer</text></g>
+  <g><polygon points="1164.0,115.0 1177.3,121.4 1180.6,135.8 1171.4,147.3 1156.6,147.3 1147.4,135.8 1150.7,121.4" fill="#22c55e" fill-opacity=".14" stroke="#22c55e" stroke-width="2.55" stroke-linejoin="round"/><line x1="1166.2" y1="127.4" x2="1169.8" y2="120.1" stroke="#22c55e" stroke-width="2.89" stroke-linecap="round"/><line x1="1169.0" y1="130.9" x2="1176.9" y2="129.0" stroke="#22c55e" stroke-width="2.89" stroke-linecap="round"/><line x1="1168.0" y1="135.2" x2="1174.4" y2="140.3" stroke="#22c55e" stroke-width="2.89" stroke-linecap="round"/><line x1="1164.0" y1="137.1" x2="1164.0" y2="145.3" stroke="#22c55e" stroke-width="2.89" stroke-linecap="round"/><line x1="1160.0" y1="135.2" x2="1153.6" y2="140.3" stroke="#22c55e" stroke-width="2.89" stroke-linecap="round"/><line x1="1159.0" y1="130.9" x2="1151.1" y2="129.0" stroke="#22c55e" stroke-width="2.89" stroke-linecap="round"/><line x1="1161.8" y1="127.4" x2="1158.2" y2="120.1" stroke="#22c55e" stroke-width="2.89" stroke-linecap="round"/><circle cx="1164" cy="132" r="4.1" fill="none" stroke="#22c55e" stroke-width="2.55"/></g>
+  <text x="300" y="170" text-anchor="start" class="mono cap" fill="#38bdf8">WRITES · TWO-PHASE, AND A PERSON IS IN IT</text>
+  <g><rect x="470" y="190" width="168" height="68" rx="10" fill="#121a30" stroke="#243154"/><rect x="470" y="190" width="3" height="68" rx="1.5" fill="#38bdf8"/><text x="485" y="212" class="sans" font-size="13" font-weight="700" fill="#38bdf8">propose</text><text x="485" y="230" class="mono xs" fill="#93a4c8">a proposal id and</text><text x="485" y="243" class="mono xs" fill="#93a4c8">a content hash</text><line x1="554" y1="258" x2="554" y2="278" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="3 4" opacity=".55"/></g><g><rect x="700" y="190" width="168" height="68" rx="10" fill="#121a30" stroke="#243154"/><rect x="700" y="190" width="3" height="68" rx="1.5" fill="#fb923c"/><text x="715" y="212" class="sans" font-size="13" font-weight="700" fill="#fb923c">approve</text><text x="715" y="230" class="mono xs" fill="#93a4c8">a person runs</text><text x="715" y="243" class="mono xs" fill="#93a4c8">ocm-mcp approve</text><line x1="784" y1="258" x2="784" y2="278" stroke="#fb923c" stroke-width="1.2" stroke-dasharray="3 4" opacity=".55"/></g><g><rect x="930" y="190" width="168" height="68" rx="10" fill="#121a30" stroke="#243154"/><rect x="930" y="190" width="3" height="68" rx="1.5" fill="#a78bfa"/><text x="945" y="212" class="sans" font-size="13" font-weight="700" fill="#a78bfa">apply</text><text x="945" y="230" class="mono xs" fill="#93a4c8">the token is spent,</text><text x="945" y="243" class="mono xs" fill="#93a4c8">once, and audited</text><line x1="1014" y1="258" x2="1014" y2="278" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="3 4" opacity=".55"/></g>
+  <line class="wire" x1="240" y1="278" x2="1132" y2="278" stroke="#38bdf8" stroke-width="1.5"
+        stroke-dasharray="4 6" opacity=".35"/>
+  <g class="crawl"><circle cx="248" cy="278" r="6.5" fill="#38bdf8"/></g>
+  <g class="hold"><g><rect x="646" y="298" width="363.6" height="18" rx="6" fill="#fb923c" fill-opacity=".16" stroke="#fb923c" stroke-opacity=".45"/><text x="827.8" y="310.6" text-anchor="middle" class="mono xs" fill="#fb923c">waiting on a human — nothing here times out into a yes</text></g></g>
+  <g><polygon points="1164.0,261.0 1177.3,267.4 1180.6,281.8 1171.4,293.3 1156.6,293.3 1147.4,281.8 1150.7,267.4" fill="#38bdf8" fill-opacity=".14" stroke="#38bdf8" stroke-width="2.55" stroke-linejoin="round"/><line x1="1166.2" y1="273.4" x2="1169.8" y2="266.1" stroke="#38bdf8" stroke-width="2.89" stroke-linecap="round"/><line x1="1169.0" y1="276.9" x2="1176.9" y2="275.0" stroke="#38bdf8" stroke-width="2.89" stroke-linecap="round"/><line x1="1168.0" y1="281.2" x2="1174.4" y2="286.3" stroke="#38bdf8" stroke-width="2.89" stroke-linecap="round"/><line x1="1164.0" y1="283.1" x2="1164.0" y2="291.3" stroke="#38bdf8" stroke-width="2.89" stroke-linecap="round"/><line x1="1160.0" y1="281.2" x2="1153.6" y2="286.3" stroke="#38bdf8" stroke-width="2.89" stroke-linecap="round"/><line x1="1159.0" y1="276.9" x2="1151.1" y2="275.0" stroke="#38bdf8" stroke-width="2.89" stroke-linecap="round"/><line x1="1161.8" y1="273.4" x2="1158.2" y2="266.1" stroke="#38bdf8" stroke-width="2.89" stroke-linecap="round"/><circle cx="1164" cy="278" r="4.1" fill="none" stroke="#38bdf8" stroke-width="2.55"/></g>
+  <g class="done"><g><circle cx="1184" cy="262" r="9" fill="#22c55e" fill-opacity=".18" stroke="#22c55e" stroke-width="1.4"/><path d="M1179.32 262 l3.7439999999999998 3.7439999999999998 l6.552 -7.4879999999999995" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+  <text x="32" y="338" class="mono xs" fill="#93a4c8">A capability that does not exist cannot be prompt-injected into use: Secrets, exec and arbitrary delete are absent from the allow-list, not merely discouraged.</text>
+</svg>

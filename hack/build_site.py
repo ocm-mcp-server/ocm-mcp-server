@@ -188,6 +188,28 @@ def make_markdown(resolve: Any) -> MarkdownIt:
     def table_close(tokens: list[Token], idx: int, options: Any, env: Any) -> str:
         return "</table></div>"
 
+    def image(tokens: list[Token], idx: int, options: Any, env: Any) -> str:
+        """Render the animated art as a theme-aware pair rather than a single file.
+
+        The panels in docs/assets/art come in a dark and a light cut. A markdown image can
+        only name one of them, and <picture> would follow the operating system - but this
+        site is dark by default for everyone and has its own toggle, so a light-OS visitor
+        would get light panels punched into a dark page. Naming the dark file in markdown
+        keeps GitHub's own rendering of these files sane; here it becomes both cuts, and the
+        stylesheet shows whichever matches the theme the reader actually chose.
+        """
+        tok = tokens[idx]
+        src = tok.attrGet("src") or ""
+        alt = tok.content
+        if "/assets/art/" not in src or not src.endswith("-dark.svg"):
+            return md.renderer.renderToken(tokens, idx, options, env)
+        light = src[: -len("-dark.svg")] + "-light.svg"
+        esc = html.escape(alt, quote=True)
+        return (f'<span class="art">'
+                f'<img class="art--dark" src="{src}" alt="{esc}" loading="lazy">'
+                f'<img class="art--light" src="{light}" alt="" aria-hidden="true" loading="lazy">'
+                f"</span>")
+
     def link_open(tokens: list[Token], idx: int, options: Any, env: Any) -> str:
         tok = tokens[idx]
         href = tok.attrGet("href") or ""
@@ -200,6 +222,7 @@ def make_markdown(resolve: Any) -> MarkdownIt:
     md.renderer.rules["table_open"] = table_open
     md.renderer.rules["table_close"] = table_close
     md.renderer.rules["link_open"] = link_open
+    md.renderer.rules["image"] = image
     return md
 
 

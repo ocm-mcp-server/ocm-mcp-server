@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 402" role="img" aria-label="The whole surface: 37 tools across ten toolsets, of which only work and registration can change anything, and only through the propose, approve and apply gate. No tool reads Secrets, execs into a pod, or deletes what it did not create.">
+  <style>
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .s{font-size:11px}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    .num{font-size:22px;font-weight:700}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+@keyframes t0{0%,0%{opacity:.42}4%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t1{0%,6%{opacity:.42}10%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t2{0%,12%{opacity:.42}16%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t3{0%,18%{opacity:.42}22%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t4{0%,24%{opacity:.42}28%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t5{0%,30%{opacity:.42}34%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t6{0%,36%{opacity:.42}40%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t7{0%,42%{opacity:.42}46%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t8{0%,48%{opacity:.42}52%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t9{0%,54%{opacity:.42}58%,92%{opacity:1}96%,100%{opacity:.42}}.t0{animation:t0 14s ease-in-out infinite}.t1{animation:t1 14s ease-in-out infinite}.t2{animation:t2 14s ease-in-out infinite}.t3{animation:t3 14s ease-in-out infinite}.t4{animation:t4 14s ease-in-out infinite}.t5{animation:t5 14s ease-in-out infinite}.t6{animation:t6 14s ease-in-out infinite}.t7{animation:t7 14s ease-in-out infinite}.t8{animation:t8 14s ease-in-out infinite}.t9{animation:t9 14s ease-in-out infinite}
+    .tile{opacity:.42}
+    .dot{animation:blip 2.6s ease-in-out infinite}
+    .d1{animation-delay:.3s}.d2{animation-delay:.6s}.d3{animation-delay:.9s}
+    @media (prefers-reduced-motion:reduce){.tile{opacity:1}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <rect width="1280" height="402" rx="18" fill="#fbfcff"/>
+  <text x="38" y="44" text-anchor="start" class="mono cap" fill="#38bdf8">37 TOOLS · TEN TOOLSETS · TWO OF THEM CAN CHANGE ANYTHING</text>
+  <text x="1242" y="44" text-anchor="end" class="mono cap" fill="#22c55e">OCM_MCP_READ_ONLY=1 REMOVES BOTH</text>
+  <text x="38" y="82" class="mono xs" fill="#5a6b8c">Every hub-level tool works for any managed spoke — standalone, HyperShift-hosted or cloud — because on the hub they are all ManagedClusters.</text>
+  
+  <g class="tile t0">
+    <rect x="38" y="106" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="38" y="106" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="54" y="132" class="sans" font-size="13" font-weight="700" fill="#0f1729">inventory</text>
+    <text x="54" y="150" class="mono xs" fill="#5a6b8c">clusters, sets, claims</text>
+    <text x="54" y="176" class="mono xs" fill="#22c55e">6 tools</text>
+    <circle class="dot d0" cx="54" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="67" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d2" cx="80" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d3" cx="93" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d0" cx="106" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="119" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <g class="tile t1">
+    <rect x="282" y="106" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="282" y="106" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="298" y="132" class="sans" font-size="13" font-weight="700" fill="#0f1729">observability</text>
+    <text x="298" y="150" class="mono xs" fill="#5a6b8c">health, events, logs</text>
+    <text x="298" y="176" class="mono xs" fill="#22c55e">4 tools</text>
+    <circle class="dot d0" cx="298" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="311" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d2" cx="324" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d3" cx="337" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <g class="tile t2">
+    <rect x="526" y="106" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="526" y="106" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="542" y="132" class="sans" font-size="13" font-weight="700" fill="#0f1729">placement</text>
+    <text x="542" y="150" class="mono xs" fill="#5a6b8c">placements, decisions</text>
+    <text x="542" y="176" class="mono xs" fill="#22c55e">3 tools</text>
+    <circle class="dot d0" cx="542" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="555" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d2" cx="568" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <g class="tile t3">
+    <rect x="770" y="106" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="770" y="106" width="228" height="3" rx="1.5" fill="#38bdf8" opacity=".85"/>
+    <text x="786" y="132" class="sans" font-size="13" font-weight="700" fill="#0f1729">work</text>
+    <text x="786" y="150" class="mono xs" fill="#5a6b8c">ManifestWork + deploys</text>
+    <text x="786" y="176" class="mono xs" fill="#38bdf8">9 tools</text>
+    <circle class="dot d0" cx="786" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d1" cx="799" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d2" cx="812" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d3" cx="825" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d0" cx="838" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d1" cx="851" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d2" cx="864" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d3" cx="877" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d0" cx="890" cy="190" r="4" fill="#38bdf8" fill-opacity=".85"/><g transform="translate(974 126) scale(1.05)"><path d="M-4 0 v-3.2a4 4 0 0 1 8 0V0" fill="none" stroke="#38bdf8" stroke-width="1.6"/><rect x="-5.4" y="0" width="10.8" height="7.6" rx="1.8" fill="#38bdf8"/></g><text x="974" y="148" text-anchor="middle" class="mono xs" fill="#38bdf8">gated</text>
+  </g>
+  <g class="tile t4">
+    <rect x="1014" y="106" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="1014" y="106" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="1030" y="132" class="sans" font-size="13" font-weight="700" fill="#0f1729">addons</text>
+    <text x="1030" y="150" class="mono xs" fill="#5a6b8c">add-on health</text>
+    <text x="1030" y="176" class="mono xs" fill="#22c55e">3 tools</text>
+    <circle class="dot d0" cx="1030" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="1043" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d2" cx="1056" cy="190" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <g class="tile t5">
+    <rect x="38" y="222" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="38" y="222" width="228" height="3" rx="1.5" fill="#38bdf8" opacity=".85"/>
+    <text x="54" y="248" class="sans" font-size="13" font-weight="700" fill="#0f1729">registration</text>
+    <text x="54" y="266" class="mono xs" fill="#5a6b8c">join CSRs + lifecycle</text>
+    <text x="54" y="292" class="mono xs" fill="#38bdf8">3 tools</text>
+    <circle class="dot d0" cx="54" cy="306" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d1" cx="67" cy="306" r="4" fill="#38bdf8" fill-opacity=".85"/><circle class="dot d2" cx="80" cy="306" r="4" fill="#38bdf8" fill-opacity=".85"/><g transform="translate(242 242) scale(1.05)"><path d="M-4 0 v-3.2a4 4 0 0 1 8 0V0" fill="none" stroke="#38bdf8" stroke-width="1.6"/><rect x="-5.4" y="0" width="10.8" height="7.6" rx="1.8" fill="#38bdf8"/></g><text x="242" y="264" text-anchor="middle" class="mono xs" fill="#38bdf8">gated</text>
+  </g>
+  <g class="tile t6">
+    <rect x="282" y="222" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="282" y="222" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="298" y="248" class="sans" font-size="13" font-weight="700" fill="#0f1729">policy</text>
+    <text x="298" y="266" class="mono xs" fill="#5a6b8c">compliance rollup</text>
+    <text x="298" y="292" class="mono xs" fill="#22c55e">2 tools</text>
+    <circle class="dot d0" cx="298" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="311" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <g class="tile t7">
+    <rect x="526" y="222" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="526" y="222" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="542" y="248" class="sans" font-size="13" font-weight="700" fill="#0f1729">hosted-control-planes</text>
+    <text x="542" y="266" class="mono xs" fill="#5a6b8c">HyperShift, NodePools</text>
+    <text x="542" y="292" class="mono xs" fill="#22c55e">3 tools</text>
+    <circle class="dot d0" cx="542" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="555" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d2" cx="568" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <g class="tile t8">
+    <rect x="770" y="222" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="770" y="222" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="786" y="248" class="sans" font-size="13" font-weight="700" fill="#0f1729">resources</text>
+    <text x="786" y="266" class="mono xs" fill="#5a6b8c">allow-listed get/list</text>
+    <text x="786" y="292" class="mono xs" fill="#22c55e">2 tools</text>
+    <circle class="dot d0" cx="786" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="799" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <g class="tile t9">
+    <rect x="1014" y="222" width="228" height="100" rx="11" fill="#ffffff" stroke="#dfe6f5"/>
+    <rect x="1014" y="222" width="228" height="3" rx="1.5" fill="#22c55e" opacity=".85"/>
+    <text x="1030" y="248" class="sans" font-size="13" font-weight="700" fill="#0f1729">audit</text>
+    <text x="1030" y="266" class="mono xs" fill="#5a6b8c">proposals, this server's log</text>
+    <text x="1030" y="292" class="mono xs" fill="#22c55e">2 tools</text>
+    <circle class="dot d0" cx="1030" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/><circle class="dot d1" cx="1043" cy="306" r="4" fill="#22c55e" fill-opacity=".85"/>
+  </g>
+  <line x1="38" y1="352" x2="1242" y2="352" stroke="#dfe6f5"/>
+  <text x="38" y="372" class="mono xs" fill="#f43f5e">NOTHING HERE CAN:</text>
+  <g><text x="330" y="372" class="mono xs" fill="#5a6b8c" text-decoration="line-through">read a Secret</text></g><g><text x="562" y="372" class="mono xs" fill="#5a6b8c" text-decoration="line-through">exec into a pod</text></g><g><text x="794" y="372" class="mono xs" fill="#5a6b8c" text-decoration="line-through">delete anything it did not create</text></g><g><text x="1026" y="372" class="mono xs" fill="#5a6b8c" text-decoration="line-through">talk to a cluster directly</text></g>
+</svg>

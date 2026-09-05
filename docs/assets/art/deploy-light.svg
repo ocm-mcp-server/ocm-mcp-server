@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 316" role="img" aria-label="Three deployment paths: a full OCM hub on a laptop in about fifteen minutes, the server pointed at a hub you already run, and a production install with a signed image, least-privilege RBAC, policies and telemetry.">
+  <style>
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .s{font-size:11px}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    .num{font-size:22px;font-weight:700}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+
+    @keyframes travel{0%,6%{transform:translateX(0);opacity:0}10%{opacity:1}
+      26%,32%{transform:translateX(270px)}48%,54%{transform:translateX(540px)}
+      70%,88%{transform:translateX(810px)}94%,100%{transform:translateX(810px);opacity:0}}
+    .run{animation:travel 10s ease-in-out infinite}
+    .g1{animation-delay:.8s}.g2{animation-delay:1.6s}
+    @media (prefers-reduced-motion:reduce){.run{opacity:1;transform:translateX(810px)}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <rect width="1280" height="316" rx="18" fill="#fbfcff"/>
+  <text x="40" y="44" text-anchor="start" class="mono cap" fill="#38bdf8">THREE WAYS IN · PICK THE ONE THAT MATCHES YOUR APPETITE</text>
+  <text x="1240" y="44" text-anchor="end" class="mono cap" fill="#5a6b8c">THE FIRST ONE NEEDS NO CLUSTER YOU DO NOT ALREADY HAVE</text>
+  <text x="40" y="78" class="mono xs" fill="#5a6b8c">Every row ends somewhere useful. Nobody has to reach the third to get an answer out of the first.</text>
+  
+  <g>
+    <text x="40" y="116" class="sans" font-size="14" font-weight="700" fill="#0f1729">on a laptop</text>
+    <text x="40" y="133" class="mono xs" fill="#22c55e">~15 minutes</text>
+    <line class="wire" x1="292" y1="118" x2="1118" y2="118" stroke="#22c55e" stroke-width="1.4"
+          stroke-dasharray="4 6" opacity=".4"/>
+    <circle cx="300" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="294" y="104" class="mono xs" fill="#5a6b8c">kind + podman</text><circle cx="570" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="564" y="104" class="mono xs" fill="#5a6b8c">make bootstrap</text><circle cx="840" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="834" y="104" class="mono xs" fill="#5a6b8c">a real OCM hub</text><circle cx="1110" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="1104" y="104" class="mono xs" fill="#5a6b8c">two spokes, Kyverno</text>
+    <g class="run g0"><circle cx="300" cy="118" r="6.5" fill="#22c55e"/></g>
+  </g>
+  <g>
+    <text x="40" y="186" class="sans" font-size="14" font-weight="700" fill="#0f1729">against your own hub</text>
+    <text x="40" y="203" class="mono xs" fill="#38bdf8">minutes</text>
+    <line class="wire" x1="292" y1="188" x2="1118" y2="188" stroke="#38bdf8" stroke-width="1.4"
+          stroke-dasharray="4 6" opacity=".4"/>
+    <circle cx="300" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="294" y="174" class="mono xs" fill="#5a6b8c">pip install</text><circle cx="570" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="564" y="174" class="mono xs" fill="#5a6b8c">point at a context</text><circle cx="840" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="834" y="174" class="mono xs" fill="#5a6b8c">ocm-mcp doctor</text><circle cx="1110" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="1104" y="174" class="mono xs" fill="#5a6b8c">reads only, first</text>
+    <g class="run g1"><circle cx="300" cy="188" r="6.5" fill="#38bdf8"/></g>
+  </g>
+  <g>
+    <text x="40" y="256" class="sans" font-size="14" font-weight="700" fill="#0f1729">in production</text>
+    <text x="40" y="273" class="mono xs" fill="#a78bfa">the deployment guide</text>
+    <line class="wire" x1="292" y1="258" x2="1118" y2="258" stroke="#a78bfa" stroke-width="1.4"
+          stroke-dasharray="4 6" opacity=".4"/>
+    <circle cx="300" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="294" y="244" class="mono xs" fill="#5a6b8c">signed image</text><circle cx="570" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="564" y="244" class="mono xs" fill="#5a6b8c">least-privilege RBAC</text><circle cx="840" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="834" y="244" class="mono xs" fill="#5a6b8c">policies + approver key</text><circle cx="1110" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="1104" y="244" class="mono xs" fill="#5a6b8c">OTLP + metrics</text>
+    <g class="run g2"><circle cx="300" cy="258" r="6.5" fill="#a78bfa"/></g>
+  </g>
+  <line x1="40" y1="292" x2="1240" y2="292" stroke="#dfe6f5" opacity=".7"/>
+</svg>
