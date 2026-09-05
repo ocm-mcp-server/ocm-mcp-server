@@ -16,8 +16,8 @@ from __future__ import annotations
 import pathlib
 
 THEMES = {
-    "dark": dict(bg="#0b1020", panel="#121a30", edge="#243154", ink="#e8ecf8", dim="#93a4c8"),
-    "light": dict(bg="#fbfcff", panel="#ffffff", edge="#dfe6f5", ink="#0f1729", dim="#5a6b8c"),
+    "dark": {"bg": "#0b1020", "panel": "#121a30", "edge": "#243154", "ink": "#e8ecf8", "dim": "#93a4c8"},
+    "light": {"bg": "#fbfcff", "panel": "#ffffff", "edge": "#dfe6f5", "ink": "#0f1729", "dim": "#5a6b8c"},
 }
 ACCENT, OK, VIOLET = "#38bdf8", "#22c55e", "#a78bfa"
 
