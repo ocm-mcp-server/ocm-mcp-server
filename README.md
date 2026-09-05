@@ -11,6 +11,14 @@
 
 ### **[📖 Read the docs site → ocm-mcp-server.github.io](https://ocm-mcp-server.github.io/)**
 
+<p align="center">
+  <strong>Star us&nbsp;❤️&nbsp;→</strong>&nbsp;<a href="https://github.com/ocm-mcp-server/ocm-mcp-server" title="Star ocm-mcp-server on GitHub"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/star-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/star-light.svg">
+    <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/hero/star-light.svg" alt="Star this repository on GitHub" width="132" height="34" align="middle">
+  </picture></a>
+</p>
+
 ### AgentOps for Kubernetes fleets, done safely.
 
 **An MCP server that lets AI agents operate a multi-cluster Kubernetes fleet through an

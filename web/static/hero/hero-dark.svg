@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 284" role="img" aria-label="ocm-mcp-server: an agent's tool calls pass through a guardrailed control plane where reads are free, consequential writes need a human signature, and everything is recorded.">
+  <style>
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .sans{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .b{font-size:12px;font-weight:700}.xs{font-size:9.5px;letter-spacing:.06em}
+    .num{font-size:22px;font-weight:700}.cap{font-size:10px;font-weight:700;letter-spacing:.18em}
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes ring{0%{opacity:.65;transform:scale(.74)}70%,100%{opacity:0;transform:scale(1.28)}}
+    @keyframes shut{0%,42%{transform:translateY(-7px)}54%,100%{transform:translateY(0)}}
+    @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+    @keyframes dash{to{stroke-dashoffset:-40}}
+    @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
+    @keyframes blip{0%,100%{opacity:.25;r:3}50%{opacity:1;r:5}}
+    .bob{animation:bob 3.6s ease-in-out infinite}
+    .ring{animation:ring 2.8s ease-out infinite;transform-origin:0 0}.ring2{animation-delay:1.4s}
+    .shackle{animation:shut 4.2s ease-in-out infinite}
+    .wire{animation:dash 1.6s linear infinite}
+    .glow{animation:glow 4s ease-in-out infinite}
+    .dot{animation:blip 2.2s ease-in-out infinite}
+    .d1{animation-delay:.3s}.d2{animation-delay:.6s}.d3{animation-delay:.9s}
+    .vrow{animation:pulse 4.2s ease-in-out infinite}.v1{animation-delay:1.4s}.v2{animation-delay:2.8s}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <defs><radialGradient id="g-dark">
+    <stop offset="0%" stop-color="#38bdf8" stop-opacity=".38"/>
+    <stop offset="55%" stop-color="#38bdf8" stop-opacity=".12"/>
+    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/></radialGradient></defs>
+  <rect width="880" height="284" rx="18" fill="#0b1020"/>
+  <circle class="glow" cx="452" cy="142" r="128" fill="url(#g-dark)"/>
+  <text x="24" y="34" class="mono cap" fill="#93a4c8">AGENT · ASKS</text>
+  <text x="392" y="34" class="mono cap" fill="#38bdf8">GUARDRAILED</text>
+  <text x="596" y="34" class="mono cap" fill="#22c55e">FLEET · SAFE</text>
+    <g class="row">
+      <rect x="24" y="62" width="252" height="34" rx="9" fill="#121a30" stroke="#243154"/>
+      <rect x="24" y="62" width="3.5" height="34" rx="2" fill="#22c55e"/>
+      <text x="38" y="76" class="mono b" fill="#e8ecf8">list_clusters</text>
+      <text x="38" y="89" class="mono xs" fill="#22c55e">read · free</text>
+      <circle class="dot d0" cx="262" cy="79" r="4" fill="#22c55e"/>
+    </g>
+    <g class="row">
+      <rect x="24" y="106" width="252" height="34" rx="9" fill="#121a30" stroke="#243154"/>
+      <rect x="24" y="106" width="3.5" height="34" rx="2" fill="#22c55e"/>
+      <text x="38" y="120" class="mono b" fill="#e8ecf8">get_fleet_status</text>
+      <text x="38" y="133" class="mono xs" fill="#22c55e">read · free</text>
+      <circle class="dot d1" cx="262" cy="123" r="4" fill="#22c55e"/>
+    </g>
+    <g class="row">
+      <rect x="24" y="150" width="252" height="34" rx="9" fill="#121a30" stroke="#243154"/>
+      <rect x="24" y="150" width="3.5" height="34" rx="2" fill="#38bdf8"/>
+      <text x="38" y="164" class="mono b" fill="#e8ecf8">apply_manifestwork</text>
+      <text x="38" y="177" class="mono xs" fill="#38bdf8">write · needs a signature</text>
+      <circle class="dot d2" cx="262" cy="167" r="4" fill="#38bdf8"/>
+    </g>
+    <g class="row">
+      <rect x="24" y="194" width="252" height="34" rx="9" fill="#121a30" stroke="#243154"/>
+      <rect x="24" y="194" width="3.5" height="34" rx="2" fill="#38bdf8"/>
+      <text x="38" y="208" class="mono b" fill="#e8ecf8">delete_namespace</text>
+      <text x="38" y="221" class="mono xs" fill="#38bdf8">write · needs a signature</text>
+      <circle class="dot d3" cx="262" cy="211" r="4" fill="#38bdf8"/>
+    </g>
+  <path class="wire" d="M280 79 C 336 79, 368 142, 414 142" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".45" stroke-dasharray="4 6"/><circle r="3.2" fill="#38bdf8"><animateMotion dur="2.4s" repeatCount="indefinite" path="M280 79 C 336 79, 368 142, 414 142"/></circle><path class="wire" d="M280 123 C 336 123, 368 142, 414 142" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".45" stroke-dasharray="4 6"/><circle r="3.2" fill="#38bdf8"><animateMotion dur="2.75s" repeatCount="indefinite" path="M280 123 C 336 123, 368 142, 414 142"/></circle><path class="wire" d="M280 167 C 336 167, 368 142, 414 142" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".45" stroke-dasharray="4 6"/><circle r="3.2" fill="#38bdf8"><animateMotion dur="3.0999999999999996s" repeatCount="indefinite" path="M280 167 C 336 167, 368 142, 414 142"/></circle><path class="wire" d="M280 211 C 336 211, 368 142, 414 142" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".45" stroke-dasharray="4 6"/><circle r="3.2" fill="#38bdf8"><animateMotion dur="3.4499999999999997s" repeatCount="indefinite" path="M280 211 C 336 211, 368 142, 414 142"/></circle>
+  <g transform="translate(452 142)"><g class="bob">
+    <circle class="ring" r="34" fill="none" stroke="#38bdf8" stroke-width="2"/>
+    <circle class="ring ring2" r="34" fill="none" stroke="#38bdf8" stroke-width="2"/>
+    <path d="M0 -34 L30 -22 V4 C30 22 16 32 0 38 C-16 32 -30 22 -30 4 V-22 Z" fill="#38bdf8"
+          fill-opacity=".16" stroke="#38bdf8" stroke-width="2.4" stroke-linejoin="round"/>
+    <g class="shackle"><path d="M-9 2 v-7 a9 9 0 0 1 18 0 v7" fill="none" stroke="#e8ecf8"
+       stroke-width="2.4" stroke-linecap="round" opacity=".85"/></g>
+    <rect x="-11" y="2" width="22" height="16" rx="3.5" fill="#e8ecf8" opacity=".85"/>
+  </g></g>
+  <text x="452" y="208" text-anchor="middle" class="sans" font-size="15" font-weight="700" fill="#e8ecf8">ocm-mcp-server</text>
+  <text x="452" y="224" text-anchor="middle" class="mono xs" fill="#93a4c8">READS ARE FREE · WRITES NEED A SIGNATURE</text>
+  <rect x="584" y="80" width="272" height="132" rx="12" fill="none" stroke="#243154" opacity=".7"/>
+    <g class="vrow v0">
+      <rect x="596" y="96" width="248" height="30" rx="8" fill="#121a30" stroke="#243154"/>
+      <circle cx="614" cy="111" r="4.5" fill="#22c55e"/>
+      <text x="628" y="115" class="mono b" fill="#22c55e">READ</text>
+      <text x="674" y="115" class="mono xs" fill="#93a4c8">allowed, always</text>
+    </g>
+    <g class="vrow v1">
+      <rect x="596" y="136" width="248" height="30" rx="8" fill="#121a30" stroke="#243154"/>
+      <circle cx="614" cy="151" r="4.5" fill="#38bdf8"/>
+      <text x="628" y="155" class="mono b" fill="#38bdf8">WRITE</text>
+      <text x="682" y="155" class="mono xs" fill="#93a4c8">two-phase, signed</text>
+    </g>
+    <g class="vrow v2">
+      <rect x="596" y="176" width="248" height="30" rx="8" fill="#121a30" stroke="#243154"/>
+      <circle cx="614" cy="191" r="4.5" fill="#a78bfa"/>
+      <text x="628" y="195" class="mono b" fill="#a78bfa">AUDIT</text>
+      <text x="682" y="195" class="mono xs" fill="#93a4c8">tamper-evident</text>
+    </g>
+  <text x="596" y="242" class="mono xs" fill="#93a4c8">ADVERSARIAL SCENARIO RUNS</text>
+  <text x="596" y="266" class="mono num" fill="#e8ecf8">44</text>
+  <text x="626" y="266" class="mono xs" fill="#93a4c8">runs</text>
+  <text x="672" y="266" class="mono num" fill="#22c55e">0</text>
+  <text x="690" y="266" class="mono xs" fill="#93a4c8">unsafe writes</text>
+</svg>
