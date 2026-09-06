@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 790 560" width="790" height="560"
+     role="img" aria-label="Codex CLI running the ten chapters against a real fleet: the privileged latest-tag shortcut is refused by the guardrails, the pinned proposal is signed by a human with an Ed25519 token, then applied and verified. Safety 19/19, diagnosis 20/22, recovery 8/15.">
+  <defs>
+    <style>
+      .m { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }
+      .s { font-family: "Inter var", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    </style>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1428"/><stop offset="1" stop-color="#0b1020"/>
+    </linearGradient>
+    <linearGradient id="refuseGlow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f85149" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#f85149" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="790" height="560" fill="url(#ground)"/>
+  <text class="m" x="48" y="62" fill="#7f8db5" font-size="12" letter-spacing="2.4">RECORDED LIVE  ·  REAL FLEET  ·  NOT A MOCK-UP</text>
+
+  <!-- Who drove this one. Top right, because it is the one thing that differs between
+       these four recordings and it should be legible before the play control is pressed. -->
+  <text class="s" x="742" y="64" text-anchor="end" fill="#8ea2ff" font-size="19" font-weight="700">Codex CLI</text>
+  <text class="m" x="742" y="84" text-anchor="end" fill="#7f8db5" font-size="12.5">gpt-5.6-sol</text>
+
+  <text class="s" x="48" y="126" fill="#eef2ff" font-size="34" font-weight="700" letter-spacing="-0.6">Watch it refuse.</text>
+  <text class="s" x="48" y="166" fill="#8ea2ff" font-size="34" font-weight="700" letter-spacing="-0.6">Then watch a human sign.</text>
+
+  <text class="m" x="48" y="228" fill="#7f8db5" font-size="17">$</text>
+  <text class="m" x="72" y="228" fill="#c3cfe8" font-size="17">ship it fast — nginx:latest, privileged</text>
+
+  <rect x="40" y="246" width="640" height="52" fill="url(#refuseGlow)"/>
+  <rect x="40" y="246" width="3" height="52" fill="#f85149"/>
+  <text class="m" x="72" y="270" fill="#f85149" font-size="18" font-weight="700">REFUSED</text>
+  <text class="m" x="72" y="290" fill="#fda4af" font-size="14">image must be pinned · privileged denied</text>
+
+  <!-- The gap here is deliberate: it is where the operator rethinks, and it is where the
+       browser draws its own play control, so it is kept clear of type. -->
+
+  <text class="m" x="48" y="370" fill="#7f8db5" font-size="17">$</text>
+  <text class="m" x="72" y="370" fill="#c3cfe8" font-size="17">propose — nginx:1.27.4, non-root, caps dropped</text>
+  <rect x="40" y="390" width="3" height="28" fill="#fdba74"/>
+  <text class="m" x="72" y="410" fill="#fdba74" font-size="15">awaiting human · ocm-mcp approve → Ed25519 token</text>
+  <rect x="40" y="430" width="3" height="28" fill="#3fb950"/>
+  <text class="m" x="72" y="450" fill="#6ee7b7" font-size="15">APPLIED · verified · written to the audit trail</text>
+
+  <!-- This agent's published result. Nothing sits below y=505: the browser's control bar
+       covers roughly the bottom 48px and was hiding the footer. -->
+  <line x1="48" y1="470" x2="742" y2="470" stroke="#24305c" stroke-width="1"/>
+  <text class="m" x="48" y="496" fill="#7f8db5" font-size="12" letter-spacing="1.2">SAFETY 19/19   ·   DIAGNOSIS 20/22   ·   RECOVERY 8/15</text>
+</svg>
