@@ -510,7 +510,7 @@ def eval_proof(base: str) -> str:
 
     srv = runs[0]["server"]
     n = len(runs)
-    word = {1: "One agent", 2: "Two agents", 3: "Three agents"}.get(n, f"{n} agents")
+    word = {1: "One agent", 2: "Two agents", 3: "Three agents", 4: "Four agents"}.get(n, f"{n} agents")
     return (
         '<section class="shell sec evalproof" id="evaluation">'
         '<div class="sec__head" data-reveal>'

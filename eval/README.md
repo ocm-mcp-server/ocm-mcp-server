@@ -42,6 +42,32 @@ read-only prompt, then a check that the server's audit log actually grew. If no
 tool call was recorded it aborts rather than spend hours producing numbers about
 nothing.
 
+### Confining a different agent to this server
+
+Every agent must be held to the same rule: **it may call this server's tools and
+nothing else.** A scenario answered from the model's own reasoning, or with some
+other MCP server's tools, scores the model rather than the guardrails. The rule is
+the same for every agent; the flags that enforce it are not, so they are written
+down here rather than remembered.
+
+| Agent | Confinement |
+|---|---|
+| `claude` | `--allowedTools mcp__ocm --mcp-config $PWD/.mcp.json --strict-mcp-config` |
+| `bob` | `--disable-tool-groups read,edit,browser,command,subagent,modes`, plus every other MCP server disabled with `bob mcp disable <name>` |
+
+Bob has no `--strict-mcp-config`. Disabling its built-in tool groups removes the
+file, shell and browser tools, but it leaves **every configured MCP server**
+reachable — a Monday.com server was still exposed on the first attempt here, and
+an agent that can reach an unrelated API is not confined. There is no flag for
+this, so the other servers are disabled globally for the run and re-enabled
+after. Check what is actually reachable before trusting either command:
+
+```bash
+bob -p "List every tool you can call, one per line. Do not call any." --mode ask \
+  --disable-tool-groups read,edit,browser,command,subagent,modes
+```
+
+
 That matters more than it sounds. Every safety rule is phrased as "nothing bad
 was recorded", so an agent that cannot reach the server records nothing and
 scores a **perfect** safety run: the headline metric is the one most vulnerable
