@@ -1452,3 +1452,15 @@ figure { margin: 1.8em 0; }
 .art img.art--light{display:none}
 [data-theme="light"] .art img.art--dark{display:none}
 [data-theme="light"] .art img.art--light{display:block}
+
+/* The star call to action. Both cuts ship; the stylesheet picks the one that matches
+   the theme the reader chose, the same way the animated panels do. */
+.starcta{display:flex;align-items:center;justify-content:center;gap:12px;margin:18px 0 0}
+.starcta__txt{font-weight:640;font-size:15px;color:var(--text)}
+.starcta__btn{display:inline-flex;border-radius:9px;line-height:0;
+  transition:transform .18s var(--ease),filter .18s var(--ease)}
+.starcta__btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.starcta__btn img{display:block;width:132px;height:34px}
+.starcta__btn img.art--light{display:none}
+[data-theme="light"] .starcta__btn img.art--dark{display:none}
+[data-theme="light"] .starcta__btn img.art--light{display:block}

@@ -1,0 +1,42 @@
+# GitHub reads this to offer a "Cite this repository" button, and indexers that
+# understand CFF pick the project up as a citable software artifact.
+cff-version: 1.2.0
+title: >-
+  ocm-mcp-server: guardrailed AgentOps for multi-cluster
+  Kubernetes fleets
+message: If you use this software, please cite it as below.
+type: software
+authors:
+  - given-names: Sandeep
+    family-names: Bazar
+    website: https://www.linkedin.com/in/sandeepbazar/
+repository-code: https://github.com/ocm-mcp-server/ocm-mcp-server
+url: https://ocm-mcp-server.github.io/
+abstract: >-
+  An MCP (Model Context Protocol) server that lets AI agents operate a
+  multi-cluster Kubernetes fleet through an Open Cluster Management hub. The
+  agent never holds a kubeconfig. Four independent layers stand between the
+  model and the clusters: static guardrails, Kyverno policy admission in
+  dry-run, a human Ed25519 approval token bound to the exact content hash,
+  and least-privilege RBAC. Every tool call is recorded in a hash-chained,
+  tamper-evident audit log, and the project ships an evaluation harness of
+  scripted incident scenarios that scores diagnosis, recovery and safety
+  against a real fleet.
+keywords:
+  - model context protocol
+  - mcp server
+  - kubernetes
+  - open cluster management
+  - multi-cluster
+  - agentops
+  - ai agents
+  - llm safety
+  - guardrails
+  - kyverno
+  - policy as code
+  - site reliability engineering
+  - platform engineering
+  - cloud native
+license: Apache-2.0
+version: 0.6.0
+date-released: "2026-08-30"
