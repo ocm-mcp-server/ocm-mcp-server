@@ -29,7 +29,12 @@
    separate OS account or device via `OCM_MCP_SIGNER_KEY`. Co-located under one
    `OCM_MCP_HOME`, signer isolation is a filesystem convention, not an enforced
    boundary; treat off-box signing (or a chat-ops/ticket signer) as required for
-   that guarantee. An apply token cannot authorize a rollback; rollback needs its
+   that guarantee. Set **`OCM_MCP_STRICT=1`** and the convention becomes a
+   precondition: the server refuses to start while the private key is readable
+   beside it, or while `OCM_MCP_ISSUER`/`OCM_MCP_AUDIENCE` are left at their
+   defaults. Serving tools that look gated and are not is worse than not serving
+   them, and the warning these replace went to a stderr stream that an MCP client
+   usually swallows. An apply token cannot authorize a rollback; rollback needs its
    own proposal and token.
 4. **RBAC** (`deploy/rbac.yaml`) - the server's own identity can read the OCM API
    and create/delete ManifestWorks and manage add-ons. RBAC cannot scope this to
