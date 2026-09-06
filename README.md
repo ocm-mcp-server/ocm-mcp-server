@@ -651,6 +651,7 @@ ready-to-paste values at the end).
 | `OCM_MCP_MAX_PROPOSAL_BYTES` | no | Reject a proposal larger than this many bytes. Default `262144` (256 KiB). |
 | `OCM_MCP_MAX_HPA_REPLICAS` | no | Reject a HorizontalPodAutoscaler whose `maxReplicas` exceeds this. Default `100`. |
 | `OCM_MCP_READ_ONLY` | no | Set to `1`/`true` for a strictly-inspection deployment: every propose/apply tool refuses, a coarse backstop under the token gate. Default off. |
+| `OCM_MCP_STRICT` | no | Set to `1`/`true` to make the deployment preconditions layer&nbsp;3 rests on a **startup failure** rather than a stderr warning: a signer private key readable next to the server, or `OCM_MCP_ISSUER`/`OCM_MCP_AUDIENCE` left at their defaults. Recommended in production. Default off, so a laptop bootstrap still works with one shared home. |
 | `OCM_MCP_CLIENT_TTL` | no | Seconds before the cached Kubernetes API client is rebuilt, so rotated/refreshed credentials are picked up. Default `600`. |
 | `OCM_MCP_FANOUT_WORKERS` | no | Concurrent spoke scans during `get_fleet_health`. Default `8` (floor `1`). |
 | `OCM_MCP_SPOKE_TIMEOUT` | no | Read timeout (seconds) for spoke health/event/log calls, so one large cluster cannot hang a tool. Default `30`. |

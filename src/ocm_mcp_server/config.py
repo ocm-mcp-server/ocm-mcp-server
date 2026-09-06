@@ -255,6 +255,14 @@ class Settings:
             os.environ.get("OCM_MCP_READ_ONLY", "").strip().lower() in ("1", "true", "yes", "on")
         )
     )
+    # When truthy (OCM_MCP_STRICT=1/true/yes), the deployment preconditions that layer 3
+    # actually rests on stop being advice and become a refusal to start. Off by default so
+    # `make bootstrap` on a laptop still works with the CLI and server sharing one home.
+    strict: bool = field(
+        default_factory=lambda: (
+            os.environ.get("OCM_MCP_STRICT", "").strip().lower() in ("1", "true", "yes", "on")
+        )
+    )
     # When truthy (OCM_MCP_AUDIT_ECHO=1), each audit line is also written to STDERR as JSON,
     # so a container log collector can forward the audit stream to a SIEM/object store.
     # (stdout is reserved for the MCP protocol, so the echo goes to stderr.)

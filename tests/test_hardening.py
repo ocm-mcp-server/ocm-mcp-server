@@ -5,7 +5,7 @@
 
 import pytest
 
-from ocm_mcp_server import approvals, guardrails
+from ocm_mcp_server import approvals, guardrails, server
 from ocm_mcp_server.config import SETTINGS
 
 MANIFEST = {
@@ -335,3 +335,66 @@ def test_token_ledger_appends_then_stays_bounded(tmp_home):
         with pytest.raises(approvals.ApprovalError, match="already been used"):
             approvals.verify_token(p, t, operation="apply", consume=True)
     assert len(SETTINGS.used_tokens_path.read_text().strip().splitlines()) == 5
+
+
+# --------------------------------------------------------- deployment preconditions
+
+
+def _no_problems(monkeypatch, tmp_home):
+    """A deployment whose layer-3 promises hold: signer off-box, ids deployment-specific."""
+    monkeypatch.setattr(SETTINGS, "issuer", "acme-hub")
+    monkeypatch.setattr(SETTINGS, "audience", "acme-ocm-mcp")
+    SETTINGS.approval_private_key_path.unlink(missing_ok=True)
+
+
+def test_deployment_warnings_clean_when_promises_hold(tmp_home, monkeypatch):
+    _no_problems(monkeypatch, tmp_home)
+    assert server.deployment_warnings() == []
+
+
+def test_deployment_warnings_flag_a_colocated_signer(tmp_home, monkeypatch):
+    _no_problems(monkeypatch, tmp_home)
+    SETTINGS.approval_private_key_path.write_text("00" * 32)
+    (problem,) = server.deployment_warnings()
+    assert "PRIVATE key" in problem
+
+
+def test_deployment_warnings_flag_default_issuer_and_audience(tmp_home, monkeypatch):
+    _no_problems(monkeypatch, tmp_home)
+    monkeypatch.setattr(SETTINGS, "issuer", server._DEFAULT_ISSUER)
+    monkeypatch.setattr(SETTINGS, "audience", server._DEFAULT_AUDIENCE)
+    (problem,) = server.deployment_warnings()
+    assert "OCM_MCP_ISSUER" in problem
+
+
+def test_strict_mode_refuses_to_start(tmp_home, monkeypatch, capsys):
+    """The whole point: under OCM_MCP_STRICT a broken promise stops the server.
+
+    Serving tools that look gated and are not is worse than not serving them, so this
+    fails loudly rather than warning into a stderr stream nobody reads.
+    """
+    _no_problems(monkeypatch, tmp_home)
+    SETTINGS.approval_private_key_path.write_text("00" * 32)
+    monkeypatch.setattr(SETTINGS, "strict", True)
+    ran = []
+    monkeypatch.setattr(server.mcp, "run", lambda *a, **k: ran.append(True))
+
+    with pytest.raises(SystemExit) as exc:
+        server.main()
+
+    assert exc.value.code == 2
+    assert ran == [], "the server must not start once it has refused"
+    assert "REFUSING TO START" in capsys.readouterr().err
+
+
+def test_without_strict_the_same_deployment_only_warns(tmp_home, monkeypatch, capsys):
+    _no_problems(monkeypatch, tmp_home)
+    SETTINGS.approval_private_key_path.write_text("00" * 32)
+    monkeypatch.setattr(SETTINGS, "strict", False)
+    ran = []
+    monkeypatch.setattr(server.mcp, "run", lambda *a, **k: ran.append(True))
+
+    server.main()
+
+    assert ran == [True], "default behaviour is unchanged: it warns and serves"
+    assert "WARNING" in capsys.readouterr().err

@@ -68,6 +68,14 @@ and the server only the public key, so the server can verify a token but can nev
 mint one. Minted only by the `ocm-mcp` CLI on a trusted terminal. See
 [How It Works](How-It-Works) for the token mechanics.
 
+That "can never mint" holds only while the signing key is genuinely off the
+server. Co-located under one `OCM_MCP_HOME` it is a filesystem convention, so
+`OCM_MCP_STRICT=1` turns it into a precondition: the server refuses to start
+while the private key is readable beside it, or while the issuer and audience
+are left at their defaults. Both were already reported at startup, and both
+went to stderr - which an MCP client, launching the server over stdio, usually
+swallows into a log nobody opens.
+
 ## Layer 4: least-privilege RBAC
 
 The server's hub identity can read across the OCM API and create/delete
