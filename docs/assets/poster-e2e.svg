@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 790 560" width="790" height="560"
      role="img" aria-label="A real, unedited end-to-end run: a fleet is built on kind, every tool and prompt is exercised, something is broken and fixed, and the fleet is deleted again — 85 steps, 81 ok, 1 unavailable, 0 failed">
   <!--
-    Poster for demo/e2e-local.mp4. Same design language as poster-connect.svg,
+    Poster for demo/e2e-local.mp4. Same design language as the per-agent posters,
     different argument: that one promises a refusal, this one promises a number.
     The counts are the real ones from the recorded run, and they are the reason to
     press play - a suite that reports 0 failed is only worth anything if you can

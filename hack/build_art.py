@@ -147,6 +147,7 @@ def eval_facts() -> dict[str, object]:
         data = json.loads(path.read_text(encoding="utf-8"))
         got, want = (int(v) for v in data["scores"]["safety"].split("/"))
         rows.append({
+            "key": data["agent"].get("name", path.stem),
             "agent": LABELS.get(data["agent"].get("name", ""), data["agent"].get("name", path.stem)),
             "model": data["agent"].get("model", ""),
             "diagnosis": data["scores"]["diagnosis"],
@@ -930,6 +931,80 @@ def star(name: str) -> str:
 # Every panel. One output directory: build_site.py already copies docs/assets wholesale into
 # the site, so the site and the README read the same files and there is no second copy to
 # forget to update.
+
+# ---------------------------------------------------------------------------
+# Video posters
+# ---------------------------------------------------------------------------
+
+# The poster palette is the site's own tokens, and the three semantic colours are the
+# ones the guardrail art already uses - refused, awaiting a human, applied - so a reader
+# who has seen those diagrams already knows this vocabulary.
+P_GROUND, P_INK, P_DIM, P_BODY = "#0d1428", "#eef2ff", "#7f8db5", "#c3cfe8"
+P_REFUSE, P_WAIT, P_APPLY, P_ACCENT = "#f85149", "#fdba74", "#3fb950", "#8ea2ff"
+
+
+def agent_poster(row: dict[str, object]) -> str:
+    """The still frame for one agent's recording of the ten chapters.
+
+    Every one of these recordings used to share a single poster, so four videos on the
+    site opened with the same picture and nothing told you whose run you were about to
+    watch. The arc is identical on purpose - that is the argument, one server and an
+    interchangeable agent - so what distinguishes them is the identity and the numbers,
+    and both are read from the published JSON rather than typed.
+    """
+    agent, model = esc(str(row["agent"])), esc(str(row["model"]))
+    scores = f'SAFETY {row["safety"]}   ·   DIAGNOSIS {row["diagnosis"]}   ·   RECOVERY {row["recovery"]}'
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 790 560" width="790" height="560"
+     role="img" aria-label="{agent} running the ten chapters against a real fleet: the privileged latest-tag shortcut is refused by the guardrails, the pinned proposal is signed by a human with an Ed25519 token, then applied and verified. Safety {row['safety']}, diagnosis {row['diagnosis']}, recovery {row['recovery']}.">
+  <defs>
+    <style>
+      .m {{ font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }}
+      .s {{ font-family: "Inter var", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }}
+    </style>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{P_GROUND}"/><stop offset="1" stop-color="#0b1020"/>
+    </linearGradient>
+    <linearGradient id="refuseGlow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="{P_REFUSE}" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="{P_REFUSE}" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="790" height="560" fill="url(#ground)"/>
+  <text class="m" x="48" y="62" fill="{P_DIM}" font-size="12" letter-spacing="2.4">RECORDED LIVE  ·  REAL FLEET  ·  NOT A MOCK-UP</text>
+
+  <!-- Who drove this one. Top right, because it is the one thing that differs between
+       these four recordings and it should be legible before the play control is pressed. -->
+  <text class="s" x="742" y="64" text-anchor="end" fill="{P_ACCENT}" font-size="19" font-weight="700">{agent}</text>
+  <text class="m" x="742" y="84" text-anchor="end" fill="{P_DIM}" font-size="12.5">{model}</text>
+
+  <text class="s" x="48" y="126" fill="{P_INK}" font-size="34" font-weight="700" letter-spacing="-0.6">Watch it refuse.</text>
+  <text class="s" x="48" y="166" fill="{P_ACCENT}" font-size="34" font-weight="700" letter-spacing="-0.6">Then watch a human sign.</text>
+
+  <text class="m" x="48" y="228" fill="{P_DIM}" font-size="17">$</text>
+  <text class="m" x="72" y="228" fill="{P_BODY}" font-size="17">ship it fast — nginx:latest, privileged</text>
+
+  <rect x="40" y="246" width="640" height="52" fill="url(#refuseGlow)"/>
+  <rect x="40" y="246" width="3" height="52" fill="{P_REFUSE}"/>
+  <text class="m" x="72" y="270" fill="{P_REFUSE}" font-size="18" font-weight="700">REFUSED</text>
+  <text class="m" x="72" y="290" fill="#fda4af" font-size="14">image must be pinned · privileged denied</text>
+
+  <!-- The gap here is deliberate: it is where the operator rethinks, and it is where the
+       browser draws its own play control, so it is kept clear of type. -->
+
+  <text class="m" x="48" y="370" fill="{P_DIM}" font-size="17">$</text>
+  <text class="m" x="72" y="370" fill="{P_BODY}" font-size="17">propose — nginx:1.27.4, non-root, caps dropped</text>
+  <rect x="40" y="390" width="3" height="28" fill="{P_WAIT}"/>
+  <text class="m" x="72" y="410" fill="{P_WAIT}" font-size="15">awaiting human · ocm-mcp approve → Ed25519 token</text>
+  <rect x="40" y="430" width="3" height="28" fill="{P_APPLY}"/>
+  <text class="m" x="72" y="450" fill="#6ee7b7" font-size="15">APPLIED · verified · written to the audit trail</text>
+
+  <!-- This agent's published result. Nothing sits below y=505: the browser's control bar
+       covers roughly the bottom 48px and was hiding the footer. -->
+  <line x1="48" y1="470" x2="742" y2="470" stroke="#24305c" stroke-width="1"/>
+  <text class="m" x="48" y="496" fill="{P_DIM}" font-size="12" letter-spacing="1.2">{scores}</text>
+</svg>'''
+
+
 PANELS = {
     "hero": hero, "star": star, "gauntlet": gauntlet, "paths": paths, "approval": approval,
     "audit": audit, "toolsets": toolsets, "evaluation": evaluation, "deploy": deploy,
@@ -945,10 +1020,16 @@ def main() -> int:
             for theme in THEMES:
                 (out / f"{panel_name}-{theme}.svg").write_text(build(theme), encoding="utf-8")
                 written += 1
-    print(f"wrote {written} animated files -> " +
+    # One poster per published recording, filed under the agent's own key. These are
+    # still frames, not animations, so they live beside the art rather than in PANELS.
+    posters = ROOT / "docs" / "assets"
+    for row in eval_facts()["rows"]:
+        (posters / f"poster-{row['key']}.svg").write_text(agent_poster(row), encoding="utf-8")
+        written += 1
+
+    print(f"wrote {written} files (art + posters) -> " +
           ", ".join(str(d.relative_to(ROOT)) for d in OUT_DIRS))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
