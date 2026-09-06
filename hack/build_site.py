@@ -482,10 +482,13 @@ def eval_proof(base: str) -> str:
             else '<span class="evalcard__nm evalcard__nm--none">every scenario reached the server</span>'
         )
         stem = DEMO.get(a["name"])
+        # Each recording opens on its own still. One shared poster meant four videos on
+        # this page all showed the same picture, and nothing said whose run it was.
+        poster = f'{raw}/docs/assets/poster-{a["name"]}.svg'
         video = (
             f'<figure class="evalvid">'
             f'<video controls preload="none" playsinline '
-            f'poster="{raw}/docs/assets/poster-connect.svg" '
+            f'poster="{poster}" '
             f'aria-label="{html.escape(label)} running the same ten chapters">'
             f'<source src="{raw}/demo/{stem}.mp4" type="video/mp4">'
             f'<a href="{raw}/demo/{stem}.gif">Watch the {html.escape(label)} recording</a>'
