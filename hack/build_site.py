@@ -438,7 +438,7 @@ def eval_proof(base: str) -> str:
 
     raw = "https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main"
     # The harness names an agent by its CLI; the recordings are named the same way.
-    DEMO = {"claude": "connect-claude", "codex": "connect-codex", "agy": "connect-agy"}
+    DEMO = {"claude": "connect-claude", "codex": "connect-codex", "agy": "connect-agy", "bob": "connect-bob"}
 
     def frac(v: str) -> tuple[int, int]:
         a, _, b = str(v).partition("/")
