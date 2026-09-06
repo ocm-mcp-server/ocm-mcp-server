@@ -297,11 +297,26 @@ def strip_leading_h1(body: str) -> tuple[str, str]:
     their source h1 in place while the shell added a second one - two <h1> elements on a
     page, which is a real signal to both a screen reader and a crawler.
     """
-    m = re.match(r"(?:\s*<!--.*?-->)*\s*<h1[^>]*>(.*?)</h1>", body, re.DOTALL)
+    # The skipping is a loop rather than part of the pattern on purpose. Expressing it as
+    # `(?:\s*<!--.*?-->)*\s*` puts a star around a `\s*`, and the two ways of splitting a
+    # run of whitespace between the iterations and the tail make the match backtrack
+    # polynomially on any body that is whitespace all the way down. This is linear.
+    i, n = 0, len(body)
+    while i < n:
+        if body[i].isspace():
+            i += 1
+        elif body.startswith("<!--", i):
+            end = body.find("-->", i + 4)
+            if end < 0:
+                break
+            i = end + 3
+        else:
+            break
+    m = re.match(r"<h1[^>]*>(.*?)</h1>", body[i:], re.DOTALL)
     if not m:
         return "", body
     title = re.sub(r"<[^>]+>", "", m.group(1)).strip()
-    return title, body[m.end() :]
+    return title, body[i + m.end() :]
 
 
 def render_pages(pages: list[Page], base: str) -> list[str]:
@@ -641,9 +656,11 @@ def faq_entries(page: Page) -> list[dict[str, Any]]:
     if page.stem != "FAQ":
         return []
     out = []
-    for m in re.finditer(r"<h2[^>]*>(.*?)</h2>(.*?)(?=<h2|\Z)", page.body, re.DOTALL):
-        question = re.sub(r"<[^>]+>", "", m.group(1)).replace("#", "").strip()
-        answer = re.sub(r"<[^>]+>", " ", m.group(2))
+    for chunk in page.body.split("<h2")[1:]:
+        head, _, rest = chunk.partition("</h2>")
+        _, _, head = head.partition(">")
+        question = re.sub(r"<[^>]+>", "", head).replace("#", "").strip()
+        answer = re.sub(r"<[^>]+>", " ", rest)
         answer = html.unescape(re.sub(r"\s+", " ", answer)).strip()
         if question.endswith("?") and answer:
             out.append(
