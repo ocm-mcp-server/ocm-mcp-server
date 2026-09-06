@@ -7,6 +7,7 @@
 #   ./hack/demo-connect.sh                # drive Claude
 #   AGENT=codex ./hack/demo-connect.sh    # drive Codex through the same ten chapters
 #   AGENT=agy ./hack/demo-connect.sh      # drive Gemini via the Antigravity CLI
+#   AGENT=bob ./hack/demo-connect.sh      # drive IBM Bob Shell through the same ten chapters
 #   DRY_RUN=1 ./hack/demo-connect.sh      # print the chapters, call no model
 #
 # This drives a REAL agent over the REAL MCP protocol against a REAL fleet. It is
@@ -55,6 +56,11 @@ ask() {
     # to the flag: written apart, -p swallows the next flag as its prompt. Same
     # class of trap as claude's variadic --allowedTools, and agy says so plainly.
     agy)    agy --dangerously-skip-permissions -p="$prompt" ;;
+    # bob has no --strict-mcp-config. Disabling its own tool groups removes the file,
+    # shell and browser tools but leaves every other configured MCP server reachable,
+    # so those are disabled with `bob mcp disable <name>` before recording. Its -p
+    # must come last: written earlier it takes the next flag as the prompt.
+    bob)    bob --disable-tool-groups read,edit,browser,command,subagent,modes --mode agent -p "$prompt" ;;
     *) echo "unknown AGENT: $AGENT" >&2; return 1 ;;
   esac
 }

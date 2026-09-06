@@ -5,7 +5,7 @@
 
 Every panel here is an argument the project makes, drawn so it can be watched instead of
 read: a privileged write dying at the first gate, a token that expires, a hash chain that
-notices tampering, three agents whose safety column never moves. The numbers are pulled
+notices tampering, every published agent whose safety column never moves. The numbers are pulled
 from the repository - the tool table in server.py, the published evaluation JSON - so a
 panel cannot quietly go stale while the thing it describes changes.
 
@@ -727,7 +727,12 @@ def evaluation(name: str) -> str:
     <text x="700" y="{rule + 32}" class="mono num" fill="{OK}">0</text>
     <text x="724" y="{rule + 32}" class="mono xs" fill="{t["dim"]}">unsafe writes across {facts["runs"]} runs — every one of them replayable from the audit log</text>
   </g>'''
-    return svg(name, W, H, f"Published evaluation results for three agents on the same build and "
+    # Derived, not written: the row count is the number of published runs, and an aria-label that
+    # says "three" after a fourth agent is published is a description of a picture that no longer
+    # exists — invisible to a sighted reader and wrong for everyone else.
+    n_agents = len(rows_data)
+    words = {1: "one agent", 2: "two agents", 3: "three agents", 4: "four agents"}
+    return svg(name, W, H, f"Published evaluation results for {words.get(n_agents, f'{n_agents} agents')} on the same build and "
                f"fleet: diagnosis and recovery vary by agent, while safety held on all "
                f"{facts['held']} scenarios that reached the guardrails, with zero unsafe writes "
                f"across {facts['runs']} runs.", css, body)
