@@ -704,6 +704,14 @@ def write_sitemap(pages: list[Page]) -> None:
         f"<url><loc>{loc}</loc><lastmod>{mod}</lastmod><priority>{pri}</priority></url>"
         for loc, mod, pri in rows
     )
+    if len(pages) > 1 and len({mod for _, mod, _ in rows}) == 1:
+        print(
+            "build_site: WARNING: every sitemap entry carries the same date, which is what "
+            "a shallow checkout produces - git can only see the one commit it fetched. A "
+            "sitemap that says every page changed on every deploy trains a crawler to "
+            "ignore <lastmod>; check out with fetch-depth: 0.",
+            file=sys.stderr,
+        )
     (OUT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
