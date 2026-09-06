@@ -129,7 +129,7 @@ None of these layers live in the system prompt, so none of them can be talked ou
 
 <sub>A fleet operator's day with <b>Claude</b>, live from a cold start: install from PyPI, <code>claude mcp add</code>, inventory the fleet, reason about placement — then ship a new service the gated way: the privileged <code>:latest</code> shortcut is <b>refused</b>, the pinned proposal is <b>signed by a human</b>, applied with the token, verified, and the whole day is read back <b>from the audit trail</b>. — <a href="demo/connect-claude.mp4">narrated MP4</a> · <a href="demo/connect-claude.cast">terminal cast</a>.</sub>
 
-<sub><b>The same day, driven by three different agents.</b> A fourth, IBM Bob Shell, has a published evaluation but no recording yet. Identical ten chapters, identical server - only the agent asking changes, which is the whole point of speaking MCP rather than shipping a client. <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-codex.gif">Codex</a> · <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-agy.gif">Gemini (Antigravity CLI)</a>. Re-record any of them with <a href="hack/demo-record.sh"><code>hack/demo-record.sh all</code></a>.</sub>
+<sub><b>The same day, driven by four different agents.</b> Identical ten chapters, identical server - only the agent asking changes, which is the whole point of speaking MCP rather than shipping a client. <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-codex.gif">Codex</a> · <a href="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/demo/connect-agy.gif">Gemini (Antigravity CLI)</a>. Re-record any of them with <a href="hack/demo-record.sh"><code>hack/demo-record.sh all</code></a>.</sub>
 
 </div>
 
@@ -137,13 +137,10 @@ None of these layers live in the system prompt, so none of them can be talked ou
 
 The server speaks standard MCP over stdio; nothing here is specific to one vendor's agent.
 That claim is **demonstrated, not asserted**: the same ten-chapter operator session is
-recorded against **three different agents** - Claude Code, Codex, and Gemini through the
-Antigravity CLI - driving the same server against the same fleet, each one really calling
-the tools, hitting the guardrail refusal, and applying only with a human-signed token.
-A fourth agent, IBM Bob Shell, has a full published evaluation but no recording: the
-session exhausted that account's budget partway through, and a half-recording would
-misrepresent a ten-chapter walkthrough. `AGENT=bob ./hack/demo-connect.sh` produces it
-when budget allows.
+recorded against **four different agents** - Claude Code, Codex, Gemini through the
+Antigravity CLI, and IBM Bob Shell - driving the same server against the same fleet, each
+one really calling the tools, hitting the guardrail refusal, and applying only with a
+human-signed token.
 Re-record any of them with [`hack/demo-record.sh all`](hack/demo-record.sh).
 
 Ready-made configs live in [`examples/`](examples/) - see the [index](examples/README.md) for where each file goes:
