@@ -10,7 +10,12 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [{ name = "Sandeep Bazar" }]
-keywords = ["mcp", "kubernetes", "open-cluster-management", "ai-agents", "multicluster"]
+keywords = [
+    "mcp", "mcp-server", "model-context-protocol", "kubernetes", "k8s",
+    "open-cluster-management", "ocm", "multicluster", "multi-cluster", "fleet",
+    "ai-agents", "agentops", "llm", "llm-safety", "guardrails", "kyverno",
+    "policy-as-code", "sre", "platform-engineering", "cloud-native", "audit",
+]
 dependencies = [
     # Upper bounds are deliberate: MCP v2 is a major rewrite and the Kubernetes client
     # bumps its major on each K8s minor, so we cap to a tested range and widen on purpose.
