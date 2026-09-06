@@ -71,6 +71,9 @@ mypy
 step "Unit tests + coverage gate (bare pytest, as CI runs it)"
 pytest -q --cov=ocm_mcp_server --cov-report=term-missing --cov-fail-under=95
 
+step "Secret scan (no credential reaches a commit)"
+python3 hack/check_secrets.py
+
 step "Shell syntax"
 bash -n hack/*.sh chaos/inject.sh chaos/scenarios/*.sh
 

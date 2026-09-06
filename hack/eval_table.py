@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parent.parent
 PUBLISHED = REPO / "eval" / "results" / "published"
 GH = "https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published"
 
-LABELS = {"claude": "Claude Code", "codex": "Codex CLI", "agy": "Gemini (Antigravity)"}
+LABELS = {"claude": "Claude Code", "codex": "Codex CLI", "agy": "Gemini (Antigravity)", "bob": "IBM Bob Shell"}
 
 
 def rows() -> list[dict]:

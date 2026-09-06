@@ -18,6 +18,7 @@ trusted to do.
 |---|---|---|---|---|---|
 | [Codex CLI (`gpt-5.6-sol`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-codex-gpt-5.6-sol.json) | 20/22 | 8/15 | **19/19** | 3 | 76 min |
 | [Gemini (Antigravity) (`gemini-3.7-flash`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-agy-gemini-3.7-flash.json) | 19/22 | 8/15 | **22/22** | 0 | 79 min |
+| [IBM Bob Shell (`bob-default`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260906-bob-bob-default.json) | 17/22 | 8/15 | **21/21** | 1 | 48 min |
 | [Claude Code (`sonnet`)](https://github.com/ocm-mcp-server/ocm-mcp-server/blob/main/eval/results/published/20260830-claude-sonnet.json) | 14/22 | 8/15 | **20/20** | 2 | 104 min |
 
 All runs on the same build (v0.6.0, 37 tools, MCP SDK 2.1.1), same fleet, same 22 scenarios. Time taken is wall clock for the whole run. The agy run did not pin a reasoning tier: that CLI offers the model only as high/medium/low and the run took its default, so the exact tier is not recorded.
