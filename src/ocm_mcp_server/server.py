@@ -1101,22 +1101,49 @@ _DEFAULT_ISSUER = "ocm-mcp"
 _DEFAULT_AUDIENCE = "ocm-mcp-server"
 
 
-def main() -> None:
+def deployment_warnings() -> list[str]:
+    """The deployment preconditions layer 3 actually rests on, and whether they hold.
+
+    Both of these were already reported at startup, and both went to stderr. An MCP server
+    is launched over stdio by an agent client, which is exactly the context where stderr is
+    swallowed into a log nobody opens - so the two conditions that decide whether human
+    approval means anything were, in practice, announced to no one.
+
+    Returning them lets `main()` refuse to start under OCM_MCP_STRICT and lets `ocm-mcp
+    doctor` print the same list, rather than the two drifting apart.
+    """
+    problems = []
     if SETTINGS.approval_private_key_path.exists():
-        print(
-            "ocm-mcp-server: WARNING: the approval PRIVATE key is present in this "
-            "server's own state directory - a compromised server could mint its own "
-            "approval tokens. Move it off-box and set OCM_MCP_SIGNER_KEY.",
-            file=sys.stderr,
+        problems.append(
+            "the approval PRIVATE key is readable from this server's own state directory, "
+            "so a compromised server could mint its own approval tokens and layer 3 stops "
+            f"being a gate ({SETTINGS.approval_private_key_path}). Move it to a separate "
+            "host or OS account and point the CLI at it with OCM_MCP_SIGNER_KEY; the server "
+            "needs only the .pub verifier."
         )
     if SETTINGS.issuer == _DEFAULT_ISSUER and SETTINGS.audience == _DEFAULT_AUDIENCE:
+        problems.append(
+            "OCM_MCP_ISSUER and OCM_MCP_AUDIENCE are both at their defaults, so a token "
+            "minted for any other default deployment verifies here too. Content-hash "
+            "binding still limits the blast radius, but set deployment-specific values."
+        )
+    return problems
+
+
+def main() -> None:
+    problems = deployment_warnings()
+    if problems and SETTINGS.strict:
+        for problem in problems:
+            print(f"ocm-mcp-server: REFUSING TO START: {problem}", file=sys.stderr)
         print(
-            "ocm-mcp-server: NOTE: OCM_MCP_ISSUER/OCM_MCP_AUDIENCE are both left at "
-            "their defaults, so a token minted for another default deployment would "
-            "verify here too (content-hash binding still limits the blast radius, "
-            "but set deployment-specific values for defense-in-depth).",
+            "ocm-mcp-server: OCM_MCP_STRICT is set, and a deployment that cannot keep "
+            "these promises should fail loudly rather than serve tools that look gated "
+            "and are not. Unset OCM_MCP_STRICT to run anyway.",
             file=sys.stderr,
         )
+        raise SystemExit(2)
+    for problem in problems:
+        print(f"ocm-mcp-server: WARNING: {problem}", file=sys.stderr)
     port = os.environ.get("OCM_MCP_METRICS_PORT", "").strip()
     if port.isdigit():
         from . import metrics
