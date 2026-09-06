@@ -146,6 +146,14 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
     ctx = SETTINGS.hub_context or "(current kubeconfig context)"
     print(f"ocm-mcp doctor - live read-path smoke test\nhub context: {ctx}\n")
 
+    # Before the hub is even contacted: whether the approval gate is a gate here. This
+    # needs no cluster, and "can this deployment keep its promises" is exactly the
+    # question someone is asking when they run doctor before wiring up an agent.
+    from .server import deployment_warnings
+
+    for problem in deployment_warnings():
+        print(f"  WARN  deployment: {problem}\n")
+
     counts = {"OK": 0, "EMPTY": 0, "SKIP": 0, "FAIL": 0}
 
     def run(label: str, fn) -> object | None:
