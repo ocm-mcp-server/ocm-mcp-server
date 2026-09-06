@@ -25,10 +25,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import html
+import json
 import re
 import shutil
+import subprocess
 import sys
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -287,7 +290,14 @@ def first_paragraph(tokens: list[Token]) -> str:
 
 
 def strip_leading_h1(body: str) -> tuple[str, str]:
-    m = re.match(r"\s*<h1[^>]*>(.*?)</h1>", body, re.DOTALL)
+    """Pull the page's own <h1> out of the body; the shell renders the title itself.
+
+    Leading HTML comments have to be skipped, not just whitespace. Three pages carry an
+    SPDX header above their heading, and an anchored match that did not allow for it left
+    their source h1 in place while the shell added a second one - two <h1> elements on a
+    page, which is a real signal to both a screen reader and a crawler.
+    """
+    m = re.match(r"(?:\s*<!--.*?-->)*\s*<h1[^>]*>(.*?)</h1>", body, re.DOTALL)
     if not m:
         return "", body
     title = re.sub(r"<[^>]+>", "", m.group(1)).strip()
@@ -527,6 +537,172 @@ def cards(pages: list[Page], section: str, base: str, limit: int) -> str:
     return "".join(out)
 
 
+# --------------------------------------------------------------------- discoverability
+
+REPO_URL = "https://github.com/ocm-mcp-server/ocm-mcp-server"
+
+
+def jsonld(obj: dict[str, Any]) -> str:
+    """One <script type="application/ld+json"> block.
+
+    Search engines read the page's prose either way; this is the same facts in the shape
+    they parse without guessing - which is what makes a result eligible to be rendered as
+    something richer than a blue link.
+    """
+    return (
+        '<script type="application/ld+json">'
+        + json.dumps(obj, separators=(",", ":"), ensure_ascii=False)
+        + "</script>"
+    )
+
+
+def home_jsonld() -> str:
+    """The project itself: an application you can install, and the source it is built from."""
+    return jsonld(
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "SoftwareApplication",
+                    "@id": f"{SITE_URL}#software",
+                    "name": "ocm-mcp-server",
+                    "applicationCategory": "DeveloperApplication",
+                    "applicationSubCategory": "Model Context Protocol server",
+                    "operatingSystem": "Linux, macOS",
+                    "url": SITE_URL,
+                    "downloadUrl": "https://pypi.org/project/ocm-mcp-server/",
+                    "codeRepository": REPO_URL,
+                    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+                    "description": (
+                        "An MCP server that lets AI agents operate a multi-cluster Kubernetes "
+                        "fleet through an Open Cluster Management hub, with policy, human "
+                        "approval and audit between the model and your clusters."
+                    ),
+                    "keywords": (
+                        "MCP server, Model Context Protocol, Kubernetes, Open Cluster "
+                        "Management, OCM, multi-cluster, AgentOps, AI agent, Kyverno, "
+                        "guardrails, SRE, platform engineering"
+                    ),
+                    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+                    "author": {"@type": "Person", "name": "Sandeep Bazar"},
+                },
+                {
+                    "@type": "SoftwareSourceCode",
+                    "@id": f"{SITE_URL}#source",
+                    "name": "ocm-mcp-server",
+                    "codeRepository": REPO_URL,
+                    "programmingLanguage": "Python",
+                    "runtimePlatform": "Python 3.11+",
+                    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+                    "about": {"@id": f"{SITE_URL}#software"},
+                },
+            ],
+        }
+    )
+
+
+def page_jsonld(page: Page, description: str) -> str:
+    """A documentation page, and the trail that leads to it."""
+    url = f"{SITE_URL}{page.url}"
+    crumbs = [
+        {"@type": "ListItem", "position": 1, "name": "ocm-mcp-server", "item": SITE_URL},
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": SECTION_LABEL[page.section],
+            "item": f"{SITE_URL}{page.section}/",
+        },
+        {"@type": "ListItem", "position": 3, "name": page.title, "item": url},
+    ]
+    graph: list[dict[str, Any]] = [
+        {
+            "@type": "TechArticle",
+            "headline": page.title,
+            "description": description,
+            "url": url,
+            "isPartOf": {"@id": f"{SITE_URL}#software"},
+            "author": {"@type": "Person", "name": "Sandeep Bazar"},
+            "license": "https://www.apache.org/licenses/LICENSE-2.0",
+        },
+        {"@type": "BreadcrumbList", "itemListElement": crumbs},
+    ]
+    faq = faq_entries(page)
+    if faq:
+        graph.append({"@type": "FAQPage", "url": url, "mainEntity": faq})
+    return jsonld({"@context": "https://schema.org", "@graph": graph})
+
+
+def faq_entries(page: Page) -> list[dict[str, Any]]:
+    """Question/answer pairs, for the one page that is actually a FAQ.
+
+    Read back out of the rendered body rather than the markdown, so the answer text is
+    exactly what a reader sees. A page whose h2s are not questions returns nothing.
+    """
+    if page.stem != "FAQ":
+        return []
+    out = []
+    for m in re.finditer(r"<h2[^>]*>(.*?)</h2>(.*?)(?=<h2|\Z)", page.body, re.DOTALL):
+        question = re.sub(r"<[^>]+>", "", m.group(1)).replace("#", "").strip()
+        answer = re.sub(r"<[^>]+>", " ", m.group(2))
+        answer = html.unescape(re.sub(r"\s+", " ", answer)).strip()
+        if question.endswith("?") and answer:
+            out.append(
+                {
+                    "@type": "Question",
+                    "name": html.unescape(question),
+                    "acceptedAnswer": {"@type": "Answer", "text": answer[:1200]},
+                }
+            )
+    return out
+
+
+def last_modified(src: Path) -> str:
+    """The source file's last commit date, so <lastmod> is a fact rather than build noise.
+
+    A sitemap that claims every page changed on every deploy teaches a crawler to ignore
+    the field; falling back to today only when git cannot answer keeps it honest.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "log", "-1", "--format=%cs", "--", str(src)],
+            capture_output=True, text=True, cwd=REPO, check=True, timeout=20,
+        ).stdout.strip()
+        if out:
+            return out
+    except (subprocess.SubprocessError, OSError):
+        pass
+    return datetime.now(UTC).date().isoformat()
+
+
+def write_sitemap(pages: list[Page]) -> None:
+    """Every canonical URL the site serves, with a real last-modified date.
+
+    The home page is the entry point and is weighted accordingly; /results/ is a redirect
+    stub and is deliberately absent, because listing a URL that immediately sends the
+    crawler elsewhere spends crawl budget to say nothing.
+    """
+    rows = [(SITE_URL, last_modified(REPO / "web" / "templates" / "home.html"), "1.0")]
+    rows += [(f"{SITE_URL}{p.url}", last_modified(p.src), "0.8") for p in pages]
+    body = "".join(
+        f"<url><loc>{loc}</loc><lastmod>{mod}</lastmod><priority>{pri}</priority></url>"
+        for loc, mod, pri in rows
+    )
+    (OUT / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{body}</urlset>",
+        encoding="utf-8",
+    )
+    (OUT / "robots.txt").write_text(
+        "# Everything here is public documentation; crawl all of it.\n"
+        "User-agent: *\n"
+        "Allow: /\n"
+        "\n"
+        f"Sitemap: {SITE_URL}sitemap.xml\n",
+        encoding="utf-8",
+    )
+
+
 def build(base: str) -> int:
     pages, orphans = discover()
     if orphans:
@@ -565,7 +741,7 @@ def build(base: str) -> int:
     page_tpl = (WEB / "templates" / "page.html").read_text()
     home_tpl = (WEB / "templates" / "home.html").read_text()
 
-    def shell(body: str, title: str, description: str, url: str) -> str:
+    def shell(body: str, title: str, description: str, url: str, structured: str = "") -> str:
         section = url.split("/")[0] if "/" in url else ""
         return fill(
             base_tpl,
@@ -580,6 +756,7 @@ def build(base: str) -> int:
                 "canonical": SITE_URL + url,
                 "body": body,
                 "megamenu": megamenu(pages, base, section),
+                "jsonld": structured,
             },
         )
 
@@ -598,7 +775,13 @@ def build(base: str) -> int:
         out = OUT / page.url / "index.html"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(
-            shell(body, f"{page.title} · ocm-mcp-server", page.description, page.url),
+            shell(
+                body,
+                f"{page.title} · ocm-mcp-server",
+                page.description,
+                page.url,
+                page_jsonld(page, page.description),
+            ),
             encoding="utf-8",
         )
 
@@ -626,6 +809,7 @@ def build(base: str) -> int:
             "through an Open Cluster Management hub, with policy, approval and audit "
             "between the model and your clusters.",
             "",
+            home_jsonld(),
         ),
         encoding="utf-8",
     )
@@ -641,6 +825,34 @@ def build(base: str) -> int:
         encoding="utf-8",
     )
 
+    # A 404 in the site's own shell rather than GitHub's bare default. It is marked
+    # noindex: a soft-404 that a crawler indexes competes with the real pages for the
+    # same queries, which is the opposite of what a 404 is for.
+    (OUT / "404.html").write_text(
+        shell(
+            '<main id="main"><section class="shell sec">'
+            '<div class="sec__head"><h1>That page moved, or never existed</h1>'
+            "<p>The documentation is organized in three passes: why it exists, how to run "
+            "it, and the evidence it works. Any of them is a good place to pick the "
+            "thread back up.</p></div>"
+            '<div class="hero__cta">'
+            f'<a class="btn btn--primary" href="{base}journey/why-this-exists/">Start here</a>'
+            f'<a class="btn btn--ghost" href="{base}reference/architecture/">Run it</a>'
+            f'<a class="btn btn--ghost" href="{base}results/test-results/">See the proof</a>'
+            "</div></section></main>",
+            "Page not found · ocm-mcp-server",
+            "That page moved or never existed. Start from the journey, the reference, or "
+            "the published results.",
+            "404.html",
+        ).replace(
+            '<meta name="robots" content="index, follow',
+            '<meta name="robots" content="noindex, follow',
+        ),
+        encoding="utf-8",
+    )
+
+    write_sitemap(pages)
+
     shutil.copytree(WEB / "static", OUT / "static")
     shutil.copytree(WEB / "vendor", OUT / "vendor")
     shutil.copytree(DOCS / "assets", OUT / "assets")
@@ -650,7 +862,10 @@ def build(base: str) -> int:
     # without bound, and git keeps every version of a binary forever.
     (OUT / ".nojekyll").write_text("")
 
-    print(f"built {len(pages) + 1} pages into {OUT.relative_to(REPO)}/ (base={base})")
+    print(
+        f"built {len(pages) + 1} pages into {OUT.relative_to(REPO)}/ "
+        f"(base={base}), with sitemap.xml and robots.txt"
+    )
     return 0
 
 

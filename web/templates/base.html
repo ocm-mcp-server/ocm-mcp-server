@@ -24,6 +24,11 @@
 <meta name="twitter:description" content="{{description}}">
 <meta name="twitter:image" content="{{og_image}}">
 <link rel="canonical" href="{{canonical}}">
+<!-- Let the image-rich results actually show the art: without this a crawler
+     may only ever render a thumbnail, and every panel here is the argument. -->
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="Sandeep Bazar">
+<link rel="sitemap" type="application/xml" href="{{base}}sitemap.xml">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128737;</text></svg>">
 <link rel="stylesheet" href="{{css_href}}">
 <script>
@@ -54,6 +59,7 @@
     }, 2000);
   })();
 </script>
+{{jsonld}}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
