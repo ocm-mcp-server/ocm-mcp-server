@@ -168,6 +168,22 @@ def test_privileged_rejected():
         guardrails.validate_manifests([bad])
 
 
+def test_host_port_rejected():
+    """A hostPort binds the node's network namespace, reaching the network
+    around Service and ingress policy."""
+    bad = deployment()
+    pod_spec(bad)["containers"][0]["ports"] = [{"containerPort": 8080, "hostPort": 8080}]
+    with pytest.raises(GuardrailViolation, match="hostPort"):
+        guardrails.validate_manifests([bad])
+
+
+def test_container_port_without_host_port_is_allowed():
+    """containerPort alone is ordinary and must not be swept up with hostPort."""
+    ok = deployment()
+    pod_spec(ok)["containers"][0]["ports"] = [{"containerPort": 8080}]
+    guardrails.validate_manifests([ok])
+
+
 def test_proc_mount_unmasked_rejected():
     """Unmasked removes the runtime's masking of host /proc, a documented escape
     route, and the Restricted Pod Security Standard forbids it."""

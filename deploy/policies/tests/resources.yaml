@@ -869,3 +869,45 @@ spec:
                       type: RuntimeDefault
                     capabilities:
                       drop: ["ALL"]
+---
+# Compliant except for a hostPort, which binds the node's network namespace and
+# bypasses Service and ingress policy entirely.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-host-port
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: nodebound
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: nodebound
+          template:
+            metadata:
+              labels:
+                app: nodebound
+            spec:
+              automountServiceAccountToken: false
+              containers:
+                - name: nodebound
+                  image: registry.example.com/app:1.0.0
+                  ports:
+                    - containerPort: 8080
+                      hostPort: 8080
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]

@@ -40,7 +40,7 @@ spec:
           (automountServiceAccountToken must be false; serviceAccountName must be
           default/empty; every container must set runAsNonRoot, allowPrivilegeEscalation=false,
           drop ALL capabilities, and a seccomp profile; no runAsUser 0; no
-          Secret/hostPath/PVC/CSI/NFS volumes; no procMount other than Default).
+          Secret/hostPath/PVC/CSI/NFS volumes; no procMount other than Default; no hostPort).
         foreach:
           - list: request.object.spec.workload.manifests
             preconditions:
@@ -135,6 +135,17 @@ spec:
                     operator: GreaterThan
                     value: 0
                   - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.procMount && securityContext.procMount != 'Default'] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  # A hostPort binds the node's network namespace directly, which
+                  # reaches the network around Service and ingress policy.
+                  # The filter must come BEFORE the flatten: ports[][?hostPort]
+                  # flattens first and then matches nothing, so the rule silently
+                  # passes everything. Verified with `kyverno jp query`.
+                  - key: "{{ length(element.spec.template.spec.containers[].ports[?hostPort][] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
+                  - key: "{{ length(element.spec.template.spec.initContainers[].ports[?hostPort][] || `[]`) }}"
                     operator: GreaterThan
                     value: 0
                   - key: "{{ length(element.spec.template.spec.initContainers[?securityContext.privileged == `true`] || `[]`) }}"

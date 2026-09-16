@@ -180,6 +180,13 @@ def _check_pod_security(manifest: dict[str, Any]) -> list[str]:
         sc = _as_dict(ctr.get("securityContext"))
         if sc.get("privileged"):
             violations.append(f"{role} '{name}': privileged=true is not allowed.")
+        for port in ctr.get("ports", []) or []:
+            host_port = _as_dict(port).get("hostPort")
+            if host_port:
+                violations.append(
+                    f"{role} '{name}': hostPort {host_port} is not allowed - binding a node "
+                    "port reaches the network directly, around Service and ingress policy."
+                )
         proc_mount = sc.get("procMount")
         if proc_mount and proc_mount != "Default":
             violations.append(
