@@ -168,6 +168,23 @@ def test_privileged_rejected():
         guardrails.validate_manifests([bad])
 
 
+def test_proc_mount_unmasked_rejected():
+    """Unmasked removes the runtime's masking of host /proc, a documented escape
+    route, and the Restricted Pod Security Standard forbids it."""
+    bad = deployment()
+    pod_spec(bad)["containers"][0]["securityContext"]["procMount"] = "Unmasked"
+    with pytest.raises(GuardrailViolation, match="procMount"):
+        guardrails.validate_manifests([bad])
+
+
+def test_proc_mount_default_is_allowed():
+    """Default is the only permitted value, and absent means Default: neither
+    may be turned into a violation, or every compliant manifest would fail."""
+    ok = deployment()
+    pod_spec(ok)["containers"][0]["securityContext"]["procMount"] = "Default"
+    guardrails.validate_manifests([ok])
+
+
 def test_added_capabilities():
     bad = deployment()
     pod_spec(bad)["containers"][0]["securityContext"]["capabilities"] = {

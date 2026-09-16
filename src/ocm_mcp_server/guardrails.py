@@ -180,6 +180,12 @@ def _check_pod_security(manifest: dict[str, Any]) -> list[str]:
         sc = _as_dict(ctr.get("securityContext"))
         if sc.get("privileged"):
             violations.append(f"{role} '{name}': privileged=true is not allowed.")
+        proc_mount = sc.get("procMount")
+        if proc_mount and proc_mount != "Default":
+            violations.append(
+                f"{role} '{name}': procMount '{proc_mount}' is not allowed - the default "
+                "masking hides host /proc paths whose exposure is a container-escape route."
+            )
         if sc.get("allowPrivilegeEscalation") is not False:
             violations.append(
                 f"{role} '{name}': allowPrivilegeEscalation must be explicitly false."

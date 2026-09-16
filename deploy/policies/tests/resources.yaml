@@ -828,3 +828,44 @@ spec:
                       type: RuntimeDefault
                     capabilities:
                       drop: ["ALL"]
+---
+# Fully compliant except for procMount: Unmasked, which strips the runtime's
+# masking of host /proc. Isolated deliberately: if this fixture fails, it is this
+# control failing and nothing else.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-proc-mount
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: unmasked
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: unmasked
+          template:
+            metadata:
+              labels:
+                app: unmasked
+            spec:
+              automountServiceAccountToken: false
+              containers:
+                - name: unmasked
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    procMount: Unmasked
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]
