@@ -911,3 +911,46 @@ spec:
                       type: RuntimeDefault
                     capabilities:
                       drop: ["ALL"]
+---
+# Compliant except for an unsafe sysctl. kernel.msgmax is not namespaced-safe,
+# so it is outside the Restricted standard's allowlist.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-sysctl
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: tuned
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: tuned
+          template:
+            metadata:
+              labels:
+                app: tuned
+            spec:
+              automountServiceAccountToken: false
+              securityContext:
+                sysctls:
+                  - name: kernel.msgmax
+                    value: "65536"
+              containers:
+                - name: tuned
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]

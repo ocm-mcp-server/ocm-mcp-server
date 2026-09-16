@@ -29,6 +29,7 @@ from .config import (
     ALLOWED_SECCOMP_TYPES,
     ALLOWED_SERVICE_ACCOUNTS,
     ALLOWED_SERVICE_TYPES,
+    ALLOWED_SYSCTLS,
     ALLOWED_VOLUME_TYPES,
     MAX_HPA_REPLICAS,
     MAX_PROPOSAL_BYTES,
@@ -158,6 +159,15 @@ def _check_pod_security(manifest: dict[str, Any]) -> list[str]:
     pod_sc = _as_dict(pod_spec.get("securityContext"))
     pod_nonroot = pod_sc.get("runAsNonRoot") is True
     pod_seccomp = _as_dict(pod_sc.get("seccompProfile")).get("type")
+
+    for sysctl in pod_sc.get("sysctls", []) or []:
+        sname = _as_dict(sysctl).get("name", "?")
+        if sname not in ALLOWED_SYSCTLS:
+            violations.append(
+                f"sysctl '{sname}' is not allowed - only the namespaced sysctls the "
+                "Restricted Pod Security Standard considers safe may be set "
+                f"({', '.join(sorted(ALLOWED_SYSCTLS))})."
+            )
 
     for vol in pod_spec.get("volumes", []) or []:
         vol = _as_dict(vol)

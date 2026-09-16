@@ -104,6 +104,22 @@ ALLOWED_VOLUME_TYPES = frozenset({"configMap", "emptyDir", "downwardAPI", "proje
 # out; externalIPs is rejected regardless of type.
 ALLOWED_SERVICE_TYPES = frozenset({"", "ClusterIP"})
 
+# The sysctls the Restricted Pod Security Standard considers safe: namespaced,
+# and unable to affect other pods or the node. Every other sysctl is a kernel
+# parameter change requested by an agent, which is not something a proposal
+# should be able to ask for. Kept as an allowlist rather than a denylist so a
+# sysctl added by a future kernel is refused until someone decides otherwise.
+ALLOWED_SYSCTLS = frozenset(
+    {
+        "kernel.shm_rmid_forced",
+        "net.ipv4.ip_local_port_range",
+        "net.ipv4.ip_unprivileged_port_start",
+        "net.ipv4.tcp_syncookies",
+        "net.ipv4.ping_group_range",
+        "net.ipv4.ip_local_reserved_ports",
+    }
+)
+
 # Seccomp profile types that satisfy the Restricted Pod Security baseline.
 ALLOWED_SECCOMP_TYPES = frozenset({"RuntimeDefault", "Localhost"})
 

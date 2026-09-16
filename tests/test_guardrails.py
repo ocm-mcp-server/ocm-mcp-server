@@ -168,6 +168,24 @@ def test_privileged_rejected():
         guardrails.validate_manifests([bad])
 
 
+def test_unsafe_sysctl_rejected():
+    """Anything outside the Restricted standard's safe set is a kernel parameter
+    change requested by an agent."""
+    bad = deployment()
+    pod_spec(bad)["securityContext"] = {"sysctls": [{"name": "kernel.msgmax", "value": "65536"}]}
+    with pytest.raises(GuardrailViolation, match="kernel.msgmax"):
+        guardrails.validate_manifests([bad])
+
+
+def test_safe_sysctl_is_allowed():
+    """The allowlist has to actually allow, or it is just a ban with extra steps."""
+    ok = deployment()
+    pod_spec(ok)["securityContext"] = {
+        "sysctls": [{"name": "net.ipv4.ip_local_port_range", "value": "1024 65535"}]
+    }
+    guardrails.validate_manifests([ok])
+
+
 def test_host_port_rejected():
     """A hostPort binds the node's network namespace, reaching the network
     around Service and ingress policy."""
