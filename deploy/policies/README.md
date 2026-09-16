@@ -13,7 +13,7 @@ controller, a CI job — these apply to you whether or not you run this server.
 
 ```bash
 kubectl apply -f deploy/policies/          # install the pack
-kyverno test deploy/policies/tests         # 42 offline cases, no cluster needed
+kyverno test deploy/policies/tests         # 46 offline cases, no cluster needed
 ```
 
 ## Why a pack for this exists at all
@@ -123,7 +123,7 @@ notes:
 | **1.13.0, 1.13.6** | **Under-enforces — see below** |
 | 1.14.0 | Cannot evaluate a custom resource offline without its CRD |
 | 1.15.0, 1.16.0, 1.17.0 | Verdicts identical to current |
-| 1.18.2, 1.19.0 | `kyverno test` 42/42 |
+| 1.18.2, 1.19.0 | `kyverno test` 46/46 |
 
 The floor is **not** simply the oldest version that works. 1.12.0 does behave
 correctly, but the entire 1.13 line silently under-enforces
@@ -139,10 +139,10 @@ check as primary.
 ## The test suite
 
 ```bash
-kyverno test deploy/policies/tests    # 42 cases, offline, no cluster
+kyverno test deploy/policies/tests    # 46 cases, offline, no cluster
 ```
 
-25 `ManifestWork` fixtures in [`tests/resources.yaml`](tests/resources.yaml) covering
+29 `ManifestWork` fixtures in [`tests/resources.yaml`](tests/resources.yaml) covering
 good proposals, each specific bypass, and human-created (unlabelled) work that must be
 **skipped** rather than passed. Several cases exist to document *why a second policy is
 needed* — `bad-gvk-spoof` is asserted to **pass** the kind-only allow-list and **fail**

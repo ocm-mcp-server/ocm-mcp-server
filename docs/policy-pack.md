@@ -8,7 +8,7 @@ an agent, a controller, a CI job — they apply to you whether or not you run th
 
 ```bash
 kubectl apply -f deploy/policies/     # install
-kyverno test deploy/policies/tests    # 42 offline cases, no cluster needed
+kyverno test deploy/policies/tests    # 46 offline cases, no cluster needed
 ```
 
 The pack's own entry point, with the full per-policy table and adoption instructions, is
@@ -55,7 +55,7 @@ by running the pack against real Kyverno CLI binaries, not inferred from release
 | **1.13.0, 1.13.6** | **Under-enforces pod security** |
 | 1.14.0 | Cannot evaluate a custom resource offline without its CRD |
 | 1.15.0, 1.16.0, 1.17.0 | Verdicts identical to current |
-| 1.18.2, 1.19.0 | `kyverno test` 42/42 |
+| 1.18.2, 1.19.0 | `kyverno test` 46/46 |
 
 The floor is deliberately **not** the oldest version that works. 1.12.0 behaves
 correctly, but the whole 1.13 line silently under-enforces
@@ -73,7 +73,7 @@ and the Kyverno checks are independent, and a gap in one is covered by the other
 
 ## Why the pack ships with tests
 
-`kyverno test deploy/policies/tests` runs 42 cases over 25 `ManifestWork` fixtures with
+`kyverno test deploy/policies/tests` runs 46 cases over 29 `ManifestWork` fixtures with
 no cluster. Several assert a **pass** on purpose: `bad-gvk-spoof` is required to pass
 the kind-only allow-list and fail the exact-GVK one, which is the whole argument for
 shipping both policies rather than one.

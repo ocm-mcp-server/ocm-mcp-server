@@ -51,6 +51,15 @@ def compute() -> dict[str, int]:
         "resources": server.count("@mcp.resource("),
         "policies": len(glob.glob(os.path.join(REPO, "deploy", "policies", "*.yaml"))),
         "policy_cases": sum(len(r["resources"]) for r in test_spec["results"]),
+        # The fixture count is quoted next to the case count and drifted the same
+        # way, so it is derived here rather than trusted.
+        "policy_fixtures": sum(
+            1
+            for d in yaml.safe_load_all(
+                open(os.path.join(REPO, "deploy", "policies", "tests", "resources.yaml"))
+            )
+            if d and d.get("kind") == "ManifestWork"
+        ),
         "unit_tests": int(m.group(1)),
     }
 
@@ -60,6 +69,19 @@ def compute() -> dict[str, int]:
 QUOTES: list[tuple[str, str, str]] = [
     ("README.md", r"ships (\d+) `ClusterPolicy` objects", "policies"),
     ("README.md", r"runs a \*\*(\d+)-case offline suite\*\*", "policy_cases"),
+    # policy-pack.md and the policy README quote both numbers in several places and
+    # none of them were guarded, so the published site said 42 cases over 25
+    # fixtures while the suite had grown to 46 over 29.
+    ("docs/policy-pack.md", r"# (\d+) offline cases", "policy_cases"),
+    ("docs/policy-pack.md", r"`kyverno test` (\d+)/\d+", "policy_cases"),
+    ("docs/policy-pack.md", r"`kyverno test` \d+/(\d+)", "policy_cases"),
+    ("docs/policy-pack.md", r"tests` runs (\d+) cases", "policy_cases"),
+    ("docs/policy-pack.md", r"cases over (\d+) `ManifestWork` fixtures", "policy_fixtures"),
+    ("deploy/policies/README.md", r"# (\d+) offline cases", "policy_cases"),
+    ("deploy/policies/README.md", r"`kyverno test` (\d+)/\d+", "policy_cases"),
+    ("deploy/policies/README.md", r"`kyverno test` \d+/(\d+)", "policy_cases"),
+    ("deploy/policies/README.md", r"# (\d+) cases, offline", "policy_cases"),
+    ("deploy/policies/README.md", r"(\d+) `ManifestWork` fixtures", "policy_fixtures"),
     ("README.md", r"`make policy-test` runs (\d+) CLI", "policy_cases"),
     ("README.md", r"The surface is \*\*(\d+) tools", "tools"),
     # These four phrasings were NOT guarded and had drifted to a stale count while
