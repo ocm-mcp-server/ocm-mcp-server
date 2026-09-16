@@ -56,6 +56,11 @@ CLUSTERSET_LABEL = "cluster.open-cluster-management.io/clusterset"
 # LIST_MAX_ITEMS is a safety ceiling; hitting it marks the result as truncated.
 LIST_PAGE_SIZE = int(os.environ.get("OCM_MCP_LIST_PAGE_SIZE", "500"))
 LIST_MAX_ITEMS = int(os.environ.get("OCM_MCP_LIST_MAX_ITEMS", "5000"))
+# An agent chooses `lines`, and nothing stopped it asking for a million. That is
+# a request the apiserver will happily serve, straight into the model's context
+# and this process's memory. Generous enough for real debugging, bounded enough
+# that a bad number cannot become an outage.
+LOG_LINES_MAX = int(os.environ.get("OCM_MCP_LOG_LINES_MAX", "2000"))
 
 
 def paged_list(list_fn: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -303,6 +308,9 @@ def cluster_events(cluster: str, namespace: str = "", limit: int = 40) -> list[d
 
 
 def pod_logs(cluster: str, namespace: str, pod: str, container: str = "", lines: int = 80) -> str:
+    # Clamped here rather than at the tool so every caller is covered, including
+    # the end-to-end harness and anything added later.
+    lines = max(1, min(lines, LOG_LINES_MAX))
     core = spoke_core(cluster)
     try:
         return core.read_namespaced_pod_log(

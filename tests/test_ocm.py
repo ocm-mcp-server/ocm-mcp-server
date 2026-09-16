@@ -344,6 +344,31 @@ def test_pod_logs(monkeypatch):
     assert "log line" in ocm.pod_logs("cluster1", "shop", "p")
 
 
+def test_pod_logs_clamps_tail_lines(monkeypatch):
+    """An agent picks `lines`, so an absurd value must not reach the apiserver.
+
+    Unbounded, a single call could pull a million lines into this process and
+    into the model's context.
+    """
+    seen = {}
+
+    class Recording(FakeCore):
+        def read_namespaced_pod_log(self, *a, **kw):
+            seen["tail_lines"] = kw.get("tail_lines")
+            return "log line"
+
+    monkeypatch.setattr(ocm, "spoke_core", lambda c: Recording())
+
+    ocm.pod_logs("cluster1", "shop", "p", lines=1_000_000)
+    assert seen["tail_lines"] == ocm.LOG_LINES_MAX
+
+    ocm.pod_logs("cluster1", "shop", "p", lines=0)
+    assert seen["tail_lines"] == 1
+
+    ocm.pod_logs("cluster1", "shop", "p", lines=25)
+    assert seen["tail_lines"] == 25
+
+
 # --------------------------------------------------------------------- more hub reads
 
 

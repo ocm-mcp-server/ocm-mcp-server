@@ -245,7 +245,7 @@ def get_pod_logs(
         namespace: pod namespace.
         pod: pod name.
         container: container name; empty picks the default container.
-        lines: number of trailing log lines (default 80).
+        lines: number of trailing log lines (default 80, clamped to 1..2000).
 
     Falls back to the previous container instance if the current one is crashing.
     """
