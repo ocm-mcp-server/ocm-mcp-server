@@ -40,7 +40,7 @@ demonstrates it. The 9 policies in `deploy/policies/` are shaped for that contri
 rather than only for this repository: every one carries the catalog's
 `policies.kyverno.io/minversion` annotation, and `deploy/policies/README.md` documents
 the `foreach` pattern, the two identifiers an adopter has to change, and the offline
-suite of 42 cases.
+suite of 46 cases.
 
 The 1.13 under-enforcement was deliberately **not** filed as a separate bug. A container
 declaring both `runAsNonRoot: true` and `runAsUser: 0` is admitted on 1.13.0 and 1.13.6,

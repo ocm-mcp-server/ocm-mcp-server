@@ -316,7 +316,7 @@ control that governs every human `kubectl apply`.
   They are usable on their own: [`deploy/policies/README.md`](deploy/policies/README.md)
   documents the `foreach`-over-embedded-manifests pattern, the two identifiers an adopter
   changes, and the Kyverno versions the pack is actually tested against.
-- `make policy-test` runs a **42-case offline suite** with the `kyverno` CLI - good, bad, and
+- `make policy-test` runs a **46-case offline suite** with the `kyverno` CLI - good, bad, and
   human-authored `ManifestWork`s - needing no cluster and no dependencies. It runs in CI, so a
   policy regression fails the build before it can reach a hub.
 - Don't start from scratch: the community library
@@ -733,7 +733,7 @@ deliberately withholds.
 Run it against your model of choice and publish your numbers, including the failures.
 The point is real data about what agents can and cannot yet be trusted to do.
 
-The Kyverno policies have their own offline test suite: `make policy-test` runs 42 CLI
+The Kyverno policies have their own offline test suite: `make policy-test` runs 46 CLI
 cases ([`deploy/policies/tests/`](deploy/policies/tests/)) against good, bad, and
 human-created ManifestWorks with no cluster and no dependencies. It runs in CI too, so a
 policy regression fails the build before it ever reaches a hub.
