@@ -77,9 +77,14 @@ jobs:
           cv=$(sed -n 's/^version: \(.*\)$/\1/p' deploy/charts/ocm-mcp-server/Chart.yaml)
           av=$(sed -n 's/^appVersion: "\(.*\)"$/\1/p' deploy/charts/ocm-mcp-server/Chart.yaml)
           tv=$(sed -n 's/^ *tag: v\(.*\)$/\1/p' deploy/charts/ocm-mcp-server/values.yaml)
+          # The raw Deployment is not rendered from the chart, so it drifts on its
+          # own. It shipped v0.2.2 while the project was on 0.6.0 because this gate
+          # listed every other file and not that one.
+          dv=$(sed -n 's|^ *image: ghcr\.io/ocm-mcp-server/ocm-mcp-server:v\(.*\)$|\1|p' deploy/deployment.yaml)
           if [ "$v" != "$pv" ] || [ "$v" != "$sv" ] || [ "$pkgs" != "$v" ] \
-            || [ "$v" != "$iv" ] || [ "$v" != "$cv" ] || [ "$v" != "$av" ] || [ "$v" != "$tv" ]; then
-            echo "::error::version drift: tag=$v pyproject=$pv server.json=$sv packages=$pkgs __init__=$iv chart=$cv appVersion=$av image.tag=$tv"
+            || [ "$v" != "$iv" ] || [ "$v" != "$cv" ] || [ "$v" != "$av" ] || [ "$v" != "$tv" ] \
+            || [ "$v" != "$dv" ]; then
+            echo "::error::version drift: tag=$v pyproject=$pv server.json=$sv packages=$pkgs __init__=$iv chart=$cv appVersion=$av image.tag=$tv deployment=$dv"
             echo "Cut releases with 'make release VERSION=x.y.z' to keep them in lockstep."
             exit 1
           fi

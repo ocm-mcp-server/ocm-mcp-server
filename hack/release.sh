@@ -116,7 +116,7 @@ if [[ -t 0 && "${RELEASE_ASSUME_EXTERNAL_OK:-0}" != "1" ]]; then
   [[ "$ok" == "y" || "$ok" == "Y" ]] || die "aborted - confirm the external settings first"
 fi
 
-say "Bumping version to $v (pyproject.toml + server.json + __init__ + Helm chart)"
+say "Bumping version to $v (pyproject.toml + server.json + __init__ + Helm chart + deployment.yaml)"
 python3 - "$v" <<'PY'
 import json, re, sys
 
@@ -146,6 +146,14 @@ sub_file(
     "deploy/charts/ocm-mcp-server/values.yaml",
     r'(?m)^(\s*)tag: v[^\s]+$',
     rf"\g<1>tag: v{v}",
+)
+# The raw Deployment is not rendered from the chart, so nothing else updates it.
+# It sat at v0.2.2 through four releases because the bump did not touch it and
+# the release gate did not check it.
+sub_file(
+    "deploy/deployment.yaml",
+    r'(?m)^(\s*image: ghcr\.io/ocm-mcp-server/ocm-mcp-server:)v[^\s]+$',
+    rf"\g<1>v{v}",
 )
 
 s = json.load(open("server.json"))
