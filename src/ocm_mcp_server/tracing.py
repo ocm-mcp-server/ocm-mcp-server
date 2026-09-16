@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import functools
 import hashlib
+import inspect
 import json
 import os
 import sys
@@ -93,6 +94,27 @@ def _audit_arg(key: str, value: Any) -> Any:
     if isinstance(value, str) and len(value) > _MAX_ARG_LEN:
         return value[:_MAX_ARG_LEN] + f"...(+{len(value) - _MAX_ARG_LEN} chars)"
     return value
+
+
+def _audit_args(fn: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict:
+    """Record every argument under its real parameter name.
+
+    Only kwargs were captured before, so anything passed positionally never
+    reached the audit log at all. Binding to the signature closes that gap and is
+    also the safe way to close it: _audit_arg redacts by parameter name, so an
+    approval token recorded under an invented key like "arg0" would be written in
+    clear text. Real names keep redaction working.
+    """
+    try:
+        bound = dict(inspect.signature(fn).bind_partial(*args, **kwargs).arguments)
+    except (TypeError, ValueError):
+        # The call does not match the signature, so it is about to fail anyway.
+        # Positional values are recorded as placeholders rather than raw: with no
+        # parameter name there is no way to know which one needs redacting.
+        bound = dict(kwargs)
+        for i in range(len(args)):
+            bound[f"<positional {i}>"] = "<unnamed>"
+    return {k: _audit_arg(k, v) for k, v in bound.items()}
 
 
 def _get_tracer():
@@ -350,7 +372,7 @@ def traced_tool(fn: Callable) -> Callable:
             _safe_audit(
                 {
                     "tool": fn.__name__,
-                    "args": {k: _audit_arg(k, v) for k, v in kwargs.items()},
+                    "args": _audit_args(fn, args, kwargs),
                     "outcome": outcome,
                     "error": error[:500],
                     "duration_ms": duration_ms,

@@ -124,3 +124,50 @@ def test_echo_safe_redacts_unrecognized_top_level_field():
     # defensive default: redact it rather than assume it is safe to forward.
     safe = tracing._echo_safe({"tool": "sample", "some_future_field": "unexpected-detail"})
     assert safe["some_future_field"] == "[redacted]"
+
+
+# ------------------------------------------------- audit captures every argument
+
+
+def test_audit_args_records_positional_arguments_under_their_real_names():
+    """Only kwargs were captured before, so a positionally-passed argument never
+    reached the audit log at all."""
+
+    def tool(cluster, namespace, approval_token="", lines=80): ...
+
+    got = tracing._audit_args(tool, ("cluster1", "shop"), {})
+    assert got == {"cluster": "cluster1", "namespace": "shop"}
+
+
+def test_audit_args_redacts_a_positionally_passed_token():
+    """Redaction keys off the parameter name, so recording positionals under
+    invented keys would write an approval token in clear text."""
+
+    def tool(cluster, namespace, approval_token="", lines=80): ...
+
+    got = tracing._audit_args(tool, ("cluster1", "shop", "SECRET-TOKEN"), {})
+    assert got["approval_token"] == "<redacted>"
+    assert "SECRET-TOKEN" not in str(got)
+
+
+def test_audit_args_mixed_positional_and_keyword():
+    def tool(cluster, namespace, approval_token="", lines=80): ...
+
+    got = tracing._audit_args(tool, ("cluster1",), {"namespace": "shop", "lines": 5})
+    assert got == {"cluster": "cluster1", "namespace": "shop", "lines": 5}
+
+
+def test_audit_args_unbindable_call_keeps_the_entry_without_leaking_values():
+    """A call that does not match the signature is about to fail anyway. The
+    entry is still written, but positional values are withheld: with no
+    parameter name there is no way to know which one needs redacting."""
+
+    def tool(cluster): ...
+
+    got = tracing._audit_args(tool, ("cluster1", "extra", "SECRET-TOKEN"), {})
+    assert "SECRET-TOKEN" not in str(got)
+    assert got == {
+        "<positional 0>": "<unnamed>",
+        "<positional 1>": "<unnamed>",
+        "<positional 2>": "<unnamed>",
+    }
