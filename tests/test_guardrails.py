@@ -168,6 +168,30 @@ def test_privileged_rejected():
         guardrails.validate_manifests([bad])
 
 
+def test_projected_exotic_source_rejected():
+    """The old denylist named serviceAccountToken and secret, so anything
+    Kubernetes added later was admitted by default."""
+    bad = deployment()
+    pod_spec(bad)["volumes"] = [
+        {"name": "trust", "projected": {"sources": [{"clusterTrustBundle": {"name": "b"}}]}}
+    ]
+    with pytest.raises(GuardrailViolation, match="clusterTrustBundle"):
+        guardrails.validate_manifests([bad])
+
+
+def test_projected_empty_downward_api_source_is_allowed():
+    """`downwardAPI: {}` is a legitimate empty source. Testing the value rather
+    than the key would treat it as absent and reject a compliant manifest."""
+    ok = deployment()
+    pod_spec(ok)["volumes"] = [
+        {
+            "name": "meta",
+            "projected": {"sources": [{"downwardAPI": {}}, {"configMap": {"name": "c"}}]},
+        }
+    ]
+    guardrails.validate_manifests([ok])
+
+
 def test_unsafe_sysctl_rejected():
     """Anything outside the Restricted standard's safe set is a kernel parameter
     change requested by an agent."""
@@ -390,7 +414,7 @@ def test_projected_service_account_token_volume_rejected():
     pod_spec(bad)["volumes"] = [
         {"name": "t", "projected": {"sources": [{"serviceAccountToken": {"path": "tok"}}]}}
     ]
-    with pytest.raises(GuardrailViolation, match="serviceAccountToken or secret"):
+    with pytest.raises(GuardrailViolation, match="source 'serviceAccountToken' is not allowed"):
         guardrails.validate_manifests([bad])
 
 
@@ -399,7 +423,7 @@ def test_projected_secret_source_rejected():
     pod_spec(bad)["volumes"] = [
         {"name": "t", "projected": {"sources": [{"secret": {"name": "db"}}]}}
     ]
-    with pytest.raises(GuardrailViolation, match="serviceAccountToken or secret"):
+    with pytest.raises(GuardrailViolation, match="source 'secret' is not allowed"):
         guardrails.validate_manifests([bad])
 
 

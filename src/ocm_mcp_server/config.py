@@ -99,6 +99,13 @@ ALLOWED_SERVICE_ACCOUNTS = frozenset({"", "default"})
 # guardrails).
 ALLOWED_VOLUME_TYPES = frozenset({"configMap", "emptyDir", "downwardAPI", "projected"})
 
+# Projected volumes combine several sources into one mount, so the volume type
+# being allowed says nothing about what is inside it. An allowlist, not a list of
+# banned sources: the previous denylist named serviceAccountToken and secret, and
+# admitted by default anything Kubernetes added later, including
+# clusterTrustBundle.
+ALLOWED_PROJECTED_SOURCES = frozenset({"configMap", "downwardAPI"})
+
 # Service types a proposed Service may use. NodePort, LoadBalancer, and ExternalName expose
 # workloads outside the cluster or resolve to arbitrary external hosts, so they are gated
 # out; externalIPs is rejected regardless of type.

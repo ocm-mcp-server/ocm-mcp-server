@@ -161,6 +161,14 @@ spec:
                   - key: "{{ length(element.spec.template.spec.volumes[?secret || hostPath || persistentVolumeClaim || csi || nfs] || `[]`) }}"
                     operator: GreaterThan
                     value: 0
+                  # A projected volume carries its own sources, so allowing the
+                  # volume type says nothing about what is mounted through it.
+                  # Matched on the source's KEY: `downwardAPI: {}` is a legitimate
+                  # empty source and an empty object is falsy in JMESPath, so
+                  # testing the value would reject a compliant manifest.
+                  - key: "{{ length(element.spec.template.spec.volumes[].projected.sources[?length(keys(@)[?!contains(`[\"configMap\",\"downwardAPI\"]`, @)]) > `0`][] || `[]`) }}"
+                    operator: GreaterThan
+                    value: 0
                   # running as uid 0 is not allowed, at the pod or the container level
                   # (0 is truthy in JMESPath, so `|| -1` only substitutes when unset)
                   - key: "{{ element.spec.template.spec.securityContext.runAsUser || `-1` }}"

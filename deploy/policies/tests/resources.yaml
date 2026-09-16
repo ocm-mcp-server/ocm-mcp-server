@@ -954,3 +954,50 @@ spec:
                       type: RuntimeDefault
                     capabilities:
                       drop: ["ALL"]
+---
+# A projected source the old denylist never named. clusterTrustBundle is not
+# serviceAccountToken and not secret, so it was admitted by default; the
+# allowlist is what refuses it.
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: bad-projected-exotic
+  namespace: cluster2
+  labels:
+    app.kubernetes.io/managed-by: ocm-mcp-server
+spec:
+  workload:
+    manifests:
+      - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: bundled
+          namespace: shop
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: bundled
+          template:
+            metadata:
+              labels:
+                app: bundled
+            spec:
+              automountServiceAccountToken: false
+              volumes:
+                - name: trust
+                  projected:
+                    sources:
+                      - clusterTrustBundle:
+                          name: example-bundle
+                          path: bundle.pem
+              containers:
+                - name: bundled
+                  image: registry.example.com/app:1.0.0
+                  securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false
+                    seccompProfile:
+                      type: RuntimeDefault
+                    capabilities:
+                      drop: ["ALL"]

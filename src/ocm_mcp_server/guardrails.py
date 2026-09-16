@@ -26,6 +26,7 @@ from typing import Any
 
 from .config import (
     ALLOWED_GVK,
+    ALLOWED_PROJECTED_SOURCES,
     ALLOWED_SECCOMP_TYPES,
     ALLOWED_SERVICE_ACCOUNTS,
     ALLOWED_SERVICE_TYPES,
@@ -180,10 +181,15 @@ def _check_pod_security(manifest: dict[str, Any]) -> list[str]:
                     f"{', '.join(sorted(ALLOWED_VOLUME_TYPES))})."
                 )
         sources = _as_dict(vol.get("projected")).get("sources", []) or []
-        if any("serviceAccountToken" in _as_dict(s) or "secret" in _as_dict(s) for s in sources):
-            violations.append(
-                f"projected volume '{name}' mounting a serviceAccountToken or secret is not allowed."
-            )
+        for src in sources:
+            # Key membership, not truthiness: `downwardAPI: {}` is a legitimate
+            # empty source, and testing the value would treat it as absent.
+            for stype in _as_dict(src):
+                if stype not in ALLOWED_PROJECTED_SOURCES:
+                    violations.append(
+                        f"projected volume '{name}' source '{stype}' is not allowed "
+                        f"(allowed: {', '.join(sorted(ALLOWED_PROJECTED_SOURCES))})."
+                    )
 
     for role, ctr in _containers(manifest):
         name = ctr.get("name", "?")
