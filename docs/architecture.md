@@ -187,7 +187,7 @@ sequenceDiagram
     GR->>GR: per-manifest schema check first (malformed = clean violation, never a crash)
     GR->>GR: exact (apiVersion, kind) in ALLOWED_GVK - group spoofing blocked
     GR->>GR: namespace required + protected list + kube-*/openshift-*/ocm prefixes
-    GR->>GR: Restricted PSS on every container role (regular/init/ephemeral):<br/>runAsNonRoot, no runAsUser 0, allowPrivilegeEscalation=false,<br/>drop ALL, no added caps, seccomp, automountServiceAccountToken=false
+    GR->>GR: Restricted PSS on every container role (regular/init/ephemeral):<br/>runAsNonRoot, no runAsUser 0, allowPrivilegeEscalation=false,<br/>drop ALL, no added caps, seccomp, automountServiceAccountToken=false,<br/>procMount=Default, no hostPort, safe sysctls only
     GR->>GR: volume ALLOW-list (configMap/emptyDir/downwardAPI/projected),<br/>no projected serviceAccountToken/secret sources
     GR->>GR: no env secretKeyRef / envFrom secretRef (no path to Secret contents)
     GR->>GR: image pinned - no :latest, no tagless, @sha256 digest in strict mode

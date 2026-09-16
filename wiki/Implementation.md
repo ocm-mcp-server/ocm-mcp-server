@@ -122,10 +122,11 @@ crash), then each manifest is rejected on any of:
   missing `runAsNonRoot`, `runAsUser: 0`, `allowPrivilegeEscalation` not `false`,
   not dropping `ALL` capabilities, added capabilities, `privileged`, or a missing
   seccomp profile;
-- `hostNetwork` / `hostPID` / `hostIPC`;
+- `hostNetwork` / `hostPID` / `hostIPC`, a `hostPort` binding a node's network, a
+  `procMount` other than `Default`, or a sysctl outside the namespaced-safe set;
 - a volume outside the allow-list (only `configMap`/`emptyDir`/`downwardAPI`/
-  projected-without-secrets - so no Secret/hostPath/PVC/CSI/NFS), or an indirect
-  Secret env ref;
+  `projected` - so no Secret/hostPath/PVC/CSI/NFS), a projected source outside
+  `configMap`/`downwardAPI`, or an indirect Secret env ref;
 - a Service that is not `ClusterIP`, or that sets `externalIPs`;
 - an unpinned image (`:latest` or no tag; a 64-hex `@sha256` digest when
   `OCM_MCP_REQUIRE_DIGEST` is set);

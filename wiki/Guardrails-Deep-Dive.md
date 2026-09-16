@@ -30,8 +30,10 @@ flowchart TD
 Runs in the server before anything else, with no cluster round-trip, so the
 agent gets instant, specific feedback. Enforces a Restricted-Pod-Security
 baseline on every workload (no root/privilege-escalation, drop-ALL, seccomp, no
-host access, no arbitrary service account or Secret access), an exact GVK
-allow-list, protected/platform namespaces, a volume and Service-type allow-list,
+host access including `hostPort`, `procMount: Default` only, only the
+namespaced-safe sysctls, no arbitrary service account or Secret access), an exact
+GVK allow-list, protected/platform namespaces, a volume, projected-source and
+Service-type allow-list,
 image pinning, and per-proposal limits. See [Implementation](Implementation) for
 the full list.
 
@@ -47,7 +49,7 @@ delivered, and the agent gets the policy message to self-correct.
 The policies are scoped by the label
 `app.kubernetes.io/managed-by: ocm-mcp-server`, so human platform engineers are
 not affected. They ship with an offline CLI test suite
-(`make policy-test`, 42 cases) that runs in CI.
+(`make policy-test`, 46 cases) that runs in CI.
 
 Because it is just [Kyverno](https://kyverno.io/docs/introduction/) - a CNCF policy
 engine whose policies are ordinary Kubernetes resources in YAML and CEL, enforced by
