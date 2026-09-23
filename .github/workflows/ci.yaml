@@ -35,6 +35,9 @@ jobs:
         run: mypy
       - name: Unit tests + coverage gate
         run: pytest -q --cov=ocm_mcp_server --cov-report=term-missing --cov-fail-under=95
+      - name: Secret and stray-file scan (credentials, keys, local tool state)
+        # Also runs in the pre-push hook, but that hook is opt-in per clone.
+        run: python3 hack/check_secrets.py
       - name: Shell syntax
         run: bash -n hack/*.sh chaos/inject.sh chaos/scenarios/*.sh
       - name: Docs stats drift check (quoted counts match reality)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Sandeep Bazar
 # SPDX-License-Identifier: Apache-2.0
-"""Refuse to ship a credential.
+"""Refuse to ship a credential, or the local state that holds one.
 
 Eval results record what an agent said and did, verbatim, and those results are
 committed. An agent that echoes the key it was given would put that key in the
@@ -31,6 +31,16 @@ RULES: list[tuple[re.Pattern[str], str]] = [
 
 SELF = "hack/check_secrets.py"
 
+# Paths that are local tool or server state, refused by name whatever they contain. The
+# content rules above cannot see these: an approval key is 64 bare hex characters, and an
+# assistant's scratch folder holds ordinary prose. Both have reached a commit before.
+FORBIDDEN_PATH = re.compile(
+    r"(^|/)(\.bob|\.claude|\.superpowers|\.demo-connect|\.local-context|\.ocm-mcp"
+    r"|\.e2e-run|\.eval-[^/]+-home)/"
+    r"|(^|/)approval_ed25519$"
+    r"|(^|/)(\.mcp\.json|CLAUDE\.local\.md|\.coverage|\.DS_Store)$"
+)
+
 
 def main() -> int:
     files = subprocess.run(
@@ -38,6 +48,9 @@ def main() -> int:
     ).stdout.split("\0")
     findings: list[str] = []
     for name in filter(None, files):
+        if FORBIDDEN_PATH.search(name):
+            findings.append(f"{name}: local state or a signing key, never project content")
+            continue
         if name == SELF:  # the patterns below are literals in this file
             continue
         try:

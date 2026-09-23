@@ -39,3 +39,15 @@ _site/
 # Local browser-automation scratch
 .playwright-mcp/
 shot-*.png
+
+# Local AI-assistant and tool state. Never project content: .bob/ once carried two
+# Medium drafts into a commit, and .demo-connect/ an approval signing key.
+.bob/
+.claude/
+.superpowers/
+.demo-connect/
+.local-context/
+.mcp.json
+CLAUDE.local.md
+.hypothesis/
+.mypy_cache/

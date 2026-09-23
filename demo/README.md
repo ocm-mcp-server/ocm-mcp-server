@@ -18,6 +18,9 @@ single place.
 | `connect-agy.gif` | The same ten chapters driven by **Gemini**, through the Antigravity CLI (`agy`). Google deprecated OAuth sign-in for the standalone Gemini CLI for individual accounts, so `agy` - which carries its own auth - is the way to drive Gemini headlessly. |
 | `connect-agy.mp4` | The Gemini recording as MP4. |
 | `connect-agy.cast` | The raw asciinema cast for the Gemini run. |
+| `connect-bob.gif` | The same ten chapters driven by **IBM Bob**, against the same server and the same fleet. |
+| `connect-bob.mp4` | The IBM Bob recording as MP4. |
+| `connect-bob.cast` | The raw asciinema cast for the IBM Bob run. |
 | `e2e-local.gif` | A real, unedited `./hack/e2e-local.sh` run (asciinema recording, long waits compressed): fleet up, every tool/prompt exercised, break-then-fix, all steps passing, fleet deleted. Shown under "Try it end to end". |
 | `e2e-local.mp4` | The same recording as MP4, for embedding outside GitHub. |
 | `e2e-local.cast` | The raw asciinema cast the GIF/MP4 are rendered from (`agg e2e-local.cast out.gif` to re-render). |
