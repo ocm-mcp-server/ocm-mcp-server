@@ -7,7 +7,7 @@
   <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/art/hero-light.svg" alt="ocm-mcp-server: an agent's tool calls pass through a guardrailed control plane where reads are free, consequential writes need a human signature, and everything is recorded." width="880">
 </picture>
 
-# 🛡️ ocm-mcp-server
+# <img src="https://raw.githubusercontent.com/ocm-mcp-server/ocm-mcp-server/main/docs/assets/logo/logo.svg" alt="" width="44" align="center"> ocm-mcp-server
 
 ### **[📖 Read the docs site → ocm-mcp-server.github.io](https://ocm-mcp-server.github.io/)**
 
