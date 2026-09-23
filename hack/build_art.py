@@ -34,9 +34,14 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 THEMES = {
     "dark": {"bg": "#0b1020", "panel": "#121a30", "edge": "#243154", "ink": "#e8ecf8", "dim": "#93a4c8"},
-    "light": {"bg": "#fbfcff", "panel": "#ffffff", "edge": "#dfe6f5", "ink": "#0f1729", "dim": "#5a6b8c"},
+    # GitHub's light README is pure white, so the ground is tinted and the edges are firm enough
+    # that a white card still reads as a card rather than dissolving into the page around it.
+    "light": {"bg": "#eef2fa", "panel": "#ffffff", "edge": "#c3cee6", "ink": "#0f1729", "dim": "#475569"},
 }
 ACCENT, OK, VIOLET, DENY, AMBER = "#38bdf8", "#22c55e", "#a78bfa", "#f43f5e", "#fb923c"
+# The accents are tuned to glow on the dark ground; on white the same sky and green fall to
+# about 2:1. The light file swaps each for a deeper shade of the same hue as it is written.
+LIGHT_ACCENTS = {ACCENT: "#0369a1", OK: "#15803d", VIOLET: "#6d28d9", DENY: "#e11d48", AMBER: "#c2410c"}
 
 # Shared type and the reduced-motion escape hatch. Everything below composes this, so one
 # rule about motion applies to every panel rather than being restated eight times.
@@ -48,7 +53,7 @@ BASE_CSS = """
     .num{font-size:22px;font-weight:700}
     @keyframes dash{to{stroke-dashoffset:-40}}
     @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
-    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    @keyframes blip{0%,100%{opacity:.5}50%{opacity:1}}
     .wire{animation:dash 1.6s linear infinite}
     .glow{animation:glow 4s ease-in-out infinite}
 """
@@ -63,11 +68,15 @@ def esc(text: str) -> str:
 def svg(name: str, w: int, h: int, label: str, css: str, body: str) -> str:
     """Wrap a panel body in the frame every panel shares: viewBox, style block, ground."""
     t = THEMES[name]
-    return (
+    out = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" role="img" '
         f'aria-label="{esc(label)}">\n  <style>{BASE_CSS}{css}\n    {REDUCED}\n  </style>\n'
         f'  <rect width="{w}" height="{h}" rx="18" fill="{t["bg"]}"/>\n{body}\n</svg>'
     )
+    if name == "light":
+        for glow, deep in LIGHT_ACCENTS.items():
+            out = out.replace(glow, deep)
+    return out
 
 
 def eyebrow(x: int, y: int, text: str, fill: str, anchor: str = "start") -> str:
@@ -183,8 +192,11 @@ def helm(cx: float, cy: float, r: float, col: str, cls: str = "") -> str:
             f'stroke-width="{r * 0.15:.2f}"/></g>')
 
 
-def lit(name: str, on: float, off: float, dim: str = ".28") -> str:
-    """A card that dims until its turn comes, then holds until the whole sequence resets."""
+def lit(name: str, on: float, off: float, dim: str = ".65") -> str:
+    """A card that dims until its turn comes, then holds until the whole sequence resets.
+
+    The resting value stays legible: a card waiting its turn is still part of the story, and on
+    a white README anything fainter than this reads as missing rather than as not-yet."""
     return (f"@keyframes {name}{{0%,{max(on - 4, 0)}%{{opacity:{dim}}}{on}%,{off}%{{opacity:1}}"
             f"{min(off + 4, 100)}%,100%{{opacity:{dim}}}}}")
 
@@ -290,7 +302,7 @@ def gauntlet(name: str) -> str:
     @keyframes waiting{{0%,56%{{opacity:0}}59%,64%{{opacity:1}}67%,100%{{opacity:0}}}}
     @keyframes signed{{0%,64%{{opacity:0}}68%,94%{{opacity:1}}97%,100%{{opacity:0}}}}
     @keyframes landed{{0%,82%{{opacity:0}}86%,96%{{opacity:1}}99%,100%{{opacity:0}}}}
-    @keyframes live{{0%,84%{{opacity:.42}}90%,96%{{opacity:1}}99%,100%{{opacity:.42}}}}
+    @keyframes live{{0%,84%{{opacity:.6}}90%,96%{{opacity:1}}99%,100%{{opacity:.6}}}}
     .pkt{{transform-box:fill-box}}
     .runA{{animation:runA 15s ease-in-out infinite}}
     .runB{{animation:runB 15s ease-in-out infinite,showB 15s linear infinite}}
@@ -470,7 +482,7 @@ def approval(name: str) -> str:
       84%{{opacity:1;transform:translateX(-150px)}}88%,100%{{opacity:0;transform:translateX(-150px)}}}}
     @keyframes stamp{{0%,84%{{opacity:0;transform:scale(1.7)}}89%,96%{{opacity:1;transform:scale(1)}}
       99%,100%{{opacity:0;transform:scale(1.7)}}}}
-    .step{{opacity:.28}}
+    .step{{opacity:.65}}
     .ttl{{animation:ttl 13s linear infinite}}
     .replay{{animation:replay 13s ease-in-out infinite}}
     .stamp{{animation:stamp 13s ease-out infinite;transform-origin:center;transform-box:fill-box}}
@@ -645,10 +657,10 @@ def toolsets(name: str) -> str:
         f'<g><text x="{330 + i * 232}" y="{372}" class="mono xs" fill="{t["dim"]}" '
         f'text-decoration="line-through">{esc(item)}</text></g>' for i, item in enumerate(ABSENT))
 
-    tile_css = "".join(lit(f"t{i}", 4 + i * 6, 92, ".42") for i in range(len(TOOLSETS)))
+    tile_css = "".join(lit(f"t{i}", 4 + i * 6, 92, ".6") for i in range(len(TOOLSETS)))
     tile_css += "".join(f".t{i}{{animation:t{i} 14s ease-in-out infinite}}" for i in range(len(TOOLSETS)))
     css = f"""{tile_css}
-    .tile{{opacity:.42}}
+    .tile{{opacity:.6}}
     .dot{{animation:blip 2.6s ease-in-out infinite}}
     .d1{{animation-delay:.3s}}.d2{{animation-delay:.6s}}.d3{{animation-delay:.9s}}
     @media (prefers-reduced-motion:reduce){{.tile{{opacity:1}}}}
@@ -857,7 +869,7 @@ def hero(name: str) -> str:
     @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
     @keyframes ring{0%{opacity:.65;transform:scale(.74)}70%,100%{opacity:0;transform:scale(1.28)}}
     @keyframes shut{0%,42%{transform:translateY(-7px)}54%,100%{transform:translateY(0)}}
-    @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+    @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
     .bob{animation:bob 3.6s ease-in-out infinite}
     .ring{animation:ring 2.8s ease-out infinite;transform-origin:0 0}.ring2{animation-delay:1.4s}
     .shackle{animation:shut 4.2s ease-in-out infinite}

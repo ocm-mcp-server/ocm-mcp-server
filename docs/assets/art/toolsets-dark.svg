@@ -7,11 +7,11 @@
     .num{font-size:22px;font-weight:700}
     @keyframes dash{to{stroke-dashoffset:-40}}
     @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
-    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    @keyframes blip{0%,100%{opacity:.5}50%{opacity:1}}
     .wire{animation:dash 1.6s linear infinite}
     .glow{animation:glow 4s ease-in-out infinite}
-@keyframes t0{0%,0%{opacity:.42}4%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t1{0%,6%{opacity:.42}10%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t2{0%,12%{opacity:.42}16%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t3{0%,18%{opacity:.42}22%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t4{0%,24%{opacity:.42}28%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t5{0%,30%{opacity:.42}34%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t6{0%,36%{opacity:.42}40%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t7{0%,42%{opacity:.42}46%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t8{0%,48%{opacity:.42}52%,92%{opacity:1}96%,100%{opacity:.42}}@keyframes t9{0%,54%{opacity:.42}58%,92%{opacity:1}96%,100%{opacity:.42}}.t0{animation:t0 14s ease-in-out infinite}.t1{animation:t1 14s ease-in-out infinite}.t2{animation:t2 14s ease-in-out infinite}.t3{animation:t3 14s ease-in-out infinite}.t4{animation:t4 14s ease-in-out infinite}.t5{animation:t5 14s ease-in-out infinite}.t6{animation:t6 14s ease-in-out infinite}.t7{animation:t7 14s ease-in-out infinite}.t8{animation:t8 14s ease-in-out infinite}.t9{animation:t9 14s ease-in-out infinite}
-    .tile{opacity:.42}
+@keyframes t0{0%,0%{opacity:.6}4%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t1{0%,6%{opacity:.6}10%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t2{0%,12%{opacity:.6}16%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t3{0%,18%{opacity:.6}22%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t4{0%,24%{opacity:.6}28%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t5{0%,30%{opacity:.6}34%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t6{0%,36%{opacity:.6}40%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t7{0%,42%{opacity:.6}46%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t8{0%,48%{opacity:.6}52%,92%{opacity:1}96%,100%{opacity:.6}}@keyframes t9{0%,54%{opacity:.6}58%,92%{opacity:1}96%,100%{opacity:.6}}.t0{animation:t0 14s ease-in-out infinite}.t1{animation:t1 14s ease-in-out infinite}.t2{animation:t2 14s ease-in-out infinite}.t3{animation:t3 14s ease-in-out infinite}.t4{animation:t4 14s ease-in-out infinite}.t5{animation:t5 14s ease-in-out infinite}.t6{animation:t6 14s ease-in-out infinite}.t7{animation:t7 14s ease-in-out infinite}.t8{animation:t8 14s ease-in-out infinite}.t9{animation:t9 14s ease-in-out infinite}
+    .tile{opacity:.6}
     .dot{animation:blip 2.6s ease-in-out infinite}
     .d1{animation-delay:.3s}.d2{animation-delay:.6s}.d3{animation-delay:.9s}
     @media (prefers-reduced-motion:reduce){.tile{opacity:1}}

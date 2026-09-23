@@ -7,7 +7,7 @@
     .num{font-size:22px;font-weight:700}
     @keyframes dash{to{stroke-dashoffset:-40}}
     @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
-    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    @keyframes blip{0%,100%{opacity:.5}50%{opacity:1}}
     .wire{animation:dash 1.6s linear infinite}
     .glow{animation:glow 4s ease-in-out infinite}
 
@@ -20,34 +20,34 @@
 
     @media (prefers-reduced-motion:reduce){*{animation:none!important}}
   </style>
-  <rect width="1280" height="316" rx="18" fill="#fbfcff"/>
-  <text x="40" y="44" text-anchor="start" class="mono cap" fill="#38bdf8">THREE WAYS IN · PICK THE ONE THAT MATCHES YOUR APPETITE</text>
-  <text x="1240" y="44" text-anchor="end" class="mono cap" fill="#5a6b8c">THE FIRST ONE NEEDS NO CLUSTER YOU DO NOT ALREADY HAVE</text>
-  <text x="40" y="78" class="mono xs" fill="#5a6b8c">Every row ends somewhere useful. Nobody has to reach the third to get an answer out of the first.</text>
+  <rect width="1280" height="316" rx="18" fill="#eef2fa"/>
+  <text x="40" y="44" text-anchor="start" class="mono cap" fill="#0369a1">THREE WAYS IN · PICK THE ONE THAT MATCHES YOUR APPETITE</text>
+  <text x="1240" y="44" text-anchor="end" class="mono cap" fill="#475569">THE FIRST ONE NEEDS NO CLUSTER YOU DO NOT ALREADY HAVE</text>
+  <text x="40" y="78" class="mono xs" fill="#475569">Every row ends somewhere useful. Nobody has to reach the third to get an answer out of the first.</text>
   
   <g>
     <text x="40" y="116" class="sans" font-size="14" font-weight="700" fill="#0f1729">on a laptop</text>
-    <text x="40" y="133" class="mono xs" fill="#22c55e">~15 minutes</text>
-    <line class="wire" x1="292" y1="118" x2="1118" y2="118" stroke="#22c55e" stroke-width="1.4"
+    <text x="40" y="133" class="mono xs" fill="#15803d">~15 minutes</text>
+    <line class="wire" x1="292" y1="118" x2="1118" y2="118" stroke="#15803d" stroke-width="1.4"
           stroke-dasharray="4 6" opacity=".4"/>
-    <circle cx="300" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="294" y="104" class="mono xs" fill="#5a6b8c">kind + podman</text><circle cx="570" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="564" y="104" class="mono xs" fill="#5a6b8c">make bootstrap</text><circle cx="840" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="834" y="104" class="mono xs" fill="#5a6b8c">a real OCM hub</text><circle cx="1110" cy="118" r="5" fill="#fbfcff" stroke="#22c55e" stroke-width="2"/><text x="1104" y="104" class="mono xs" fill="#5a6b8c">two spokes, Kyverno</text>
-    <g class="run g0"><circle cx="300" cy="118" r="6.5" fill="#22c55e"/></g>
+    <circle cx="300" cy="118" r="5" fill="#eef2fa" stroke="#15803d" stroke-width="2"/><text x="294" y="104" class="mono xs" fill="#475569">kind + podman</text><circle cx="570" cy="118" r="5" fill="#eef2fa" stroke="#15803d" stroke-width="2"/><text x="564" y="104" class="mono xs" fill="#475569">make bootstrap</text><circle cx="840" cy="118" r="5" fill="#eef2fa" stroke="#15803d" stroke-width="2"/><text x="834" y="104" class="mono xs" fill="#475569">a real OCM hub</text><circle cx="1110" cy="118" r="5" fill="#eef2fa" stroke="#15803d" stroke-width="2"/><text x="1104" y="104" class="mono xs" fill="#475569">two spokes, Kyverno</text>
+    <g class="run g0"><circle cx="300" cy="118" r="6.5" fill="#15803d"/></g>
   </g>
   <g>
     <text x="40" y="186" class="sans" font-size="14" font-weight="700" fill="#0f1729">against your own hub</text>
-    <text x="40" y="203" class="mono xs" fill="#38bdf8">minutes</text>
-    <line class="wire" x1="292" y1="188" x2="1118" y2="188" stroke="#38bdf8" stroke-width="1.4"
+    <text x="40" y="203" class="mono xs" fill="#0369a1">minutes</text>
+    <line class="wire" x1="292" y1="188" x2="1118" y2="188" stroke="#0369a1" stroke-width="1.4"
           stroke-dasharray="4 6" opacity=".4"/>
-    <circle cx="300" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="294" y="174" class="mono xs" fill="#5a6b8c">pip install</text><circle cx="570" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="564" y="174" class="mono xs" fill="#5a6b8c">point at a context</text><circle cx="840" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="834" y="174" class="mono xs" fill="#5a6b8c">ocm-mcp doctor</text><circle cx="1110" cy="188" r="5" fill="#fbfcff" stroke="#38bdf8" stroke-width="2"/><text x="1104" y="174" class="mono xs" fill="#5a6b8c">reads only, first</text>
-    <g class="run g1"><circle cx="300" cy="188" r="6.5" fill="#38bdf8"/></g>
+    <circle cx="300" cy="188" r="5" fill="#eef2fa" stroke="#0369a1" stroke-width="2"/><text x="294" y="174" class="mono xs" fill="#475569">pip install</text><circle cx="570" cy="188" r="5" fill="#eef2fa" stroke="#0369a1" stroke-width="2"/><text x="564" y="174" class="mono xs" fill="#475569">point at a context</text><circle cx="840" cy="188" r="5" fill="#eef2fa" stroke="#0369a1" stroke-width="2"/><text x="834" y="174" class="mono xs" fill="#475569">ocm-mcp doctor</text><circle cx="1110" cy="188" r="5" fill="#eef2fa" stroke="#0369a1" stroke-width="2"/><text x="1104" y="174" class="mono xs" fill="#475569">reads only, first</text>
+    <g class="run g1"><circle cx="300" cy="188" r="6.5" fill="#0369a1"/></g>
   </g>
   <g>
     <text x="40" y="256" class="sans" font-size="14" font-weight="700" fill="#0f1729">in production</text>
-    <text x="40" y="273" class="mono xs" fill="#a78bfa">the deployment guide</text>
-    <line class="wire" x1="292" y1="258" x2="1118" y2="258" stroke="#a78bfa" stroke-width="1.4"
+    <text x="40" y="273" class="mono xs" fill="#6d28d9">the deployment guide</text>
+    <line class="wire" x1="292" y1="258" x2="1118" y2="258" stroke="#6d28d9" stroke-width="1.4"
           stroke-dasharray="4 6" opacity=".4"/>
-    <circle cx="300" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="294" y="244" class="mono xs" fill="#5a6b8c">signed image</text><circle cx="570" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="564" y="244" class="mono xs" fill="#5a6b8c">least-privilege RBAC</text><circle cx="840" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="834" y="244" class="mono xs" fill="#5a6b8c">policies + approver key</text><circle cx="1110" cy="258" r="5" fill="#fbfcff" stroke="#a78bfa" stroke-width="2"/><text x="1104" y="244" class="mono xs" fill="#5a6b8c">OTLP + metrics</text>
-    <g class="run g2"><circle cx="300" cy="258" r="6.5" fill="#a78bfa"/></g>
+    <circle cx="300" cy="258" r="5" fill="#eef2fa" stroke="#6d28d9" stroke-width="2"/><text x="294" y="244" class="mono xs" fill="#475569">signed image</text><circle cx="570" cy="258" r="5" fill="#eef2fa" stroke="#6d28d9" stroke-width="2"/><text x="564" y="244" class="mono xs" fill="#475569">least-privilege RBAC</text><circle cx="840" cy="258" r="5" fill="#eef2fa" stroke="#6d28d9" stroke-width="2"/><text x="834" y="244" class="mono xs" fill="#475569">policies + approver key</text><circle cx="1110" cy="258" r="5" fill="#eef2fa" stroke="#6d28d9" stroke-width="2"/><text x="1104" y="244" class="mono xs" fill="#475569">OTLP + metrics</text>
+    <g class="run g2"><circle cx="300" cy="258" r="6.5" fill="#6d28d9"/></g>
   </g>
-  <line x1="40" y1="292" x2="1240" y2="292" stroke="#dfe6f5" opacity=".7"/>
+  <line x1="40" y1="292" x2="1240" y2="292" stroke="#c3cee6" opacity=".7"/>
 </svg>

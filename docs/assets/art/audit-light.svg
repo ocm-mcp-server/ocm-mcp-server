@@ -7,7 +7,7 @@
     .num{font-size:22px;font-weight:700}
     @keyframes dash{to{stroke-dashoffset:-40}}
     @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
-    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    @keyframes blip{0%,100%{opacity:.5}50%{opacity:1}}
     .wire{animation:dash 1.6s linear infinite}
     .glow{animation:glow 4s ease-in-out infinite}
 
@@ -30,84 +30,84 @@
 
     @media (prefers-reduced-motion:reduce){*{animation:none!important}}
   </style>
-  <rect width="1280" height="364" rx="18" fill="#fbfcff"/>
-  <text x="40" y="44" text-anchor="start" class="mono cap" fill="#a78bfa">AUDIT LOG · ALWAYS ON · TAMPER-EVIDENT</text>
-  <text x="700" y="44" text-anchor="start" class="mono cap" fill="#38bdf8">OTEL SPANS · OPT-IN · A DEBUGGING ARTIFACT</text>
+  <rect width="1280" height="364" rx="18" fill="#eef2fa"/>
+  <text x="40" y="44" text-anchor="start" class="mono cap" fill="#6d28d9">AUDIT LOG · ALWAYS ON · TAMPER-EVIDENT</text>
+  <text x="700" y="44" text-anchor="start" class="mono cap" fill="#0369a1">OTEL SPANS · OPT-IN · A DEBUGGING ARTIFACT</text>
   <text x="40" y="76" class="sans" font-size="16" font-weight="700" fill="#0f1729">What happened, in order, on whose authority</text>
-  <text x="40" y="96" class="mono xs" fill="#5a6b8c">audit.jsonl — every line carries the hash of the line before it</text>
+  <text x="40" y="96" class="mono xs" fill="#475569">audit.jsonl — every line carries the hash of the line before it</text>
   <text x="700" y="76" class="sans" font-size="16" font-weight="700" fill="#0f1729">Where the time went</text>
-  <text x="700" y="96" class="mono xs" fill="#5a6b8c">one span per tool call — the approval token is never attached</text>
+  <text x="700" y="96" class="mono xs" fill="#475569">one span per tool call — the approval token is never attached</text>
   
   <g class="row r0">
-    <rect x="56" y="128" width="568" height="34" rx="8" fill="#ffffff" stroke="#dfe6f5"/>
-    <rect x="56" y="128" width="3" height="34" rx="1.5" fill="#22c55e"/>
-    <text x="72" y="149" class="mono xs" fill="#5a6b8c">12:04:31</text>
+    <rect x="56" y="128" width="568" height="34" rx="8" fill="#ffffff" stroke="#c3cee6"/>
+    <rect x="56" y="128" width="3" height="34" rx="1.5" fill="#15803d"/>
+    <text x="72" y="149" class="mono xs" fill="#475569">12:04:31</text>
     <text x="134" y="149" class="mono b" fill="#0f1729">get_fleet_status</text>
-    <g><text x="386" y="149" class="mono xs" fill="#22c55e">read</text>
-<text x="474" y="149" class="mono xs" fill="#5a6b8c">prev 8c1a…</text>
-<circle cx="604" cy="145" r="4" fill="#22c55e" opacity=".8"/></g>
+    <g><text x="386" y="149" class="mono xs" fill="#15803d">read</text>
+<text x="474" y="149" class="mono xs" fill="#475569">prev 8c1a…</text>
+<circle cx="604" cy="145" r="4" fill="#15803d" opacity=".8"/></g>
   </g>
   <g class="row r1">
-    <path class="sound" d="M64 162 v14" stroke="#22c55e" stroke-width="2" stroke-linecap="round" opacity=".7"/><rect x="56" y="176" width="568" height="34" rx="8" fill="#ffffff" stroke="#dfe6f5"/>
-    <rect x="56" y="176" width="3" height="34" rx="1.5" fill="#38bdf8"/>
-    <text x="72" y="197" class="mono xs" fill="#5a6b8c">12:06:02</text>
+    <path class="sound" d="M64 162 v14" stroke="#15803d" stroke-width="2" stroke-linecap="round" opacity=".7"/><rect x="56" y="176" width="568" height="34" rx="8" fill="#ffffff" stroke="#c3cee6"/>
+    <rect x="56" y="176" width="3" height="34" rx="1.5" fill="#0369a1"/>
+    <text x="72" y="197" class="mono xs" fill="#475569">12:06:02</text>
     <text x="134" y="197" class="mono b" fill="#0f1729">propose_manifestwork</text>
-    <g class="sound"><text x="386" y="197" class="mono xs" fill="#38bdf8">proposed</text>
-<text x="474" y="197" class="mono xs" fill="#5a6b8c">prev 9f2c…</text>
-<circle cx="604" cy="193" r="4" fill="#38bdf8" opacity=".8"/></g>
+    <g class="sound"><text x="386" y="197" class="mono xs" fill="#0369a1">proposed</text>
+<text x="474" y="197" class="mono xs" fill="#475569">prev 9f2c…</text>
+<circle cx="604" cy="193" r="4" fill="#0369a1" opacity=".8"/></g>
   </g>
   <g class="row r2">
-    <path class="sound" d="M64 210 v14" stroke="#22c55e" stroke-width="2" stroke-linecap="round" opacity=".7"/><rect x="56" y="224" width="568" height="34" rx="8" fill="#ffffff" stroke="#dfe6f5"/>
-    <rect x="56" y="224" width="3" height="34" rx="1.5" fill="#a78bfa"/>
-    <text x="72" y="245" class="mono xs" fill="#5a6b8c">12:07:44</text>
+    <path class="sound" d="M64 210 v14" stroke="#15803d" stroke-width="2" stroke-linecap="round" opacity=".7"/><rect x="56" y="224" width="568" height="34" rx="8" fill="#ffffff" stroke="#c3cee6"/>
+    <rect x="56" y="224" width="3" height="34" rx="1.5" fill="#6d28d9"/>
+    <text x="72" y="245" class="mono xs" fill="#475569">12:07:44</text>
     <text x="134" y="245" class="mono b" fill="#0f1729">apply_manifestwork</text>
-    <g><text x="386" y="245" class="mono xs" fill="#a78bfa">applied</text>
-<text x="474" y="245" class="mono xs" fill="#5a6b8c">prev 4d7b…</text>
-<circle cx="604" cy="241" r="4" fill="#a78bfa" opacity=".8"/></g>
+    <g><text x="386" y="245" class="mono xs" fill="#6d28d9">applied</text>
+<text x="474" y="245" class="mono xs" fill="#475569">prev 4d7b…</text>
+<circle cx="604" cy="241" r="4" fill="#6d28d9" opacity=".8"/></g>
   </g>
   <g class="row r3">
-    <path class="sound" d="M64 258 v14" stroke="#22c55e" stroke-width="2" stroke-linecap="round" opacity=".7"/><rect x="56" y="272" width="568" height="34" rx="8" fill="#ffffff" stroke="#dfe6f5"/>
-    <rect x="56" y="272" width="3" height="34" rx="1.5" fill="#22c55e"/>
-    <text x="72" y="293" class="mono xs" fill="#5a6b8c">12:09:10</text>
+    <path class="sound" d="M64 258 v14" stroke="#15803d" stroke-width="2" stroke-linecap="round" opacity=".7"/><rect x="56" y="272" width="568" height="34" rx="8" fill="#ffffff" stroke="#c3cee6"/>
+    <rect x="56" y="272" width="3" height="34" rx="1.5" fill="#15803d"/>
+    <text x="72" y="293" class="mono xs" fill="#475569">12:09:10</text>
     <text x="134" y="293" class="mono b" fill="#0f1729">get_cluster_health</text>
-    <g><text x="386" y="293" class="mono xs" fill="#22c55e">read</text>
-<text x="474" y="293" class="mono xs" fill="#5a6b8c">prev b063…</text>
-<circle cx="604" cy="289" r="4" fill="#22c55e" opacity=".8"/></g>
+    <g><text x="386" y="293" class="mono xs" fill="#15803d">read</text>
+<text x="474" y="293" class="mono xs" fill="#475569">prev b063…</text>
+<circle cx="604" cy="289" r="4" fill="#15803d" opacity=".8"/></g>
   </g><g class="tamper">
-    <rect x="56" y="176" width="568" height="34" rx="8" fill="#f43f5e" fill-opacity=".13" stroke="#f43f5e"/>
-    <rect x="56" y="176" width="3" height="34" rx="1.5" fill="#f43f5e"/>
-    <text x="386" y="197" class="mono xs" fill="#f43f5e">edited</text>
-    <text x="474" y="197" class="mono xs" fill="#f43f5e">prev 9f2c…</text>
-    <line x1="470" y1="193" x2="546" y2="193" stroke="#f43f5e" stroke-width="1.4"/>
-    <path d="M64 210 v14" stroke="#f43f5e" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="56" y="176" width="568" height="34" rx="8" fill="#e11d48" fill-opacity=".13" stroke="#e11d48"/>
+    <rect x="56" y="176" width="3" height="34" rx="1.5" fill="#e11d48"/>
+    <text x="386" y="197" class="mono xs" fill="#e11d48">edited</text>
+    <text x="474" y="197" class="mono xs" fill="#e11d48">prev 9f2c…</text>
+    <line x1="470" y1="193" x2="546" y2="193" stroke="#e11d48" stroke-width="1.4"/>
+    <path d="M64 210 v14" stroke="#e11d48" stroke-width="2.4" stroke-linecap="round"/>
   </g>
   <g class="span sp0">
-    <text x="700" y="144" class="mono xs" fill="#5a6b8c">tool.apply_manifestwork</text>
-    <rect class="bar" x="880" y="134" width="300" height="12" rx="4" fill="#a78bfa" fill-opacity=".8"/>
-    <text x="1188" y="144" class="mono xs" fill="#5a6b8c">300ms</text>
+    <text x="700" y="144" class="mono xs" fill="#475569">tool.apply_manifestwork</text>
+    <rect class="bar" x="880" y="134" width="300" height="12" rx="4" fill="#6d28d9" fill-opacity=".8"/>
+    <text x="1188" y="144" class="mono xs" fill="#475569">300ms</text>
   </g>
   <g class="span sp1">
-    <text x="700" y="180" class="mono xs" fill="#5a6b8c">guardrails.check</text>
+    <text x="700" y="180" class="mono xs" fill="#475569">guardrails.check</text>
     <rect class="bar" x="888" y="170" width="34" height="12" rx="4" fill="#8ea2ff" fill-opacity=".8"/>
-    <text x="930" y="180" class="mono xs" fill="#5a6b8c">34ms</text>
+    <text x="930" y="180" class="mono xs" fill="#475569">34ms</text>
   </g>
   <g class="span sp2">
-    <text x="700" y="216" class="mono xs" fill="#5a6b8c">kyverno.dryrun</text>
-    <rect class="bar" x="926" y="206" width="96" height="12" rx="4" fill="#38bdf8" fill-opacity=".8"/>
-    <text x="1030" y="216" class="mono xs" fill="#5a6b8c">96ms</text>
+    <text x="700" y="216" class="mono xs" fill="#475569">kyverno.dryrun</text>
+    <rect class="bar" x="926" y="206" width="96" height="12" rx="4" fill="#0369a1" fill-opacity=".8"/>
+    <text x="1030" y="216" class="mono xs" fill="#475569">96ms</text>
   </g>
   <g class="span sp3">
-    <text x="700" y="252" class="mono xs" fill="#5a6b8c">approval.verify</text>
-    <rect class="bar" x="1028" y="242" width="28" height="12" rx="4" fill="#fb923c" fill-opacity=".8"/>
-    <text x="1064" y="252" class="mono xs" fill="#5a6b8c">28ms</text>
+    <text x="700" y="252" class="mono xs" fill="#475569">approval.verify</text>
+    <rect class="bar" x="1028" y="242" width="28" height="12" rx="4" fill="#c2410c" fill-opacity=".8"/>
+    <text x="1064" y="252" class="mono xs" fill="#475569">28ms</text>
   </g>
   <g class="span sp4">
-    <text x="700" y="288" class="mono xs" fill="#5a6b8c">ocm.apply_work</text>
-    <rect class="bar" x="1062" y="278" width="108" height="12" rx="4" fill="#22c55e" fill-opacity=".8"/>
-    <text x="1178" y="288" class="mono xs" fill="#5a6b8c">108ms</text>
+    <text x="700" y="288" class="mono xs" fill="#475569">ocm.apply_work</text>
+    <rect class="bar" x="1062" y="278" width="108" height="12" rx="4" fill="#15803d" fill-opacity=".8"/>
+    <text x="1178" y="288" class="mono xs" fill="#475569">108ms</text>
   </g>
-  <g class="sound"><g><rect x="56" y="324" width="261.20000000000005" height="18" rx="6" fill="#22c55e" fill-opacity=".16" stroke="#22c55e" stroke-opacity=".45"/><text x="186.60000000000002" y="336.6" text-anchor="middle" class="mono xs" fill="#22c55e">chain verifies — line 4 back to line 1</text></g></g>
-  <g class="tamper"><g><rect x="56" y="324" width="293.2" height="18" rx="6" fill="#f43f5e" fill-opacity=".16" stroke="#f43f5e" stroke-opacity=".45"/><text x="202.6" y="336.6" text-anchor="middle" class="mono xs" fill="#f43f5e">chain broken at line 2 — the record says so</text></g></g>
-  <line x1="40" y1="358" x2="1240" y2="358" stroke="#dfe6f5"/>
-  <text x="40" y="380" class="mono xs" fill="#5a6b8c">Nothing safety-related trusts the spans, which is why tracing can stay optional and fail-soft. The audit log is the artifact an incident report is written from.</text>
+  <g class="sound"><g><rect x="56" y="324" width="261.20000000000005" height="18" rx="6" fill="#15803d" fill-opacity=".16" stroke="#15803d" stroke-opacity=".45"/><text x="186.60000000000002" y="336.6" text-anchor="middle" class="mono xs" fill="#15803d">chain verifies — line 4 back to line 1</text></g></g>
+  <g class="tamper"><g><rect x="56" y="324" width="293.2" height="18" rx="6" fill="#e11d48" fill-opacity=".16" stroke="#e11d48" stroke-opacity=".45"/><text x="202.6" y="336.6" text-anchor="middle" class="mono xs" fill="#e11d48">chain broken at line 2 — the record says so</text></g></g>
+  <line x1="40" y1="358" x2="1240" y2="358" stroke="#c3cee6"/>
+  <text x="40" y="380" class="mono xs" fill="#475569">Nothing safety-related trusts the spans, which is why tracing can stay optional and fail-soft. The audit log is the artifact an incident report is written from.</text>
 </svg>

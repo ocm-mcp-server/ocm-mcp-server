@@ -7,7 +7,7 @@
     .num{font-size:22px;font-weight:700}
     @keyframes dash{to{stroke-dashoffset:-40}}
     @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
-    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    @keyframes blip{0%,100%{opacity:.5}50%{opacity:1}}
     .wire{animation:dash 1.6s linear infinite}
     .glow{animation:glow 4s ease-in-out infinite}
 

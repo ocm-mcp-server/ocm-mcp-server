@@ -7,7 +7,7 @@
     .num{font-size:22px;font-weight:700}
     @keyframes dash{to{stroke-dashoffset:-40}}
     @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
-    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    @keyframes blip{0%,100%{opacity:.5}50%{opacity:1}}
     .wire{animation:dash 1.6s linear infinite}
     .glow{animation:glow 4s ease-in-out infinite}
 
@@ -28,7 +28,7 @@
     @keyframes waiting{0%,56%{opacity:0}59%,64%{opacity:1}67%,100%{opacity:0}}
     @keyframes signed{0%,64%{opacity:0}68%,94%{opacity:1}97%,100%{opacity:0}}
     @keyframes landed{0%,82%{opacity:0}86%,96%{opacity:1}99%,100%{opacity:0}}
-    @keyframes live{0%,84%{opacity:.42}90%,96%{opacity:1}99%,100%{opacity:.42}}
+    @keyframes live{0%,84%{opacity:.6}90%,96%{opacity:1}99%,100%{opacity:.6}}
     .pkt{transform-box:fill-box}
     .runA{animation:runA 15s ease-in-out infinite}
     .runB{animation:runB 15s ease-in-out infinite,showB 15s linear infinite}

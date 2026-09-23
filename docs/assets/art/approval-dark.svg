@@ -7,17 +7,17 @@
     .num{font-size:22px;font-weight:700}
     @keyframes dash{to{stroke-dashoffset:-40}}
     @keyframes glow{0%,100%{opacity:.22}50%{opacity:.44}}
-    @keyframes blip{0%,100%{opacity:.25}50%{opacity:1}}
+    @keyframes blip{0%,100%{opacity:.5}50%{opacity:1}}
     .wire{animation:dash 1.6s linear infinite}
     .glow{animation:glow 4s ease-in-out infinite}
 
-@keyframes s0{0%,4%{opacity:.28}8%,88%{opacity:1}92%,100%{opacity:.28}}@keyframes s1{0%,20%{opacity:.28}24%,88%{opacity:1}92%,100%{opacity:.28}}@keyframes s2{0%,36%{opacity:.28}40%,88%{opacity:1}92%,100%{opacity:.28}}@keyframes s3{0%,52%{opacity:.28}56%,88%{opacity:1}92%,100%{opacity:.28}}.s0{animation:s0 13s ease-in-out infinite}.s1{animation:s1 13s ease-in-out infinite}.s2{animation:s2 13s ease-in-out infinite}.s3{animation:s3 13s ease-in-out infinite}
+@keyframes s0{0%,4%{opacity:.65}8%,88%{opacity:1}92%,100%{opacity:.65}}@keyframes s1{0%,20%{opacity:.65}24%,88%{opacity:1}92%,100%{opacity:.65}}@keyframes s2{0%,36%{opacity:.65}40%,88%{opacity:1}92%,100%{opacity:.65}}@keyframes s3{0%,52%{opacity:.65}56%,88%{opacity:1}92%,100%{opacity:.65}}.s0{animation:s0 13s ease-in-out infinite}.s1{animation:s1 13s ease-in-out infinite}.s2{animation:s2 13s ease-in-out infinite}.s3{animation:s3 13s ease-in-out infinite}
     @keyframes ttl{0%,42%{width:236px}92%,100%{width:26px}}
     @keyframes replay{0%,72%{opacity:0;transform:translateX(0)}78%{opacity:1}
       84%{opacity:1;transform:translateX(-150px)}88%,100%{opacity:0;transform:translateX(-150px)}}
     @keyframes stamp{0%,84%{opacity:0;transform:scale(1.7)}89%,96%{opacity:1;transform:scale(1)}
       99%,100%{opacity:0;transform:scale(1.7)}}
-    .step{opacity:.28}
+    .step{opacity:.65}
     .ttl{animation:ttl 13s linear infinite}
     .replay{animation:replay 13s ease-in-out infinite}
     .stamp{animation:stamp 13s ease-out infinite;transform-origin:center;transform-box:fill-box}
