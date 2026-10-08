@@ -382,10 +382,6 @@ def megamenu(pages: list[Page], base: str, current_section: str) -> str:
             f'<div class="menu__panel{wide}"><p class="menu__blurb">{SECTION_BLURB[section]}</p>'
             f'<div class="menu__grid">{"".join(rows)}</div></div></div>'
         )
-    # The sibling sites. Plain links rather than panels: they leave this site, and a panel would
-    # promise contents this build knows nothing about.
-    out.append('<div class="menu"><a class="menu__t" href="https://lazy-senior-dev.github.io/">lazy-senior-dev</a></div>')
-    out.append('<div class="menu"><a class="menu__t" href="https://ai-roadmap-365.github.io/">365 Days of AI</a></div>')
     return "".join(out)
 
 
