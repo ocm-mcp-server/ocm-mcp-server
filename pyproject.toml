@@ -20,7 +20,7 @@ dependencies = [
     # Upper bounds are deliberate: MCP v2 is a major rewrite and the Kubernetes client
     # bumps its major on each K8s minor, so we cap to a tested range and widen on purpose.
     "mcp>=2,<3",
-    "kubernetes>=29.0.0,<37",
+    "kubernetes>=29.0.0,<38",
     "cryptography>=42",
     "PyYAML>=6.0",
 ]
