@@ -9,7 +9,7 @@
 # NOTE: pin the multi-arch INDEX digest (docker buildx imagetools inspect
 # python:3.14-slim), never a platform manifest digest - an arm64-only pin makes
 # amd64 CI builds fail with "exec format error".
-FROM python:3.14-slim@sha256:cae66f2ef0ec51a9891263eeee7f987dacf0a9879e8aa9353d5606e0530619a5
+FROM python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913
 
 # The MCP Registry validates OCI-package ownership against this label; without
 # it the registry refuses to list the image (as of the 0.3.0 publish).
